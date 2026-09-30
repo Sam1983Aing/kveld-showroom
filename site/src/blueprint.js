@@ -1,4 +1,4 @@
-// Plots the Nimbus plan view from assets/data/nimbus.json, which the Blender
+// Plots the Floe plan view from assets/data/floe.json, which the Blender
 // build writes from the same numbers it models with. Units are inches; SVG y
 // is flipped so the bass side sits on top, as on the original drawing.
 const NS = 'http://www.w3.org/2000/svg';
@@ -78,7 +78,7 @@ export function drawBlueprint(svg, D) {
   callout(7.0, 5.0, 11.4, 5.4, 'Two-piece swamp ash · 1.75 deep');
   callout(-0.08, -0.85, 1.4, -7.0, 'Three brass saddles');
   callout(15.4, 0.4, 14.2, -3.1, `${D.frets} frets · ${D.radius} radius`);
-  callout(29.1, -0.72, 27.4, -2.9, 'HALDEN headstock');
+  callout(29.1, -0.72, 27.4, -2.9, `${D.brand} headstock`);
   callout(D.nut[0] + 0.06, 0.7, 23.2, 3.0, `Nut ${D.nut_width.toFixed(2)}`, 'end');
 
   // title block

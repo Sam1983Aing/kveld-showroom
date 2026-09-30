@@ -3,7 +3,7 @@
 // get replaced one by one as each model is built from its plans.
 //
 // Frame (inches): x across with the bass side at -x, y up from the tail,
-// z toward the front. Same orientation and origin as nimbus.glb.
+// z toward the front. Same orientation and origin as floe.glb.
 import * as THREE from 'three';
 
 const IN = 0.0254;
@@ -62,8 +62,8 @@ const SHAPES = {
   },
 };
 
-// HALDEN headstocks, shared across the range: six in line for bolt-ons (the
-// same outline as the Nimbus), three a side for glued-in necks.
+// KVELD headstocks, shared across the range: six in line for bolt-ons (the
+// same outline as the Floe), three a side for glued-in necks.
 const HEAD_SIX = [[0.12, 0.826], [0.40, 0.85], [0.75, 0.98], [1.10, 1.21], [1.45, 1.355], [2.3, 1.104], [3.2, 0.829], [4.1, 0.555],
   [5.0, 0.28], [5.8, 0.036], [6.35, -0.13], [6.85, -0.27], [7.14, -0.45], [7.27, -0.68], [7.21, -0.92], [7.0, -1.075], [6.6, -1.145],
   [5.8, -1.14], [4.8, -1.06], [3.8, -1.005], [2.8, -1.0], [1.9, -1.005], [1.2, -0.975], [0.7, -0.905], [0.35, -0.85], [0.12, -0.826]]

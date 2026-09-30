@@ -12,9 +12,10 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { Reflector } from 'three/addons/objects/Reflector.js';
 import { buildStandin } from './standins.js';
+import { prepareGuitar } from './guitar-look.js';
 
 const N = 7;
-const ACCENT = new THREE.Color('#e7bd7f');
+const ACCENT = new THREE.Color('#e7bd7f');   // the centre guitar's colour, set every frame (applyPalette)
 const PED_TOP = 0.22;                  // pedestal height, metres
 const HOVER = 0.028;                   // guitars float just clear of the top
 
@@ -150,7 +151,7 @@ const GrainShader = {
 
 // ========================================================================
 export class Showroom {
-  constructor(canvas, { onProgress, onChange } = {}) {
+  constructor(canvas, { onProgress, onChange, hero } = {}) {
     this.canvas = canvas;
     this.onProgress = onProgress || (() => {});
     this.onChange = onChange || (() => {});
@@ -170,8 +171,10 @@ export class Showroom {
     this.scrollT = 0;
     this.mobile = matchMedia('(max-width: 760px)').matches;
 
+    this.opt = hero || null;  // a hero-options.js variant (?hero=), or null for the page as it is
     this.initRenderer();
     this.initScene();
+    this.opt?.init?.(this);
     this.layout();
     this.bind();
   }
@@ -347,16 +350,10 @@ export class Showroom {
     const ringGeo = new THREE.TorusGeometry(0.323, 0.0034, 8, 180);
     const baseRingGeo = new THREE.TorusGeometry(0.402, 0.0024, 6, 180);
 
+    this.setPalette(lineup.map((g) => g.colour));
     const gltf = await new GLTFLoader().loadAsync(glbUrl, (e) => { if (e.total) this.onProgress(e.loaded / e.total); });
-    const nimbus = gltf.scene;
-    const maxAniso = this.renderer.capabilities.getMaxAnisotropy();
-    nimbus.traverse((o) => {
-      if (!o.isMesh) return;
-      o.castShadow = true; o.receiveShadow = true;
-      const m = o.material;
-      if (m.map) m.map.anisotropy = maxAniso;
-      m.envMapIntensity = 1.0;
-    });
+    const floe = gltf.scene;
+    prepareGuitar(floe, this.renderer);
 
     lineup.forEach((info, i) => {
       const dim = { value: 1 };
@@ -374,7 +371,7 @@ export class Showroom {
 
       let guitar;
       if (info.real) {
-        guitar = nimbus;
+        guitar = floe;
         guitar.traverse((o) => { if (o.isMesh) addDim(o.material, dim); });
       } else {
         const c = clay.clone(), gr = graphite.clone();
@@ -395,6 +392,7 @@ export class Showroom {
       this.items.push({ info, group, pedestal, spinner, guitar, dim, ringMat, baseMat, hit, spin: 0, spinV: 0, hoverK: 0 });
     });
     this.hits = this.items.map((it) => it.hit);
+    this.opt?.loaded?.(this);
     this.update(0);
     this.emitChange();
   }
@@ -417,6 +415,7 @@ export class Showroom {
     this.bloom.resolution.set(w, h);
     const pr = this.renderer.getPixelRatio();
     this.floor.getRenderTarget().setSize(Math.round(w * pr * 0.5), Math.round(h * pr * 0.5));
+    this.opt?.layout?.(this, portrait, w, h, pr);
     if (this.items.length) this.rebuildTrack();
     else this.rebuildTrackPending = true;
   }
@@ -549,6 +548,7 @@ export class Showroom {
     const t = this.time;
     const L = this.lights, F = this.focus;
     const cam = this.camera;
+    if (this.palette) this.applyPalette();
 
     // camera: base framing, a little pointer parallax, a crane on scroll,
     // and the push-in for close-up
@@ -556,6 +556,7 @@ export class Showroom {
     const px = this.parallax.x * 0.08 * (1 - F), py = this.parallax.y * 0.04 * (1 - F);
     const pos = b.pos.clone().add(new THREE.Vector3(px, py + this.scrollT * 0.55, -this.scrollT * 0.4));
     const tgt = b.target.clone().add(new THREE.Vector3(px * 0.3, this.scrollT * 0.08, 0));
+    this.opt?.camera?.(this, pos, tgt, dt);
     const close = this.mobile || cam.aspect < 0.9
       ? { pos: new THREE.Vector3(0, 0.7, 3.5), target: new THREE.Vector3(0, 0.32, 0), fov: 40 }
       : { pos: new THREE.Vector3(0.3, 0.8, 2.6), target: new THREE.Vector3(0.3, 0.76, 0), fov: 30 };
@@ -597,8 +598,9 @@ export class Showroom {
       const dim = (curve(DIM, s) + it.hoverK * 0.14) * focusDim * (0.15 + 0.85 * smooth(0, 1, L * 1.4 - a * 0.12));
       it.dim.value = dim;
       const glow = curve(GLOW, s) * (0.6 + 0.4 * smooth(0, 1, L * 1.2 - a * 0.1)) * smooth(0, 1, L * 1.6 - a * 0.25) * (1 - 0.6 * F * (a > 0.5));
-      it.ringMat.color.copy(ACCENT).multiplyScalar(3.4 * glow);
-      it.baseMat.color.copy(ACCENT).multiplyScalar(1.3 * glow);
+      const own = this.palette[i];
+      it.ringMat.color.copy(own).multiplyScalar(3.4 * glow);
+      it.baseMat.color.copy(own).multiplyScalar(1.3 * glow);
     });
 
     // lights follow the intro and the close-up
@@ -613,7 +615,7 @@ export class Showroom {
     this.stage.children.forEach((m) => m.material.color.copy(ACCENT).multiplyScalar(m.userData.k * smooth(0.1, 0.9, L) * (1 - 0.5 * F)));
     this.seams.forEach((m) => m.material.color.copy(ACCENT).multiplyScalar(m.userData.base * smooth(0.4, 1, L) * (1 - 0.6 * F)));
     this.trackMat.opacity = 0.5 * smooth(0.2, 1, L) * (1 - 0.8 * F);
-    this.floor.material.uniforms.uPool.value.set('#2a1d10').multiplyScalar(on * (1 - 0.4 * F));
+    this.floor.material.uniforms.uPool.value.copy(ACCENT).multiplyScalar(0.03 * on * (1 - 0.4 * F));
 
     // dust drifting through the cone
     const dp = this.dust.geometry.attributes.position;
@@ -628,6 +630,30 @@ export class Showroom {
 
     this.bloom.strength = LOOK.bloom.strength * (1 - 0.45 * F);
     this.grain.uniforms.uTime.value = t;
+    this.opt?.frame?.(this, dt);
+  }
+
+  // One colour per guitar (data.js). The centre colour cross-fades with the
+  // ring's position, and every shared glow in the room (halo, stage rings,
+  // seams, cone, dust, floor pool, warm rim) takes it.
+  setPalette(hexes) {
+    this.palette = hexes.map((h) => new THREE.Color(h));
+    this.rimWarm = new THREE.Color('#ffcf94');
+    this.rimTint = new THREE.Color();
+  }
+
+  // the same colour for the page, as a CSS hex
+  get accentHex() { return `#${ACCENT.getHexString()}`; }
+
+  applyPalette() {
+    const P = this.palette, u = this.u, i0 = Math.floor(u), f = u - i0;
+    const a = P[((i0 % N) + N) % N], b = P[(((i0 + 1) % N) + N) % N];
+    const k = f * f * (3 - 2 * f);
+    ACCENT.copy(a).lerp(b, k);
+    this.cone.material.uniforms.uColor.value.copy(ACCENT);
+    this.dust.material.color.copy(ACCENT).multiplyScalar(1.6);
+    const lum = Math.max(ACCENT.r, ACCENT.g, ACCENT.b) || 1;
+    this.rimR.color.copy(this.rimWarm).lerp(this.rimTint.copy(ACCENT).multiplyScalar(1 / lum), 0.7);
   }
 
   makeDust() {
