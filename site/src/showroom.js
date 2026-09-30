@@ -1,5 +1,5 @@
-// The showroom: seven pedestals on a curved track, the centre one under a
-// spot, the rest falling away into the dark. One continuous number, `u`,
+// The showroom: seven plinths on a curved track over a black glass floor,
+// the centre one under a spot and a halo, the rest falling away into the dark. One continuous number, `u`,
 // drives the whole ring: guitar i sits at slot s = wrap(i - u), and every
 // visual (position, dimming, ring light, lift) is a function of s. Stepping,
 // dragging and clicking all just move `u`.
@@ -12,10 +12,11 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { Reflector } from 'three/addons/objects/Reflector.js';
 import { buildStandin } from './standins.js';
+import { prepareGuitar } from './guitar-look.js';
 
 const N = 7;
-const ACCENT = new THREE.Color('#e7bd7f');
-const PED_TOP = 0.22;                  // pedestal height, metres
+const ACCENT = new THREE.Color('#e7bd7f');   // the centre guitar's colour, set every frame (applyPalette)
+const PED_TOP = 0.09;                  // plinth height, metres: low, so the glass floor shows round them
 const HOVER = 0.028;                   // guitars float just clear of the top
 
 // ------------------------------------------------------------ tunables ----
@@ -40,6 +41,11 @@ function curve(arr, s) {
   return i >= arr.length - 1 ? arr[arr.length - 1] : arr[i] + (arr[i + 1] - arr[i]) * f;
 }
 const wrap = (s) => ((((s + 3.5) % N) + N) % N) - 3.5;
+// Perceived brightness differs a lot between the seven colours: Scree's blue
+// has about 40% of the luminance of Floe's ice blue. Each glow is scaled
+// towards the same luminance, gently (power 0.55), so none of them flattens.
+const lum = (c) => 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
+const glowGain = (c) => THREE.MathUtils.clamp(Math.pow(0.5 / Math.max(lum(c), 0.05), 0.55), 0.8, 1.7);
 const smooth = (a, b, x) => { const t = Math.min(Math.max((x - a) / (b - a), 0), 1); return t * t * (3 - 2 * t); };
 
 // ---------------------------------------------------------- dim patch ----
@@ -55,12 +61,16 @@ function addDim(material, uniform) {
 }
 
 // ------------------------------------------------------------- floor ----
+// Black glass: a sharp reflection (a four-tap soften only, for the target's
+// pixel edges) and a strong Fresnel, so it only reads as a mirror at a grazing
+// angle. Seen from the resting camera the floor is dark; when the camera drops
+// low for a turn (see `breathe` in update) the room appears in it.
 const FloorShader = {
   name: 'FloorShader',
   uniforms: {
     color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null },
-    uCam: { value: new THREE.Vector3() }, uStrength: { value: 0.55 }, uBlur: { value: 0.0035 },
-    uPool: { value: new THREE.Color('#2a1d10') },
+    uCam: { value: new THREE.Vector3() }, uStrength: { value: 1.25 }, uBlur: { value: 0.0007 },
+    uPool: { value: new THREE.Color('#2a1d10') }, uPoolR: { value: 0.6 }, uFres0: { value: 0.45 },
   },
   vertexShader: /* glsl */`
     uniform mat4 textureMatrix;
@@ -82,29 +92,25 @@ const FloorShader = {
     uniform float uStrength;
     uniform float uBlur;
     uniform vec3 uPool;
+    uniform float uPoolR;
+    uniform float uFres0;
     varying vec4 vUv;
     varying vec3 vWorld;
     #include <logdepthbuf_pars_fragment>
-    float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
     void main() {
       #include <logdepthbuf_fragment>
       vec2 uv = vUv.xy / vUv.w;
-      // polished stone, not a mirror: a 12-tap disc blur of the reflection
-      float r = uBlur * (1.0 + 0.6 * length(vWorld.xz));
-      vec3 refl = vec3(0.0);
-      for (int i = 0; i < 12; i++) {
-        float a = float(i) * 2.399963;
-        float d = sqrt((float(i) + 0.5) / 12.0);
-        refl += texture2D(tDiffuse, uv + vec2(cos(a), sin(a)) * d * r).rgb;
-      }
-      refl /= 12.0;
+      vec3 refl = texture2D(tDiffuse, uv).rgb * 0.52;
+      refl += texture2D(tDiffuse, uv + vec2(uBlur, 0.0)).rgb * 0.12;
+      refl += texture2D(tDiffuse, uv - vec2(uBlur, 0.0)).rgb * 0.12;
+      refl += texture2D(tDiffuse, uv + vec2(0.0, uBlur)).rgb * 0.12;
+      refl += texture2D(tDiffuse, uv - vec2(0.0, uBlur)).rgb * 0.12;
       vec3 V = normalize(uCam - vWorld);
-      float fres = 0.18 + 0.82 * pow(1.0 - clamp(V.y, 0.0, 1.0), 4.0);
-      float fade = smoothstep(11.0, 1.5, length(vWorld.xz - vec2(0.0, -1.5)));
-      float grain = 0.92 + 0.08 * hash(floor(vWorld.xz * 900.0));
+      float fres = uFres0 + (1.0 - uFres0) * pow(1.0 - clamp(V.y, 0.0, 1.0), 3.0);
+      float fade = smoothstep(10.0, 1.2, length(vWorld.xz - vec2(0.0, -1.2)));
       // the pool of light the spot leaves on the floor
-      float pool = exp(-dot(vWorld.xz, vWorld.xz) / 0.9);
-      vec3 col = color + uPool * pool + refl * uStrength * fres * fade * grain;
+      float pool = exp(-dot(vWorld.xz, vWorld.xz) / uPoolR);
+      vec3 col = color + uPool * pool + refl * uStrength * fres * fade;
       gl_FragColor = vec4(col, 1.0);
       #include <tonemapping_fragment>
       #include <colorspace_fragment>
@@ -170,6 +176,10 @@ export class Showroom {
     this.scrollT = 0;
     this.mobile = matchMedia('(max-width: 760px)').matches;
 
+    this.breath = 0;          // 0..1, how far the camera has pulled back for a turn
+    this.lean = 0;            // sideways lean into the turn
+    this.lastU = 0;
+    this.glow = 1;            // glowGain of the centre colour
     this.initRenderer();
     this.initScene();
     this.layout();
@@ -206,30 +216,29 @@ export class Showroom {
     scene.environment = pmrem.fromScene(this.studioEnv(), 0.02).texture;
     scene.environmentIntensity = LOOK.envIntensity;
 
-    // floor: a blurred planar reflection of the whole room
+    // floor: black glass, a planar reflection of the whole room
     const floor = this.floor = new Reflector(new THREE.PlaneGeometry(40, 40), {
       textureWidth: 512, textureHeight: 512, clipBias: 0.002, shader: FloorShader, multisample: 4,
-      color: new THREE.Color('#060504'),
+      color: new THREE.Color('#050506'),
     });
     floor.rotation.x = -Math.PI / 2;
     scene.add(floor);
 
     this.buildRoom();
-    this.buildTrack();
 
     // lights: one key spot over the stage, two rims behind it, a whisper of top light
     const key = this.key = new THREE.SpotLight('#fff1dc', 0, 9, 0.21, 0.7, 2);
     key.position.set(0.55, 3.7, 2.1);
-    key.target.position.set(0, 0.72, 0);
+    key.target.position.set(0, 0.6, 0);
     key.castShadow = true;
     key.shadow.mapSize.set(1024, 1024);
     key.shadow.camera.near = 1.5; key.shadow.camera.far = 6;
     key.shadow.bias = -0.0003; key.shadow.normalBias = 0.015;
     scene.add(key, key.target);
     const rimL = this.rimL = new THREE.SpotLight('#cfdcff', 0, 8, 0.32, 0.9, 2);
-    rimL.position.set(-1.5, 2.3, -2.0); rimL.target.position.set(0, 0.7, 0);
+    rimL.position.set(-1.5, 2.3, -2.0); rimL.target.position.set(0, 0.58, 0);
     const rimR = this.rimR = new THREE.SpotLight('#ffcf94', 0, 8, 0.32, 0.9, 2);
-    rimR.position.set(1.7, 1.5, -1.8); rimR.target.position.set(0, 0.6, 0);
+    rimR.position.set(1.7, 1.5, -1.8); rimR.target.position.set(0, 0.48, 0);
     scene.add(rimL, rimL.target, rimR, rimR.target);
     this.top = new THREE.DirectionalLight('#fff6ea', 0);
     this.top.position.set(0.3, 5, 1.4);
@@ -280,22 +289,9 @@ export class Showroom {
       const seam = new THREE.Mesh(new THREE.PlaneGeometry(0.018, 5.2), seamMat);
       seam.position.set(Math.sin(a) * 8.45, 2.6, 0.4 + Math.cos(a) * 8.45);
       seam.lookAt(0, 2.6, 0.4);
-      seam.userData.base = 0.3 * (1 - Math.abs(i) / 9);
       scene.add(seam);
       (this.seams ||= []).push(seam);
     }
-
-    // the stage: concentric rings on the floor around the centre pedestal
-    const ringMat = (k, o) => new THREE.MeshBasicMaterial({ color: ACCENT.clone().multiplyScalar(k), transparent: true, opacity: o,
-      blending: THREE.AdditiveBlending, depthWrite: false });
-    this.stage = new THREE.Group();
-    for (const [r0, r1, k, o] of [[0.6, 0.607, 2.2, 1], [0.64, 0.643, 1.2, 0.8], [0.98, 0.984, 0.9, 0.7], [1.42, 1.424, 0.6, 0.55], [2.3, 2.303, 0.4, 0.4]]) {
-      const m = new THREE.Mesh(new THREE.RingGeometry(r0, r1, 256), ringMat(k, o));
-      m.rotation.x = -Math.PI / 2; m.position.y = 0.002;
-      m.userData.k = k;
-      this.stage.add(m);
-    }
-    scene.add(this.stage);
 
     // the halo: an open arch of light behind the centre guitar
     const arc = Math.PI * 1.32;
@@ -306,7 +302,8 @@ export class Showroom {
       t.userData.k = k;
       this.halo.add(t);
     }
-    this.halo.position.set(0, PED_TOP + 0.56, -0.5);
+    // round the guitar rather than above it (scaled per screen shape in layout)
+    this.halo.position.set(0, 0.5, -0.5);
     scene.add(this.halo);
   }
 
@@ -323,58 +320,36 @@ export class Showroom {
     return out.set(Math.sign(s) * cr(0), 0, cr(1));
   }
 
-  buildTrack() {
-    // one thin line of light along the track the pedestals ride on
-    this.trackMat = new THREE.MeshBasicMaterial({ color: ACCENT.clone().multiplyScalar(0.5), transparent: true, opacity: 0.5,
-      blending: THREE.AdditiveBlending, depthWrite: false });
-  }
-
-  rebuildTrack() {
-    if (this.track) { this.scene.remove(this.track); this.track.geometry.dispose(); }
-    const pts = [];
-    for (let s = -4.4; s <= 4.4; s += 0.05) pts.push(this.pathPoint(s).setY(0.003));
-    this.track = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 400, 0.0028, 4), this.trackMat);
-    this.scene.add(this.track);
-  }
-
   // ----------------------------------------------------------- guitars ----
   async load(lineup, glbUrl) {
     const clay = new THREE.MeshPhysicalMaterial({ color: '#6c665f', roughness: 0.58, clearcoat: 0.25, clearcoatRoughness: 0.4 });
     const graphite = new THREE.MeshStandardMaterial({ color: '#2d2a27', roughness: 0.42, metalness: 0.4 });
     const pedGeo = new THREE.LatheGeometry([
-      [0, 0], [0.4, 0], [0.4, 0.016], [0.382, 0.021], [0.33, 0.021], [0.325, 0.03], [0.325, 0.205], [0.321, 0.214], [0.31, PED_TOP], [0, PED_TOP],
+      [0, 0], [0.4, 0], [0.4, 0.012], [0.385, 0.016], [0.33, 0.016], [0.325, 0.022], [0.325, 0.078], [0.321, 0.085], [0.31, PED_TOP], [0, PED_TOP],
     ].map(([x, y]) => new THREE.Vector2(x, y)), 96);
     const ringGeo = new THREE.TorusGeometry(0.323, 0.0034, 8, 180);
-    const baseRingGeo = new THREE.TorusGeometry(0.402, 0.0024, 6, 180);
 
+    this.setPalette(lineup.map((g) => g.colour));
     const gltf = await new GLTFLoader().loadAsync(glbUrl, (e) => { if (e.total) this.onProgress(e.loaded / e.total); });
-    const nimbus = gltf.scene;
-    const maxAniso = this.renderer.capabilities.getMaxAnisotropy();
-    nimbus.traverse((o) => {
-      if (!o.isMesh) return;
-      o.castShadow = true; o.receiveShadow = true;
-      const m = o.material;
-      if (m.map) m.map.anisotropy = maxAniso;
-      m.envMapIntensity = 1.0;
-    });
+    const floe = gltf.scene;
+    prepareGuitar(floe, this.renderer);
 
     lineup.forEach((info, i) => {
       const dim = { value: 1 };
       const group = new THREE.Group();
       const pedestal = new THREE.Group();
-      const pedMat = new THREE.MeshPhysicalMaterial({ color: '#0c0b0a', roughness: 0.32, metalness: 0.55, clearcoat: 0.7, clearcoatRoughness: 0.15 });
+      // black glass, like the floor: a dark polished body under a full clear coat
+      const pedMat = new THREE.MeshPhysicalMaterial({ color: '#060607', roughness: 0.3, metalness: 0.2, clearcoat: 1, clearcoatRoughness: 0.06 });
       addDim(pedMat, dim);
       const ped = new THREE.Mesh(pedGeo, pedMat);
       ped.receiveShadow = true;
       const ringMat = new THREE.MeshBasicMaterial({ color: ACCENT.clone().multiplyScalar(3.4) });
-      const baseMat = new THREE.MeshBasicMaterial({ color: ACCENT.clone().multiplyScalar(1.3) });
       const ring = new THREE.Mesh(ringGeo, ringMat); ring.rotation.x = Math.PI / 2; ring.position.y = PED_TOP - 0.006;
-      const base = new THREE.Mesh(baseRingGeo, baseMat); base.rotation.x = Math.PI / 2; base.position.y = 0.018;
-      pedestal.add(ped, ring, base);
+      pedestal.add(ped, ring);
 
       let guitar;
       if (info.real) {
-        guitar = nimbus;
+        guitar = floe;
         guitar.traverse((o) => { if (o.isMesh) addDim(o.material, dim); });
       } else {
         const c = clay.clone(), gr = graphite.clone();
@@ -392,7 +367,7 @@ export class Showroom {
       group.add(hit);
 
       this.scene.add(group);
-      this.items.push({ info, group, pedestal, spinner, guitar, dim, ringMat, baseMat, hit, spin: 0, spinV: 0, hoverK: 0 });
+      this.items.push({ info, group, pedestal, spinner, guitar, dim, ringMat, hit, spin: 0, spinV: 0, hoverK: 0 });
     });
     this.hits = this.items.map((it) => it.hit);
     this.update(0);
@@ -407,25 +382,30 @@ export class Showroom {
     const portrait = aspect < 0.9;
     // wide screens: the whole ring; tall screens: the centre plus neighbours peeking in
     this.path = portrait
-      ? [[0, 0], [0.72, -0.62], [1.35, -1.7], [1.95, -3.0], [2.5, -4.5]]
-      : [[0, 0], [0.9, -0.44], [1.76, -1.24], [2.62, -2.46], [3.46, -4.0]];
+      ? [[0, 0], [0.82, -0.8], [1.5, -2.0], [2.1, -3.3], [2.6, -4.7]]
+      : [[0, 0], [1.08, -0.62], [2.0, -1.6], [2.8, -2.9], [3.5, -4.3]];
+    // camBase: close on the centre guitar, at rest. camWide: where a turn pulls
+    // back to, low over the glass so the floor turns into a mirror
     this.camBase = portrait
-      ? { pos: new THREE.Vector3(0, 1.3, 5.3), target: new THREE.Vector3(0, 0.72, -0.2), fov: 29 }
-      : { pos: new THREE.Vector3(0, 1.28, 5.6), target: new THREE.Vector3(0, 0.74, -0.6), fov: 22 };
+      ? { pos: new THREE.Vector3(0, 0.8, 3.35), target: new THREE.Vector3(0, 0.6, 0), fov: 30 }
+      : { pos: new THREE.Vector3(0, 0.78, 3.0), target: new THREE.Vector3(0, 0.58, -0.2), fov: 22 };
+    this.camWide = portrait
+      ? { pos: new THREE.Vector3(0, 0.42, 5.9), target: new THREE.Vector3(0, 0.5, -0.6) }
+      : { pos: new THREE.Vector3(0, 0.4, 5.6), target: new THREE.Vector3(0, 0.48, -0.9) };
+    this.halo.scale.setScalar(portrait ? 0.74 : 0.94);
     this.renderer.setSize(w, h, false);
     this.composer.setSize(w, h);
     this.bloom.resolution.set(w, h);
     const pr = this.renderer.getPixelRatio();
-    this.floor.getRenderTarget().setSize(Math.round(w * pr * 0.5), Math.round(h * pr * 0.5));
-    if (this.items.length) this.rebuildTrack();
-    else this.rebuildTrackPending = true;
+    // the glass needs a sharp reflection, so its target runs near full size
+    this.floor.getRenderTarget().setSize(Math.round(w * pr * 0.9), Math.round(h * pr * 0.9));
   }
 
   /** Where the front of the stage lands on screen, so the DOM can sit under it. */
   stageScreenY() {
     this.camera.updateMatrixWorld();
-    // centre of the centre pedestal's front face
-    const v = new THREE.Vector3(0, 0.155, 0.325).project(this.camera);
+    // centre of the centre plinth's front face
+    const v = new THREE.Vector3(0, PED_TOP * 0.5, 0.325).project(this.camera);
     return (1 - (v.y * 0.5 + 0.5)) * (this.canvas.clientHeight || innerHeight);
   }
 
@@ -549,16 +529,18 @@ export class Showroom {
     const t = this.time;
     const L = this.lights, F = this.focus;
     const cam = this.camera;
+    if (this.palette) this.applyPalette();
 
-    // camera: base framing, a little pointer parallax, a crane on scroll,
-    // and the push-in for close-up
+    // camera: close framing, a little pointer parallax, a crane on scroll,
+    // the breath on a turn, and the push-in for close-up
     const b = this.camBase;
     const px = this.parallax.x * 0.08 * (1 - F), py = this.parallax.y * 0.04 * (1 - F);
     const pos = b.pos.clone().add(new THREE.Vector3(px, py + this.scrollT * 0.55, -this.scrollT * 0.4));
     const tgt = b.target.clone().add(new THREE.Vector3(px * 0.3, this.scrollT * 0.08, 0));
+    this.breathe(pos, tgt, dt);
     const close = this.mobile || cam.aspect < 0.9
-      ? { pos: new THREE.Vector3(0, 0.7, 3.5), target: new THREE.Vector3(0, 0.32, 0), fov: 40 }
-      : { pos: new THREE.Vector3(0.3, 0.8, 2.6), target: new THREE.Vector3(0.3, 0.76, 0), fov: 30 };
+      ? { pos: new THREE.Vector3(0, 0.57, 3.5), target: new THREE.Vector3(0, 0.19, 0), fov: 40 }
+      : { pos: new THREE.Vector3(0.3, 0.67, 2.6), target: new THREE.Vector3(0.3, 0.63, 0), fov: 30 };
     close.pos.z += this.closeDist;
     cam.position.lerpVectors(pos, close.pos, F);
     const look = tgt.lerp(close.target, F);
@@ -597,8 +579,10 @@ export class Showroom {
       const dim = (curve(DIM, s) + it.hoverK * 0.14) * focusDim * (0.15 + 0.85 * smooth(0, 1, L * 1.4 - a * 0.12));
       it.dim.value = dim;
       const glow = curve(GLOW, s) * (0.6 + 0.4 * smooth(0, 1, L * 1.2 - a * 0.1)) * smooth(0, 1, L * 1.6 - a * 0.25) * (1 - 0.6 * F * (a > 0.5));
-      it.ringMat.color.copy(ACCENT).multiplyScalar(3.4 * glow);
-      it.baseMat.color.copy(ACCENT).multiplyScalar(1.3 * glow);
+      // the plinth ring stays soft under the guitar in front (the halo is its
+      // light) and comes up to full as the guitar moves to the side
+      const own = this.palette[i];
+      it.ringMat.color.copy(own).multiplyScalar(3.4 * glow * this.gains[i] * (0.32 + 0.68 * smooth(0, 1, a)));
     });
 
     // lights follow the intro and the close-up
@@ -608,12 +592,12 @@ export class Showroom {
     this.rimR.intensity = LOOK.rim * 0.8 * smooth(0.25, 1, L) * (1 + 0.6 * F);
     this.top.intensity = 0.35 * on;
     this.scene.environmentIntensity = LOOK.envIntensity * (0.3 + 0.7 * on);
-    this.cone.material.uniforms.uAlpha.value = 0.05 * smooth(0.1, 1, L) * (1 - 0.7 * F);
-    this.halo.children.forEach((m) => m.material.color.copy(ACCENT).multiplyScalar(m.userData.k * smooth(0.3, 1, L) * (1 - 0.75 * F)));
-    this.stage.children.forEach((m) => m.material.color.copy(ACCENT).multiplyScalar(m.userData.k * smooth(0.1, 0.9, L) * (1 - 0.5 * F)));
-    this.seams.forEach((m) => m.material.color.copy(ACCENT).multiplyScalar(m.userData.base * smooth(0.4, 1, L) * (1 - 0.6 * F)));
-    this.trackMat.opacity = 0.5 * smooth(0.2, 1, L) * (1 - 0.8 * F);
-    this.floor.material.uniforms.uPool.value.set('#2a1d10').multiplyScalar(on * (1 - 0.4 * F));
+    const G = this.glow;
+    this.cone.material.uniforms.uAlpha.value = 0.05 * G * smooth(0.1, 1, L) * (1 - 0.7 * F);
+    this.halo.children.forEach((m) => m.material.color.copy(ACCENT).multiplyScalar(G * m.userData.k * smooth(0.3, 1, L) * (1 - 0.75 * F)));
+    // the seams share one material, at the strength they have always had
+    this.seams[0].material.color.copy(ACCENT).multiplyScalar(G * 0.067 * smooth(0.4, 1, L) * (1 - 0.6 * F));
+    this.floor.material.uniforms.uPool.value.copy(ACCENT).multiplyScalar(G * 0.03 * on * (1 - 0.4 * F));
 
     // dust drifting through the cone
     const dp = this.dust.geometry.attributes.position;
@@ -628,6 +612,55 @@ export class Showroom {
 
     this.bloom.strength = LOOK.bloom.strength * (1 - 0.45 * F);
     this.grain.uniforms.uTime.value = t;
+  }
+
+  // Close at rest; when the ring turns the camera pulls back to camWide and
+  // leans into the turn, so for a moment the whole ring stands on the glass,
+  // then it pushes in on the guitar that arrives. It follows how fast the ring
+  // is moving, so steps, drags and flings all breathe the same way.
+  breathe(pos, tgt, dt) {
+    const v = dt ? (this.u - this.lastU) / dt : 0;     // guitars per second
+    this.lastU = this.u;
+    if (this.reduced || !dt) return;
+    const want = Math.min(Math.abs(v) / 0.9, 1);
+    // out quickly, in slowly: the push-in lands after the guitar does
+    this.breath += (want - this.breath) * Math.min(dt * (want > this.breath ? 5 : 2.2), 1);
+    this.lean += (THREE.MathUtils.clamp(v * 0.35, -0.5, 0.5) - this.lean) * Math.min(dt * 3, 1);
+    const k = this.breath * this.breath * (3 - 2 * this.breath);
+    const B = this.camBase, W = this.camWide;
+    pos.x += (W.pos.x - B.pos.x) * k + this.lean * 0.5;
+    pos.y += (W.pos.y - B.pos.y) * k;
+    pos.z += (W.pos.z - B.pos.z) * k;
+    tgt.x += this.lean * 0.25;
+    tgt.y += (W.target.y - B.target.y) * k;
+    tgt.z += (W.target.z - B.target.z) * k;
+  }
+
+  // One colour per guitar (data.js). The centre colour cross-fades with the
+  // ring's position, and every shared glow in the room (halo, seams, cone,
+  // dust, floor pool, warm rim) takes it.
+  setPalette(hexes) {
+    this.palette = hexes.map((h) => new THREE.Color(h));
+    this.gains = this.palette.map(glowGain);
+    this.rimWarm = new THREE.Color('#ffcf94');
+    this.rimTint = new THREE.Color();
+  }
+
+  // the same colour for the page, as a CSS hex
+  get accentHex() { return `#${ACCENT.getHexString()}`; }
+
+  applyPalette() {
+    const P = this.palette, u = this.u, i0 = Math.floor(u), f = u - i0;
+    const a = P[((i0 % N) + N) % N], b = P[(((i0 + 1) % N) + N) % N];
+    const k = f * f * (3 - 2 * f);
+    // round the colour wheel rather than straight through RGB, which turned
+    // yellow-to-blue grey halfway
+    ACCENT.copy(a).lerpHSL(b, k);
+    this.glow = glowGain(ACCENT);
+    this.cone.material.uniforms.uColor.value.copy(ACCENT);
+    this.dust.material.color.copy(ACCENT).multiplyScalar(1.6 * this.glow);
+    const peak = Math.max(ACCENT.r, ACCENT.g, ACCENT.b) || 1;
+    this.rimR.color.copy(this.rimWarm).lerp(this.rimTint.copy(ACCENT).multiplyScalar(1 / peak), 0.7);
   }
 
   makeDust() {
@@ -651,7 +684,6 @@ export class Showroom {
     const now = performance.now();
     const dt = Math.min((now - this.last) / 1000, 0.05);
     this.last = now; this.time += dt;
-    if (this.rebuildTrackPending && this.path) { this.rebuildTrack(); this.rebuildTrackPending = false; }
     this.update(dt);
     this.composer.render(dt);
   }

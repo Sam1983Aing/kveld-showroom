@@ -3,21 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>HALDEN Showroom</title>
-  <meta name="description" content="Seven guitars rebuilt from measured drawings. A concept showroom for HALDEN.">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%230b0a09%22/%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%229%22 fill=%22none%22 stroke=%22%23d8ad6e%22 stroke-width=%221.5%22/%3E%3C/svg%3E">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+  <title>KVELD Showroom</title>
+  <meta name="description" content="Seven guitars rebuilt from measured drawings. A concept showroom for KVELD.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%230b0a09%22/%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%229%22 fill=%22none%22 stroke=%22%239fe3f0%22 stroke-width=%221.5%22/%3E%3C/svg%3E">
+  <link rel="preload" href="vendor/fonts/panchang-500.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="styles.css">
 
   <!--
     CREATIVE DIRECTION (the contract this build obeys)
     Build mode   Full: three.js showroom hero with the real Blender model
-    Content      Invented. HALDEN is a working name; model names from Sam's reference
+    Content      Invented. KVELD (Norwegian for evening), models named after
+                 Nordic landscape: Floe, Sedge, Scree, Moss, Fjord, Rowan, Heath
     Mood         nocturnal, quiet, weighted, crafted
-    Palette      ink #0B0A09, bone #ECE6DA, one accent: brass #D8AD6E
-    Type         Bodoni Moda (display, matches the headstock decal) + Jost (labels)
+    Palette      ink #0B0A09, bone #ECE6DA, and one colour per guitar (data.js)
+                 that lights the room and the page accent while it is in front
+    Type         Panchang (display, also the headstock logo) + Martian Mono
+                 (labels). Both local in vendor/fonts, no network needed
     Motion       expo family only: expo.out for reveals, expo.inOut for the ring.
                  Lenis duration 1.4 (heavy, drifting)
   -->
@@ -34,13 +35,13 @@
 <body>
 
   <div class="loader" aria-hidden="true">
-    <p class="loader__mark">HALDEN</p>
+    <p class="loader__mark">KVELD</p>
     <div class="loader__bar"><span></span></div>
     <p class="loader__count"><span data-count>000</span></p>
   </div>
 
   <header class="site-head">
-    <a class="brand" href="#room" aria-label="HALDEN, back to the room">HALDEN</a>
+    <a class="brand" href="#room" aria-label="KVELD, back to the room">KVELD</a>
     <nav class="site-nav" aria-label="Main">
       <a href="#guitars">Guitars</a>
       <a href="#drawings">Drawings</a>
@@ -63,7 +64,7 @@
 
         <div class="room__title" aria-live="polite">
           <p class="room__count"><span data-no>01</span><i>/</i>07</p>
-          <h2 class="room__name"><span data-name>Nimbus</span></h2>
+          <h2 class="room__name"><span data-name>Floe</span></h2>
           <p class="room__line" data-line>Single-cut · Swamp ash · 25.5 in scale</p>
         </div>
 
@@ -92,7 +93,7 @@
           <span>Back to the room</span>
         </button>
         <div class="closeup__panel">
-          <p class="eyebrow">01 · Nimbus</p>
+          <p class="eyebrow">01 · Floe</p>
           <h3 class="closeup__h">A single-cut, <em>measured</em> before it was made.</h3>
           <dl class="closeup__specs" data-specs></dl>
           <p class="closeup__hint">Drag to turn it. Scroll to come closer.</p>
@@ -103,13 +104,13 @@
     <!-- 01 · THE DRAWING ------------------------------------------------- -->
     <section class="drawing" id="drawings" data-theme="light">
       <div class="drawing__head">
-        <p class="eyebrow" data-reveal>01 · Nimbus · From the drawing</p>
+        <p class="eyebrow" data-reveal>01 · Floe · From the drawing</p>
         <h2 class="drawing__h2" data-split>The numbers<br>came <em>first</em>.</h2>
-        <p class="drawing__text" data-reveal>Nimbus follows a 1950s single-cut drawn at full scale. We kept every number on that sheet, from the 25.5 inch scale to the 7.25 inch fretboard radius, and redrew only what carries our name: the headstock, the markers and the logo. The drawing below is plotted from the same figures that built the model above.</p>
+        <p class="drawing__text" data-reveal>Floe follows a 1950s single-cut drawn at full scale. We kept every number on that sheet, from the 25.5 inch scale to the 7.25 inch fretboard radius, and redrew only what carries our name: the headstock, the markers and the logo. The drawing below is plotted from the same figures that built the model above.</p>
       </div>
 
       <figure class="drawing__plate" data-plate>
-        <svg class="blueprint" data-blueprint role="img" aria-label="Plan view of the Nimbus with its main dimensions"></svg>
+        <svg class="blueprint" data-blueprint role="img" aria-label="Plan view of the Floe with its main dimensions"></svg>
         <figcaption>Plan view · 1:1 source, shown reduced · dimensions in inches</figcaption>
       </figure>
 
@@ -131,9 +132,9 @@
       <h2 class="visit__h2" data-split>Come and hear<br>them <em>played</em>.</h2>
       <a class="visit__ghost" href="#room" data-reveal>Book a visit</a>
       <div class="visit__meta" data-reveal>
-        <p>HALDEN Room 01<br>59.1244° N, 11.3875° E</p>
+        <p>KVELD Room 01<br>59.1244° N, 11.3875° E</p>
         <p>Open by appointment<br>Thursday to Saturday</p>
-        <p class="visit__note">HALDEN is a working name for a concept study. Nimbus is modelled from published measured drawings of a 1950s single-cut guitar. Its headstock, markers and logo are original. The other six are workshop stand-ins until their drawings are done.</p>
+        <p class="visit__note">KVELD is a fictional maker, made for a concept study. Floe is modelled from published measured drawings of a 1950s single-cut guitar. Its headstock, markers and logo are original. The other six are workshop stand-ins until their drawings are done.</p>
       </div>
     </footer>
   </main>

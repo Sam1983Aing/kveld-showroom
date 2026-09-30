@@ -1,5 +1,5 @@
 /* ==========================================================================
-   HALDEN showroom · boot
+   KVELD showroom · boot
    One loop: GSAP's ticker drives Lenis, ScrollTrigger and the WebGL frame.
    One easing family: expo.out for things arriving, expo.in for things
    leaving, expo.inOut for the ring (see showroom.js).
@@ -12,6 +12,7 @@ const { gsap, ScrollTrigger, SplitText, Lenis } = window;
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
 const EASE = 'expo.out';
+const FACES = ['400 32px Panchang', '500 32px Panchang', '300 16px "Martian Mono"', '400 16px "Martian Mono"'];
 const REVEAL = 1.3;
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $ = (s, r = document) => r.querySelector(s);
@@ -52,14 +53,18 @@ try {
 
 LINEUP.forEach((g, i) => {
   const li = document.createElement('li');
-  li.innerHTML = `<button type="button" aria-label="${g.name}"></button>`;
+  li.innerHTML = `<button type="button" aria-label="${g.name}" style="--dot: ${g.colour}"></button>`;
   li.firstChild.addEventListener('click', () => room?.goTo(i));
   ui.dots.appendChild(li);
 });
 
+// The button sits on the centre pedestal's front face, but never lower than
+// a clear gap above the arrows: on short windows the pedestal lands on them.
 function setStageY() {
   if (!room) return;
-  document.documentElement.style.setProperty('--stage-y', `${Math.round(room.stageScreenY())}px`);
+  const view = ui.view.getBoundingClientRect(), controls = $('.room__controls').getBoundingClientRect();
+  const floor = controls.top - roomEl.getBoundingClientRect().top - 22 - view.height / 2;
+  document.documentElement.style.setProperty('--stage-y', `${Math.round(Math.min(room.stageScreenY(), floor))}px`);
 }
 
 let firstChange = true;
@@ -145,16 +150,24 @@ function introReveal() {
 }
 
 async function boot() {
+  // SplitText measures lines, so the faces have to be in first
+  await Promise.all(FACES.map((f) => document.fonts.load(f))).catch(() => {});
   await document.fonts.ready;
-  const dataP = fetch('assets/data/nimbus.json').then((r) => r.json());
+  const dataP = fetch('assets/data/floe.json').then((r) => r.json());
   if (room) {
     try {
-      await room.load(LINEUP, 'assets/models/nimbus.glb');
+      await room.load(LINEUP, 'assets/models/floe.glb');
     } catch (err) {
       console.error(err);
     }
     setStageY();
-    gsap.ticker.add(() => room.render());
+    // the page accent follows the guitar in the centre, same colour as the room's light
+    let accent = '';
+    gsap.ticker.add(() => {
+      room.render();
+      const hex = room.accentHex;
+      if (hex !== accent) { accent = hex; document.documentElement.style.setProperty('--accent', hex); }
+    });
     new IntersectionObserver(([e]) => { room.running = e.isIntersecting; }).observe(roomEl);
   }
   onProgress(1);
@@ -208,7 +221,7 @@ function buildIndex() {
   LINEUP.forEach((g, i) => {
     const li = document.createElement('li');
     li.setAttribute('data-reveal', '');
-    li.innerHTML = `<button class="index__row" type="button">
+    li.innerHTML = `<button class="index__row" type="button" style="--own: ${g.colour}">
         <span class="index__no">${g.no}</span>
         <span class="index__name">${g.name}</span>
         <span class="index__meta">${g.pattern}</span>
