@@ -10,14 +10,20 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
 import { Reflector } from 'three/addons/objects/Reflector.js';
 import { buildStandin } from './standins.js';
 import { prepareGuitar } from './guitar-look.js';
+import { Walk, LIFT, blendShots } from './sequence.js';
 
 const N = 7;
 const ACCENT = new THREE.Color('#e7bd7f');   // the centre guitar's colour, set every frame (applyPalette)
 const PED_TOP = 0.09;                  // plinth height, metres: low, so the glass floor shows round them
 const HOVER = 0.028;                   // guitars float just clear of the top
+const FILL = 0.9;                      // how much of the frame a walk stop's subject takes
+const _q1 = new THREE.Quaternion(), _q2 = new THREE.Quaternion();
+const _v1 = new THREE.Vector3(), _v2 = new THREE.Vector3(), _v3 = new THREE.Vector3();
+const _v4 = new THREE.Vector3(), _v5 = new THREE.Vector3(), _v6 = new THREE.Vector3();
 
 // ------------------------------------------------------------ tunables ----
 export const LOOK = {
@@ -29,6 +35,7 @@ export const LOOK = {
   spinSpeed: 0.16,        // rad/s, the centre guitar's slow turn
   stepDuration: 1.7,      // seconds per ring step
   grain: 0.035,
+  dof: 0.0075,            // walk depth of field: blur per metre off focus, times 1/focus²
 };
 
 // Slot keyframes: |s| → dimming and ring-light level. Past 3.5 a guitar is
@@ -52,12 +59,16 @@ const smooth = (a, b, x) => { const t = Math.min(Math.max((x - a) / (b - a), 0),
 // Every material in the ring gets a per-guitar uDim multiplier on its final
 // colour, so a guitar can fade into the dark without transparency sorting.
 function addDim(material, uniform) {
-  material.onBeforeCompile = (shader) => {
+  if (material.userData.dim) return;        // shared by several meshes: patch once
+  material.userData.dim = true;
+  const before = material.onBeforeCompile, key = material.customProgramCacheKey();
+  material.onBeforeCompile = (shader, r) => {
+    before.call(material, shader, r);      // keep any patch already on it (the string winding)
     shader.uniforms.uDim = uniform;
     shader.fragmentShader = 'uniform float uDim;\n' + shader.fragmentShader.replace(
       '#include <dithering_fragment>', 'gl_FragColor.rgb *= uDim;\n#include <dithering_fragment>');
   };
-  material.customProgramCacheKey = () => 'dim';
+  material.customProgramCacheKey = () => key + 'dim';
 }
 
 // ------------------------------------------------------------- floor ----
@@ -173,13 +184,20 @@ export class Showroom {
     this.closeYaw = 0;
     this.closeDist = 0;
     this.parallax = new THREE.Vector2();
-    this.scrollT = 0;
     this.mobile = matchMedia('(max-width: 760px)').matches;
 
     this.breath = 0;          // 0..1, how far the camera has pulled back for a turn
     this.lean = 0;            // sideways lean into the turn
     this.lastU = 0;
     this.glow = 1;            // glowGain of the centre colour
+
+    // the walk (scroll sequence): `walkTo` is where the scroll is, in screen
+    // heights into the pinned room; `walkAt` follows it with a little weight
+    this.walk = new Walk();
+    this.walkTo = 0;
+    this.walkAt = 0;
+    this.walkState = null;    // last sample, read by the page for the copy
+    this.shot = {};
     this.initRenderer();
     this.initScene();
     this.layout();
@@ -203,6 +221,18 @@ export class Showroom {
     const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: this.mobile ? 2 : 4 });
     this.composer = new EffectComposer(r, rt);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
+    // depth of field for the walk's close shots, off the rest of the time
+    this.dof = new BokehPass(this.scene, this.camera, { focus: 1, aperture: 0, maxblur: 0.008 });
+    this.dof.enabled = false;
+    const dofRender = this.dof.render.bind(this.dof);
+    this.dof.render = (...a) => {
+      // the depth pass only needs the guitars: the mirror would re-render the room
+      const hide = [this.floor, this.dust, this.cone, this.halo];
+      hide.forEach((o) => { o.userData.v = o.visible; o.visible = false; });
+      dofRender(...a);
+      hide.forEach((o) => { o.visible = o.userData.v; });
+    };
+    this.composer.addPass(this.dof);
     this.bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), LOOK.bloom.strength, LOOK.bloom.radius, LOOK.bloom.threshold);
     this.composer.addPass(this.bloom);
     this.composer.addPass(new OutputPass());
@@ -230,6 +260,8 @@ export class Showroom {
     const key = this.key = new THREE.SpotLight('#fff1dc', 0, 9, 0.21, 0.7, 2);
     key.position.set(0.55, 3.7, 2.1);
     key.target.position.set(0, 0.6, 0);
+    this.keyRest = key.target.position.clone();
+    this.keyAim = key.target.position.clone();
     key.castShadow = true;
     key.shadow.mapSize.set(1024, 1024);
     key.shadow.camera.near = 1.5; key.shadow.camera.far = 6;
@@ -351,6 +383,11 @@ export class Showroom {
       if (info.real) {
         guitar = floe;
         guitar.traverse((o) => { if (o.isMesh) addDim(o.material, dim); });
+        // mirror chrome: up close the key light's reflection in a knob blooms
+        // into a white blob, so the walk takes the polish down a touch
+        this.chrome = [];
+        guitar.traverse((o) => { if (o.isMesh && /^(Chrome|Nickel)$/.test(o.material.name) && !this.chrome.includes(o.material)) this.chrome.push(o.material); });
+        this.chrome.forEach((m) => { m.userData.rough = m.roughness; });
       } else {
         const c = clay.clone(), gr = graphite.clone();
         addDim(c, dim); addDim(gr, dim);
@@ -379,7 +416,7 @@ export class Showroom {
     const w = this.canvas.clientWidth || innerWidth, h = this.canvas.clientHeight || innerHeight;
     const aspect = w / h;
     this.camera.aspect = aspect;
-    const portrait = aspect < 0.9;
+    const portrait = this.portrait = aspect < 0.9;
     // wide screens: the whole ring; tall screens: the centre plus neighbours peeking in
     this.path = portrait
       ? [[0, 0], [0.82, -0.8], [1.5, -2.0], [2.1, -3.3], [2.6, -4.7]]
@@ -413,6 +450,7 @@ export class Showroom {
   bind() {
     const c = this.canvas;
     c.addEventListener('pointerdown', (e) => {
+      if (this.walkAt > 0.02) return;      // the ring stays put while the walk runs
       this.drag = { x: e.clientX, u0: this.u, t: performance.now(), lastX: e.clientX, lastT: performance.now(), v: 0, moved: false, yaw0: this.closeYaw };
       c.setPointerCapture(e.pointerId);
       this.tween?.kill();
@@ -531,26 +569,25 @@ export class Showroom {
     const cam = this.camera;
     if (this.palette) this.applyPalette();
 
-    // camera: close framing, a little pointer parallax, a crane on scroll,
-    // the breath on a turn, and the push-in for close-up
+    // the walk: the scroll position with a little weight on it, sampled for
+    // the guitar in the centre (sequence.js)
+    this.walkAt = this.reduced ? this.walkTo : this.walkAt + (this.walkTo - this.walkAt) * Math.min(dt * 4.5, 1);
+    if (Math.abs(this.walkTo - this.walkAt) < 1e-4) this.walkAt = this.walkTo;
+    const front = this.items[this.index];
+    const plan = front && this.walkAt > 1e-4 ? this.walk.plan(front, this.portrait) : null;
+    const W = this.walkState = plan ? this.walk.sample(plan, this.walkAt) : null;
+    const Lw = W ? W.lift : 0;
+
+    // camera at rest: close framing, a little pointer parallax, and the
+    // breath on a turn
     const b = this.camBase;
-    const px = this.parallax.x * 0.08 * (1 - F), py = this.parallax.y * 0.04 * (1 - F);
-    const pos = b.pos.clone().add(new THREE.Vector3(px, py + this.scrollT * 0.55, -this.scrollT * 0.4));
-    const tgt = b.target.clone().add(new THREE.Vector3(px * 0.3, this.scrollT * 0.08, 0));
+    const px = this.parallax.x * 0.08 * (1 - F) * (1 - Lw), py = this.parallax.y * 0.04 * (1 - F) * (1 - Lw);
+    const pos = b.pos.clone().add(new THREE.Vector3(px, py, 0));
+    const tgt = b.target.clone().add(new THREE.Vector3(px * 0.3, 0, 0));
     this.breathe(pos, tgt, dt);
-    const close = this.mobile || cam.aspect < 0.9
-      ? { pos: new THREE.Vector3(0, 0.57, 3.5), target: new THREE.Vector3(0, 0.19, 0), fov: 40 }
-      : { pos: new THREE.Vector3(0.3, 0.67, 2.6), target: new THREE.Vector3(0.3, 0.63, 0), fov: 30 };
-    close.pos.z += this.closeDist;
-    cam.position.lerpVectors(pos, close.pos, F);
-    const look = tgt.lerp(close.target, F);
-    cam.fov = b.fov + (close.fov - b.fov) * F;
-    cam.updateProjectionMatrix();
-    cam.lookAt(look);
-    this.floor.material.uniforms.uCam.value.copy(cam.position);
 
     // hover highlight
-    if (!this.drag && F < 0.5 && Math.abs(this.pointer.x) < 1.5) {
+    if (!this.drag && F < 0.5 && !W && Math.abs(this.pointer.x) < 1.5) {
       const h = this.pick();
       this.canvas.style.cursor = h >= 0 && h !== this.index ? 'pointer' : '';
     }
@@ -567,23 +604,99 @@ export class Showroom {
       // face a point in front of the room, so the sides angle in a little
       const face = Math.atan2(-tmp.x, 3.2 - tmp.z);
       const centre = a < 0.02 && !this.drag;
-      if (centre && F < 0.01 && !this.reduced) it.spinV = Math.min(it.spinV + dt * 0.08, LOOK.spinSpeed);
-      else if (!centre) it.spinV = 0;
+      if (centre && F < 0.01 && !W && !this.reduced) it.spinV = Math.min(it.spinV + dt * 0.08, LOOK.spinSpeed);
+      else it.spinV = 0;
       it.spin += it.spinV * dt;
       const yaw = face + it.spin + (a < 0.5 ? this.closeYaw * F : 0);
-      it.spinner.rotation.y = yaw;
+      it.spinner.position.set(0, PED_TOP + HOVER, 0);
+      it.spinner.rotation.set(0, yaw, 0);
 
       const hk = this.hover === i && a > 0.5 ? 1 : 0;
       it.hoverK += (hk - it.hoverK) * Math.min(dt * 6, 1);
       const focusDim = a < 0.5 ? 1 : 1 - 0.85 * F;
-      const dim = (curve(DIM, s) + it.hoverK * 0.14) * focusDim * (0.15 + 0.85 * smooth(0, 1, L * 1.4 - a * 0.12));
+      // the rest of the room goes out while the walk runs
+      const walkDim = a < 0.5 ? 1 : 1 - 0.95 * Lw;
+      const dim = (curve(DIM, s) + it.hoverK * 0.14) * focusDim * walkDim * (0.15 + 0.85 * smooth(0, 1, L * 1.4 - a * 0.12));
       it.dim.value = dim;
-      const glow = curve(GLOW, s) * (0.6 + 0.4 * smooth(0, 1, L * 1.2 - a * 0.1)) * smooth(0, 1, L * 1.6 - a * 0.25) * (1 - 0.6 * F * (a > 0.5));
+      const glow = curve(GLOW, s) * (0.6 + 0.4 * smooth(0, 1, L * 1.2 - a * 0.1)) * smooth(0, 1, L * 1.6 - a * 0.25) * (1 - 0.6 * F * (a > 0.5)) * walkDim;
       // the plinth ring stays soft under the guitar in front (the halo is its
-      // light) and comes up to full as the guitar moves to the side
+      // light) and comes up to full as the guitar moves to the side. When the
+      // guitar lifts off, its empty plinth flares once and stays lit.
       const own = this.palette[i];
-      it.ringMat.color.copy(own).multiplyScalar(3.4 * glow * this.gains[i] * (0.32 + 0.68 * smooth(0, 1, a)));
+      const flare = a < 0.5 ? 1.8 * Math.sin(Math.PI * Math.min(Lw * 1.4, 1)) + 0.5 * Lw : 0;
+      it.ringMat.color.copy(own).multiplyScalar(3.4 * glow * this.gains[i] * (0.32 + 0.68 * smooth(0, 1, a) + flare));
     });
+
+    // the guitar in front lifts out and the camera rides along it
+    let shift = 0, roll = 0, fov = b.fov + 0;
+    const look = tgt;
+    if (W) {
+      const sh = blendShots(W.a, W.b, W.k, this.shot);
+      const sp = front.spinner;
+      const cL = plan.centre;
+      const restQ = _q1.setFromEuler(sp.rotation);
+      const restC = _v1.copy(cL).applyQuaternion(restQ).add(sp.position);
+      const liftC = _v2.set(0, sp.position.y + cL.y + LIFT, 0);
+      // the guitar starts a beat after the camera, so the camera has already
+      // backed off when the headstock rises
+      const Lg = smooth(0.12, 1, Lw), Lc = smooth(0, 0.82, Lw);
+      const Q = _q2.copy(restQ).slerp(sh.quat, Lg);
+      sp.quaternion.copy(Q);
+      sp.position.copy(restC.lerp(liftC, Lg)).sub(_v3.copy(cL).applyQuaternion(Q));
+      front.group.updateMatrixWorld(true);
+
+      const halfV = THREE.MathUtils.degToRad(sh.lens) / 2;
+      const halfH = Math.atan(Math.tan(halfV) * cam.aspect);
+      const dist = sh.radius / (FILL * Math.tan(Math.min(halfV, halfH)));
+      const aimW = _v4.copy(sh.aim).applyMatrix4(sp.matrixWorld);
+      const camW = _v5.copy(sh.dir).applyQuaternion(Q).multiplyScalar(dist).add(aimW);
+      pos.lerp(camW, Lc);
+      look.lerp(aimW, Lc);
+      fov += (sh.lens - fov) * Lc;
+      roll = sh.roll * Lc;
+      shift = sh.shift * Lc;
+      this.walkFocus = pos.distanceTo(aimW);
+      this.walkDof = sh.dof * Lw;
+      this.keyAim.copy(this.keyRest).lerp(sp.localToWorld(_v6.copy(cL)), Lw);
+    } else {
+      this.walkDof = 0;
+      this.keyAim.copy(this.keyRest);
+    }
+
+    // the close-up from View guitar
+    const close = this.mobile || cam.aspect < 0.9
+      ? { pos: new THREE.Vector3(0, 0.57, 3.5), target: new THREE.Vector3(0, 0.19, 0), fov: 40 }
+      : { pos: new THREE.Vector3(0.3, 0.67, 2.6), target: new THREE.Vector3(0.3, 0.63, 0), fov: 30 };
+    close.pos.z += this.closeDist;
+    cam.position.lerpVectors(pos, close.pos, F);
+    look.lerp(close.target, F);
+    cam.fov = fov + (close.fov - fov) * F;
+    // the near plane follows the camera in: 10 cm spends the depth buffer badly at 15 cm
+    cam.near = W ? THREE.MathUtils.clamp((this.walkFocus || 1) * 0.12, 0.008, 0.1) : 0.1;
+    cam.updateProjectionMatrix();
+    cam.lookAt(look);
+    if (roll) cam.rotateZ(roll);
+    if (shift) {
+      // a lens shift: the guitar moves aside for the copy without the
+      // perspective changing. Right on wide screens, up on tall ones.
+      const P = cam.projectionMatrix.elements;
+      if (this.portrait) P[9] -= 0.34 * shift; else P[8] -= 0.27 * shift;
+      cam.projectionMatrixInverse.copy(cam.projectionMatrix).invert();
+    }
+    this.floor.material.uniforms.uCam.value.copy(cam.position);
+
+    // depth of field, only on the walk: shallow up close, gone from afar
+    const dofOn = this.walkDof > 0.01;
+    this.dof.enabled = dofOn;
+    if (dofOn) {
+      const f = this.walkFocus;
+      this.dof.uniforms.focus.value = f;
+      this.dof.uniforms.aperture.value = LOOK.dof * this.walkDof / (f * f);
+    }
+    this.chrome?.forEach((m) => { m.roughness = m.userData.rough + 0.07 * Lw; });
+    this.key.target.position.copy(this.keyAim);
+    this.key.angle = 0.21 + 0.09 * Lw;
+    this.scene.fog.density = 0.075 * (1 - 0.85 * Lw);
 
     // lights follow the intro and the close-up
     const on = smooth(0, 1, L);
@@ -593,8 +706,8 @@ export class Showroom {
     this.top.intensity = 0.35 * on;
     this.scene.environmentIntensity = LOOK.envIntensity * (0.3 + 0.7 * on);
     const G = this.glow;
-    this.cone.material.uniforms.uAlpha.value = 0.05 * G * smooth(0.1, 1, L) * (1 - 0.7 * F);
-    this.halo.children.forEach((m) => m.material.color.copy(ACCENT).multiplyScalar(G * m.userData.k * smooth(0.3, 1, L) * (1 - 0.75 * F)));
+    this.cone.material.uniforms.uAlpha.value = 0.05 * G * smooth(0.1, 1, L) * (1 - 0.7 * F) * (1 - 0.6 * Lw);
+    this.halo.children.forEach((m) => m.material.color.copy(ACCENT).multiplyScalar(G * m.userData.k * smooth(0.3, 1, L) * (1 - 0.75 * F) * (1 - Lw)));
     // the seams share one material, at the strength they have always had
     this.seams[0].material.color.copy(ACCENT).multiplyScalar(G * 0.067 * smooth(0.4, 1, L) * (1 - 0.6 * F));
     this.floor.material.uniforms.uPool.value.copy(ACCENT).multiplyScalar(G * 0.03 * on * (1 - 0.4 * F));
@@ -608,9 +721,11 @@ export class Showroom {
       dp.setX(k, dp.getX(k) + Math.sin(t * 0.3 + k) * dt * 0.004);
     }
     dp.needsUpdate = true;
-    this.dust.material.opacity = 0.55 * smooth(0.3, 1, L) * (1 - 0.8 * F);
+    this.dust.material.opacity = 0.55 * smooth(0.3, 1, L) * (1 - 0.8 * F) * (1 - 0.5 * Lw);
 
-    this.bloom.strength = LOOK.bloom.strength * (1 - 0.45 * F);
+    // up close the chrome and brass catch the key light hard: less bloom
+    this.bloom.strength = LOOK.bloom.strength * (1 - 0.45 * F) * (1 - 0.35 * Lw);
+    this.bloom.threshold = LOOK.bloom.threshold + 0.1 * Lw;
     this.grain.uniforms.uTime.value = t;
   }
 

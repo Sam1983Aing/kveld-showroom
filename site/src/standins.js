@@ -125,6 +125,7 @@ export function buildStandin(shapeId, clay, graphite) {
 
   const holes = (S.holes || []).map((h) => catmull(h, 6));
   const body = new THREE.Mesh(slab(catmull(S.body, 10), S.depth, S.bevel, holes), clay);
+  body.name = 'Body';     // named groups, so the scroll sequence can aim at them (stops.js)
   g.add(body);
 
   // neck: from inside the body up to the nut, tapering 2.2 in to 1.69 in
@@ -138,6 +139,7 @@ export function buildStandin(shapeId, clay, graphite) {
   // headstock
   const six = S.head === 'six';
   const head = new THREE.Group();
+  head.name = 'Headstock';
   head.position.set(0, nutY, front + (six ? -0.02 : 0.1));
   const hs = new THREE.Mesh(slab((six ? HEAD_SIX : HEAD_THREE).map(([x, y]) => new THREE.Vector2(x, y)), 0.56, 0.08), clay);
   head.add(hs);
@@ -158,12 +160,15 @@ export function buildStandin(shapeId, clay, graphite) {
 
   // pickups, bridge and controls in graphite
   const pu = { sc: [2.72, 0.72, 0.1], hb: [2.8, 1.5, 0.14], wide: [3.5, 1.35, 0.18] };
+  const pickups = new THREE.Group();
+  pickups.name = 'Pickups';
   for (const [type, y, ang] of S.pickups) {
     const [w, h, r] = pu[type];
     const m = block(w, h, 0.26, r, graphite);
     m.position.set(0, y, front - 0.02); m.rotation.z = ang;
-    g.add(m);
+    pickups.add(m);
   }
+  g.add(pickups);
   const bridges = {
     trem: [[2.3, 0.95, 0.3, 0]],
     tom: [[3.1, 0.34, 0.55, 0], [3.3, 0.46, 0.46, -1.4]],

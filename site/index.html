@@ -84,7 +84,22 @@
         </nav>
 
         <p class="room__foot">Open by appointment<br><span>59.1244° N, 11.3875° E</span></p>
-        <a class="room__scroll" href="#drawings"><span>Scroll</span><i></i></a>
+        <a class="room__scroll" href="#drawings" data-scroll-cue><span>Scroll</span><i></i></a>
+      </div>
+
+      <!-- the walk: copy for each stop as the camera travels along the guitar -->
+      <div class="walk" data-walk aria-hidden="true">
+        <div class="walk__shade"></div>
+        <div class="walk__copy">
+          <p class="walk__no"><span data-walk-no>01</span><i>/</i><span data-walk-of>07</span><b data-walk-label>Headstock</b></p>
+          <h3 class="walk__title"><span data-walk-title></span></h3>
+          <p class="walk__text" data-walk-text></p>
+        </div>
+        <div class="walk__rail">
+          <p class="walk__model" data-walk-model>Floe · Up close</p>
+          <ol class="walk__ticker" data-walk-ticker></ol>
+          <div class="walk__bar"><span data-walk-bar></span></div>
+        </div>
       </div>
 
       <aside class="closeup" aria-hidden="true" data-closeup>

@@ -7,6 +7,7 @@
 import { Showroom } from './showroom.js';
 import { LINEUP } from './data.js';
 import { drawBlueprint, specRows } from './blueprint.js';
+import { BEATS } from './sequence.js';
 
 const { gsap, ScrollTrigger, SplitText, Lenis } = window;
 gsap.registerPlugin(ScrollTrigger, SplitText);
@@ -69,6 +70,7 @@ function setStageY() {
 
 let firstChange = true;
 function onChange(i, info) {
+  setWalkGuitar(i);
   $$('button', ui.dots).forEach((b, k) => b.setAttribute('aria-current', k === i ? 'true' : 'false'));
   const apply = () => {
     ui.no.textContent = info.no;
@@ -183,7 +185,7 @@ async function boot() {
   buildDrawing(D);
   buildIndex();
   initReveals();
-  initScrollCamera();
+  initWalk();
   ScrollTrigger.refresh();
 }
 
@@ -254,11 +256,83 @@ function initReveals() {
   });
 }
 
-/* The camera cranes up and back as the room scrolls away */
-function initScrollCamera() {
-  if (!room || reduced) return;
-  ScrollTrigger.create({ trigger: roomEl, start: 'top top', end: 'bottom top', scrub: true,
-    onUpdate: (self) => { room.scrollT = self.progress; } });
+/* ---------------------------------------------------------------------------
+   8) The walk: the room pins, and scrolling lifts the guitar in the centre
+   off its plinth and takes the camera along it (sequence.js). The stops and
+   their copy are data per guitar (stops.js); this only shows the copy.
+   ------------------------------------------------------------------------ */
+const pad = (n) => String(n).padStart(2, '0');
+const walkUI = {
+  el: $('[data-walk]'), no: $('[data-walk-no]'), of: $('[data-walk-of]'), label: $('[data-walk-label]'),
+  title: $('[data-walk-title]'), text: $('[data-walk-text]'), ticker: $('[data-walk-ticker]'), bar: $('[data-walk-bar]'),
+  model: $('[data-walk-model]'), copy: $('.walk__copy'), rail: $('.walk__rail'), shade: $('.walk__shade'), roomUI: $('.room__ui'),
+};
+let walkST = null, walkStops = [], walkLen = 0, walkStop = -2, walkFor = -1;
+
+function setWalkGuitar(i) {
+  if (!room || i === walkFor) return;
+  walkFor = i;
+  const info = LINEUP[i];
+  walkStops = room.walk.stopsFor(info);
+  walkLen = room.walk.length(info);
+  walkUI.of.textContent = pad(walkStops.length);
+  walkUI.model.textContent = `${info.name} · ${info.real ? 'Up close' : 'In the workshop'}`;
+  walkUI.ticker.innerHTML = walkStops.map((s, k) => `<li data-n="${pad(k + 1)}">${s.label}</li>`).join('');
+  walkStop = -2;
+  if (walkST) ScrollTrigger.refresh();     // a maquette's walk is shorter, so the pin is too
+}
+
+function initWalk() {
+  if (!room) return;
+  setWalkGuitar(room.index);
+  walkST = ScrollTrigger.create({
+    trigger: roomEl, start: 'top top', end: () => `+=${Math.round(walkLen * innerHeight)}`, pin: true, anticipatePin: 1,
+    onUpdate: (self) => {
+      const at = self.progress * walkLen;
+      // reduced motion: no camera travel, the walk cuts from stop to stop
+      room.walkTo = reduced ? room.walk.snap(LINEUP[walkFor], at) : at;
+    },
+  });
+  // Scroll in the corner goes to the first stop rather than past the walk
+  $('[data-scroll-cue]').addEventListener('click', (e) => {
+    e.preventDefault();
+    const to = Math.round((BEATS.lift + BEATS.travel + BEATS.hold * 0.4) * innerHeight);
+    lenis ? lenis.scrollTo(to, { duration: 2.6 }) : window.scrollTo({ top: to });
+  });
+  gsap.ticker.add(walkFrame);
+}
+
+const clamp01 = (x) => Math.min(Math.max(x, 0), 1);
+function walkFrame() {
+  const W = room.walkState;
+  const lift = W ? W.lift : 0;
+  // the room's own chrome leaves as the guitar lifts
+  const roomA = 1 - clamp01(lift / 0.45);
+  walkUI.roomUI.style.opacity = roomA;
+  walkUI.roomUI.style.visibility = roomA > 0 ? '' : 'hidden';
+  walkUI.el.style.visibility = lift > 0 ? 'visible' : 'hidden';
+  if (!W) return;
+
+  if (W.stop !== walkStop) {
+    walkStop = W.stop;
+    const s = walkStops[W.stop];
+    walkUI.ticker.querySelectorAll('li').forEach((li, k) => li.classList.toggle('is-on', k === W.stop));
+    if (s) {
+      walkUI.no.textContent = pad(W.stop + 1);
+      walkUI.label.textContent = s.label;
+      walkUI.title.innerHTML = s.title;
+      walkUI.text.textContent = s.text;
+    }
+  }
+  // the copy rides the scroll: the title slides up out of its mask, the rest fades
+  const c = W.stop >= 0 ? W.copy : 0;
+  walkUI.title.style.transform = `translate3d(0, ${((1 - c) * 108).toFixed(2)}%, 0)`;
+  walkUI.copy.style.opacity = Math.min(c * 1.6, 1);
+  walkUI.text.style.transform = `translate3d(0, ${((1 - c) * 14).toFixed(1)}px, 0)`;
+  walkUI.text.style.opacity = clamp01((c - 0.25) / 0.75);
+  walkUI.rail.style.opacity = clamp01((lift - 0.5) / 0.5) * (1 - W.outro);
+  walkUI.shade.style.opacity = clamp01((lift - 0.5) / 0.5) * (1 - W.outro);
+  walkUI.bar.style.transform = `scaleX(${clamp01(room.walkAt / walkLen).toFixed(4)})`;
 }
 
 let resizeT;
