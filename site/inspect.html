@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>KVELD Floe · Inspect</title>
-  <meta name="description" content="Workshop viewer for the Floe model: orbit, zoom to the frets, isolate parts.">
+  <title>KVELD · Inspect</title>
+  <meta name="description" content="Workshop viewer for the seven KVELD models: orbit, zoom to the frets, isolate parts.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%230b0a09%22/%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%229%22 fill=%22none%22 stroke=%22%239fe3f0%22 stroke-width=%221.5%22/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
   <style>
@@ -31,11 +31,14 @@
     .parts label:hover .solo { opacity: 1; }
     .parts h3, .modes h3 { margin: 0 0 8px; font: inherit; color: var(--text); }
     .modes { position: absolute; right: var(--gutter); top: 50%; transform: translateY(-50%); display: grid; gap: 6px; justify-items: end; }
-    .hint { position: absolute; right: var(--gutter); top: 72px; text-align: right; }
+    .hint { position: absolute; right: var(--gutter); top: 112px; text-align: right; }
+    .guitars { position: absolute; left: 50%; top: 20px; transform: translateX(-50%); display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: calc(100vw - 340px); }
     @media (max-width: 760px) {
       .parts { top: 70px; transform: none; max-height: 34vh; }
       .modes { top: 70px; transform: none; }
       .hint { display: none; }
+      .guitars { top: 54px; max-width: calc(100vw - 32px); }
+      .parts, .modes { top: 130px; }
       .views { bottom: 14px; }
     }
   </style>
@@ -46,12 +49,13 @@
   <script type="module" src="src/inspect.js"></script>
 </head>
 <body>
-  <canvas class="gl" aria-label="The Floe model. Drag to orbit, scroll to zoom, right-drag to pan."></canvas>
+  <canvas class="gl" aria-label="The guitar model. Drag to orbit, scroll to zoom, right-drag to pan."></canvas>
   <div class="ui">
     <div class="top">
       <a class="mark" href="index.html">KVELD<span>Floe</span></a>
       <p class="stats" data-stats></p>
     </div>
+    <nav class="guitars" data-guitars aria-label="Guitars"></nav>
     <div class="parts" data-parts><h3>Parts</h3></div>
     <div class="modes">
       <h3>Look</h3>
@@ -61,7 +65,7 @@
       <button type="button" data-turn aria-pressed="false">Turntable</button>
     </div>
     <nav class="views" data-views aria-label="Camera views"></nav>
-    <p class="hint">Drag to orbit · scroll to zoom · right-drag to pan<br>Click a part name to frame it · F frames the whole guitar</p>
+    <p class="hint">Drag to orbit · scroll to zoom · right-drag to pan<br>Click a part name to frame it · F frames the whole guitar · 1 to 7 switch guitars</p>
   </div>
 </body>
 </html>

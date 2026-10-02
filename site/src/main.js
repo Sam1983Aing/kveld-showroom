@@ -158,7 +158,7 @@ async function boot() {
   const dataP = fetch('assets/data/floe.json').then((r) => r.json());
   if (room) {
     try {
-      await room.load(LINEUP, 'assets/models/floe.glb');
+      await room.load(LINEUP);
     } catch (err) {
       console.error(err);
     }
