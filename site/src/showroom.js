@@ -28,7 +28,8 @@ const _v4 = new THREE.Vector3(), _v5 = new THREE.Vector3(), _v6 = new THREE.Vect
 // ------------------------------------------------------------ tunables ----
 export const LOOK = {
   exposure: 1.05,
-  bloom: { strength: 0.62, radius: 0.55, threshold: 0.82 },
+  // at rest, and on the walk (the walk's numbers are the ones it has always had)
+  bloom: { strength: 0.44, radius: 0.55, threshold: 0.9, walk: { strength: 0.403, threshold: 0.92 } },
   envIntensity: 0.62,
   spot: 46,               // centre key light, candela
   rim: 16,
@@ -42,6 +43,10 @@ export const LOOK = {
 // fully dark, which is where it wraps round to the other end of the ring.
 const DIM = [1.0, 0.55, 0.32, 0.16, 0.0];
 const GLOW = [1.0, 0.42, 0.26, 0.14, 0.0];
+// At rest the room belongs to the guitar in front: the others wait in the
+// dark and come up to the levels above while the ring is moving (`wake`).
+const DIM_REST = [1.0, 0.15, 0.12, 0.08, 0.0];
+const GLOW_REST = [1.0, 0.11, 0.09, 0.06, 0.0];
 function curve(arr, s) {
   const a = Math.min(Math.abs(s) * (arr.length - 1) / 3.6, arr.length - 1);
   const i = Math.floor(a), f = a - i;
@@ -190,6 +195,7 @@ export class Showroom {
     this.lean = 0;            // sideways lean into the turn
     this.lastU = 0;
     this.glow = 1;            // glowGain of the centre colour
+    this.wake = 1;            // 0..1, the rest of the ring lit: on while it turns, settling after
 
     // the walk (scroll sequence): `walkTo` is where the scroll is, in screen
     // heights into the pinned room; `walkAt` follows it with a little weight
@@ -328,14 +334,14 @@ export class Showroom {
     // the halo: an open arch of light behind the centre guitar
     const arc = Math.PI * 1.32;
     this.halo = new THREE.Group();
-    for (const [rad, k] of [[0.6, 3.0], [0.635, 0.6]]) {
-      const t = new THREE.Mesh(new THREE.TorusGeometry(rad, 0.0042, 8, 320, arc), new THREE.MeshBasicMaterial({ color: ACCENT.clone().multiplyScalar(k) }));
+    for (const [rad, k, tube] of [[0.6, 1.7, 0.0027], [0.63, 0.2, 0.0016]]) {
+      const t = new THREE.Mesh(new THREE.TorusGeometry(rad, tube, 8, 320, arc), new THREE.MeshBasicMaterial({ color: ACCENT.clone().multiplyScalar(k) }));
       t.rotation.z = Math.PI / 2 - arc / 2;
       t.userData.k = k;
       this.halo.add(t);
     }
     // round the guitar rather than above it (scaled per screen shape in layout)
-    this.halo.position.set(0, 0.5, -0.5);
+    this.halo.position.set(0, 0.54, -0.95);
     scene.add(this.halo);
   }
 
@@ -362,6 +368,7 @@ export class Showroom {
     const ringGeo = new THREE.TorusGeometry(0.323, 0.0034, 8, 180);
 
     this.setPalette(lineup.map((g) => g.colour));
+    this.lightOf = lineup.map((g) => g.light || 1);   // key light lift for dark finishes
     this.loader = new GLTFLoader();
     this.chrome = [];
     // the guitar in the centre first, with the loader's progress bar; the
@@ -374,7 +381,7 @@ export class Showroom {
       const group = new THREE.Group();
       const pedestal = new THREE.Group();
       // black glass, like the floor: a dark polished body under a full clear coat
-      const pedMat = new THREE.MeshPhysicalMaterial({ color: '#060607', roughness: 0.3, metalness: 0.2, clearcoat: 1, clearcoatRoughness: 0.06 });
+      const pedMat = new THREE.MeshPhysicalMaterial({ color: '#060607', roughness: 0.3, metalness: 0.2, clearcoat: 1, clearcoatRoughness: 0.2 });
       addDim(pedMat, dim);
       const ped = new THREE.Mesh(pedGeo, pedMat);
       ped.receiveShadow = true;
@@ -454,11 +461,11 @@ export class Showroom {
     // back to, low over the glass so the floor turns into a mirror
     this.camBase = portrait
       ? { pos: new THREE.Vector3(0, 0.8, 3.35), target: new THREE.Vector3(0, 0.6, 0), fov: 30 }
-      : { pos: new THREE.Vector3(0, 0.78, 3.0), target: new THREE.Vector3(0, 0.58, -0.2), fov: 22 };
+      : { pos: new THREE.Vector3(0, 0.81, 3.3), target: new THREE.Vector3(0, 0.625, -0.2), fov: 22 };
     this.camWide = portrait
       ? { pos: new THREE.Vector3(0, 0.42, 5.9), target: new THREE.Vector3(0, 0.5, -0.6) }
       : { pos: new THREE.Vector3(0, 0.4, 5.6), target: new THREE.Vector3(0, 0.48, -0.9) };
-    this.halo.scale.setScalar(portrait ? 0.74 : 0.94);
+    this.halo.scale.setScalar(portrait ? 0.8 : 0.92);
     this.renderer.setSize(w, h, false);
     this.composer.setSize(w, h);
     this.bloom.resolution.set(w, h);
@@ -473,6 +480,15 @@ export class Showroom {
     // centre of the centre plinth's front face
     const v = new THREE.Vector3(0, PED_TOP * 0.5, 0.325).project(this.camera);
     return (1 - (v.y * 0.5 + 0.5)) * (this.canvas.clientHeight || innerHeight);
+  }
+
+  /** The halo's left and right edges on screen (CSS px), with the camera at rest. */
+  haloScreenX() {
+    const b = this.camBase, cam = this.camera.clone();
+    cam.position.copy(b.pos); cam.fov = b.fov; cam.updateProjectionMatrix(); cam.lookAt(b.target); cam.updateMatrixWorld();
+    const r = 0.635 * this.halo.scale.x, w = this.canvas.clientWidth || innerWidth, p = this.halo.position;
+    const x = (sx) => (new THREE.Vector3(sx * r, p.y, p.z).project(cam).x * 0.5 + 0.5) * w;
+    return [x(-1), x(1)];
   }
 
   // ------------------------------------------------------- interaction ----
@@ -580,6 +596,8 @@ export class Showroom {
   }
 
   exitCloseup() {
+    // the stand has been turning: unwind by the short way round
+    this.closeYaw = THREE.MathUtils.euclideanModulo(this.closeYaw + Math.PI, Math.PI * 2) - Math.PI;
     window.gsap.to(this, { focus: 0, closeYaw: 0, closeDist: 0, duration: 1.6, ease: 'expo.inOut' });
   }
 
@@ -621,7 +639,10 @@ export class Showroom {
       this.canvas.style.cursor = h >= 0 && h !== this.index ? 'pointer' : '';
     }
 
-    // the ring
+    // the ring: awake while it turns or is dragged, then the others settle back
+    const moving = this.drag || Math.abs(this.u - Math.round(this.u)) > 0.004 || L < 0.98;
+    this.wake += ((moving ? 1 : 0) - this.wake) * Math.min(dt * (moving ? 6 : 0.9), 1);
+    const wake = this.reduced ? 0 : this.wake * this.wake * (3 - 2 * this.wake);
     const tmp = new THREE.Vector3();
     this.items.forEach((it, i) => {
       const s = wrap(i - this.u);
@@ -636,18 +657,20 @@ export class Showroom {
       if (centre && F < 0.01 && !W && !this.reduced) it.spinV = Math.min(it.spinV + dt * 0.08, LOOK.spinSpeed);
       else it.spinV = 0;
       it.spin += it.spinV * dt;
+      if (centre && F > 0.6 && !this.reduced) this.closeYaw += dt * 0.11;
       const yaw = face + it.spin + (a < 0.5 ? this.closeYaw * F : 0);
       it.spinner.position.set(0, PED_TOP + HOVER, 0);
       it.spinner.rotation.set(0, yaw, 0);
 
       const hk = this.hover === i && a > 0.5 ? 1 : 0;
       it.hoverK += (hk - it.hoverK) * Math.min(dt * 6, 1);
-      const focusDim = a < 0.5 ? 1 : 1 - 0.85 * F;
+      const focusDim = a < 0.5 ? 1 : 1 - 0.97 * F;
       // the rest of the room goes out while the walk runs
       const walkDim = a < 0.5 ? 1 : 1 - 0.95 * Lw;
-      const dim = (curve(DIM, s) + it.hoverK * 0.14) * focusDim * walkDim * (0.15 + 0.85 * smooth(0, 1, L * 1.4 - a * 0.12));
+      const dimS = curve(DIM_REST, s), glowS = curve(GLOW_REST, s);
+      const dim = (dimS + (curve(DIM, s) - dimS) * wake + it.hoverK * 0.3) * focusDim * walkDim * (0.15 + 0.85 * smooth(0, 1, L * 1.4 - a * 0.12));
       it.dim.value = dim;
-      const glow = curve(GLOW, s) * (0.6 + 0.4 * smooth(0, 1, L * 1.2 - a * 0.1)) * smooth(0, 1, L * 1.6 - a * 0.25) * (1 - 0.6 * F * (a > 0.5)) * walkDim;
+      const glow = (glowS + (curve(GLOW, s) - glowS) * Math.max(wake, it.hoverK)) * (0.6 + 0.4 * smooth(0, 1, L * 1.2 - a * 0.1)) * smooth(0, 1, L * 1.6 - a * 0.25) * (1 - 0.94 * F * (a > 0.5)) * walkDim;
       // the plinth ring stays soft under the guitar in front (the halo is its
       // light) and comes up to full as the guitar moves to the side. When the
       // guitar lifts off, its empty plinth flares once and stays lit.
@@ -729,11 +752,15 @@ export class Showroom {
 
     // lights follow the intro and the close-up
     const on = smooth(0, 1, L);
-    this.key.intensity = LOOK.spot * on;
-    this.rimL.intensity = LOOK.rim * smooth(0.2, 1, L) * (1 + 0.6 * F);
-    this.rimR.intensity = LOOK.rim * 0.8 * smooth(0.25, 1, L) * (1 + 0.6 * F);
+    // a dark finish gets more key in the room; on the walk every guitar has the light its stops were tuned in
+    const lift = 1 + ((this.lift || 1) - 1) * (1 - Lw);
+    this.key.intensity = LOOK.spot * on * lift;
+    // at rest the rims are held back: square on, they burn the rounded edges of a body to white
+    const rimK = 0.5 + 0.5 * Math.max(Lw, F);
+    this.rimL.intensity = LOOK.rim * rimK * smooth(0.2, 1, L) * (1 + 0.6 * F);
+    this.rimR.intensity = LOOK.rim * 0.8 * rimK * smooth(0.25, 1, L) * (1 + 0.6 * F);
     this.top.intensity = 0.35 * on;
-    this.scene.environmentIntensity = LOOK.envIntensity * (0.3 + 0.7 * on);
+    this.scene.environmentIntensity = LOOK.envIntensity * (0.3 + 0.7 * on) * (1 + (lift - 1) * 0.7);
     const G = this.glow;
     this.cone.material.uniforms.uAlpha.value = 0.05 * G * smooth(0.1, 1, L) * (1 - 0.7 * F) * (1 - 0.6 * Lw);
     this.halo.children.forEach((m) => m.material.color.copy(ACCENT).multiplyScalar(G * m.userData.k * smooth(0.3, 1, L) * (1 - 0.75 * F) * (1 - Lw)));
@@ -753,8 +780,8 @@ export class Showroom {
     this.dust.material.opacity = 0.55 * smooth(0.3, 1, L) * (1 - 0.8 * F) * (1 - 0.5 * Lw);
 
     // up close the chrome and brass catch the key light hard: less bloom
-    this.bloom.strength = LOOK.bloom.strength * (1 - 0.45 * F) * (1 - 0.35 * Lw);
-    this.bloom.threshold = LOOK.bloom.threshold + 0.1 * Lw;
+    this.bloom.strength = (LOOK.bloom.strength + (LOOK.bloom.walk.strength - LOOK.bloom.strength) * Lw) * (1 - 0.45 * F);
+    this.bloom.threshold = LOOK.bloom.threshold + (LOOK.bloom.walk.threshold - LOOK.bloom.threshold) * Lw;
     this.grain.uniforms.uTime.value = t;
   }
 
@@ -800,11 +827,13 @@ export class Showroom {
     // round the colour wheel rather than straight through RGB, which turned
     // yellow-to-blue grey halfway
     ACCENT.copy(a).lerpHSL(b, k);
+    const L = this.lightOf, la = L[((i0 % N) + N) % N], lb = L[(((i0 + 1) % N) + N) % N];
+    this.lift = la + (lb - la) * k;
     this.glow = glowGain(ACCENT);
     this.cone.material.uniforms.uColor.value.copy(ACCENT);
     this.dust.material.color.copy(ACCENT).multiplyScalar(1.6 * this.glow);
     const peak = Math.max(ACCENT.r, ACCENT.g, ACCENT.b) || 1;
-    this.rimR.color.copy(this.rimWarm).lerp(this.rimTint.copy(ACCENT).multiplyScalar(1 / peak), 0.7);
+    this.rimR.color.copy(this.rimWarm).lerp(this.rimTint.copy(ACCENT).multiplyScalar(1 / peak), 0.35);
   }
 
   makeDust() {

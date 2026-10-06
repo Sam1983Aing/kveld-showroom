@@ -6,13 +6,15 @@
 // Names are Nordic landscape words. `colour` is the guitar's own light: the
 // halo, cone, dust, floor pool and page accent take it when the guitar is in
 // the centre, and its pedestal ring always glows in it.
+// `light` lifts the key light for a dark finish while it stands in the centre
+// (the room is dark too: Scree's slate read as a cut-out without it).
 
 export const LINEUP = [
   { id: 'floe',  no: '01', name: 'Floe',  colour: '#9fe3f0', line: 'Single-cut · Swamp ash · 25.5 in scale',       woods: 'Swamp ash, maple',      pattern: 'Single-cut slab',        real: true, model: 'assets/models/floe.glb' },
   { id: 'sedge', no: '02', name: 'Sedge', colour: '#e8c14a', line: 'Double-cut · Carved flame maple · 25.5 in scale', woods: 'Flame maple, basswood, maple', pattern: 'Double-cut, carved top', shape: 'doublecutCarved', real: true, model: 'assets/models/sedge.glb' },
-  { id: 'scree', no: '03', name: 'Scree', colour: '#5e8cff', line: 'Twin horn · Mahogany · 24.75 in scale',         woods: 'Mahogany, rosewood',    pattern: 'Twin horn slab',         shape: 'twinHorn', real: true, model: 'assets/models/scree.glb' },
-  { id: 'moss',  no: '04', name: 'Moss',  colour: '#a6d84a', line: 'Offset waist · Alder · 25.5 in scale',          woods: 'Alder, maple, rosewood', pattern: 'Offset waist',           shape: 'offset', real: true, model: 'assets/models/moss.glb' },
+  { id: 'scree', no: '03', name: 'Scree', colour: '#5e8cff', line: 'Twin horn · Mahogany · 24.75 in scale',         woods: 'Mahogany, rosewood',    pattern: 'Twin horn slab',         shape: 'twinHorn', light: 1.7, real: true, model: 'assets/models/scree.glb' },
+  { id: 'moss',  no: '04', name: 'Moss',  colour: '#a6d84a', line: 'Offset waist · Alder · 25.5 in scale',          woods: 'Alder, maple, rosewood', pattern: 'Offset waist',           shape: 'offset', light: 1.2, real: true, model: 'assets/models/moss.glb' },
   { id: 'fjord', no: '05', name: 'Fjord', colour: '#33c6b3', line: 'Semi-hollow · Thinline · 24.54 in scale',       woods: 'Maple laminate, mahogany', pattern: 'Semi-hollow thinline', shape: 'semiHollow', real: true, model: 'assets/models/fjord.glb' },
   { id: 'rowan', no: '06', name: 'Rowan', colour: '#ff5a40', line: 'Single-cut · Carved maple cap · 24.75 in scale', woods: 'Flame maple, mahogany', pattern: 'Single-cut, carved top', shape: 'singlecutCarved', real: true, model: 'assets/models/rowan.glb' },
-  { id: 'heath', no: '07', name: 'Heath', colour: '#d65be8', line: 'Contoured double-cut · Alder · 25.5 in scale',  woods: 'Alder, maple, rosewood', pattern: 'Contoured double-cut',   shape: 'contoured', real: true, model: 'assets/models/heath.glb' },
+  { id: 'heath', no: '07', name: 'Heath', colour: '#d65be8', line: 'Contoured double-cut · Alder · 25.5 in scale',  woods: 'Alder, maple, rosewood', pattern: 'Contoured double-cut',   shape: 'contoured', light: 1.2, real: true, model: 'assets/models/heath.glb' },
 ];

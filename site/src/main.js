@@ -6,8 +6,12 @@
    ========================================================================== */
 import { Showroom } from './showroom.js';
 import { LINEUP } from './data.js';
+import { SPECS } from './specs.js';
 import { drawBlueprint, specRows } from './blueprint.js';
 import { BEATS } from './sequence.js';
+import { initDraft } from './draft-options.js';   // demo options, ?draft=ink|stack|dark (off without it)
+import { INDEX, buildIndexOption } from './index-options.js';   // demo options, ?index=wall|stage|bench
+import { FOOTER, buildFooterOption } from './footer-options.js';   // demo options, ?footer=light|strings|ticket
 
 const { gsap, ScrollTrigger, SplitText, Lenis } = window;
 gsap.registerPlugin(ScrollTrigger, SplitText);
@@ -65,7 +69,13 @@ function setStageY() {
   if (!room) return;
   const view = ui.view.getBoundingClientRect(), controls = $('.room__controls').getBoundingClientRect();
   const floor = controls.top - roomEl.getBoundingClientRect().top - 22 - view.height / 2;
-  document.documentElement.style.setProperty('--stage-y', `${Math.round(Math.min(room.stageScreenY(), floor))}px`);
+  const css = document.documentElement.style;
+  css.setProperty('--stage-y', `${Math.round(Math.min(room.stageScreenY(), floor))}px`);
+  // the two columns of copy stop short of the halo, wherever it lands on this screen
+  const [left, right] = room.haloScreenX(), gutter = $('.room__copy').offsetLeft || 32, gap = 18;
+  const fit = (v, lo, hi) => Math.round(Math.min(Math.max(v, lo), hi));
+  css.setProperty('--copy-w', `${fit(left - gutter - gap, 180, 470)}px`);
+  css.setProperty('--side-w', `${fit(roomEl.clientWidth - right - gutter - gap, 170, 430)}px`);
 }
 
 let firstChange = true;
@@ -75,7 +85,7 @@ function onChange(i, info) {
   const apply = () => {
     ui.no.textContent = info.no;
     ui.name.textContent = info.name;
-    ui.line.textContent = info.line;
+    ui.line.innerHTML = info.line.split(' · ').map((part) => `<span>${part}</span>`).join('');
     ui.view.disabled = !info.real;
     ui.view.querySelector('span').textContent = info.real ? 'View guitar' : 'In the workshop';
     ui.view.classList.toggle('is-bench', !info.real);
@@ -87,8 +97,8 @@ function onChange(i, info) {
     .fromTo([ui.name, ui.line, ui.no], { yPercent: 110, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 1.1, ease: EASE, stagger: 0.05 });
 }
 
-$('[data-prev]').addEventListener('click', () => room?.step(-1));
-$('[data-next]').addEventListener('click', () => room?.step(1));
+$$('[data-prev]').forEach((b) => b.addEventListener('click', () => room?.step(-1)));
+$$('[data-next]').forEach((b) => b.addEventListener('click', () => room?.step(1)));
 addEventListener('keydown', (e) => {
   if (!room) return;
   if (e.key === 'Escape' && inCloseup) return closeCloseup();
@@ -102,9 +112,31 @@ addEventListener('keydown', (e) => {
    ------------------------------------------------------------------------ */
 let inCloseup = false;
 const roomChrome = () => $$('.room__copy, .room__title, .room__view, .room__controls, .room__foot, .room__scroll');
-function openCloseup() {
+
+// Each guitar's sheet: the figures from the file its build writes, the words from specs.js
+const sheets = new Map();
+const sheet = (id) => sheets.get(id) || sheets.set(id, fetch(`assets/data/${id}.json`).then((r) => r.json())).get(id);
+const cu = {
+  no: $('[data-cu-no]'), after: $('[data-cu-after]'), name: $('[data-cu-name]'), claim: $('[data-cu-claim]'),
+  figures: $('[data-cu-figures]'), specs: $('[data-specs]'), ours: $('[data-cu-ours]'), shade: $('[data-cu-shade]'),
+};
+async function fillCloseup(info) {
+  const D = await sheet(info.id), S = SPECS[info.id] || {};
+  cu.no.textContent = info.no;
+  cu.after.textContent = S.after ? `After ${S.after}` : info.pattern;
+  cu.name.textContent = info.name;
+  cu.claim.innerHTML = S.claim || '';
+  const places = (v) => (Number.isInteger(v) ? 0 : 2);
+  cu.figures.innerHTML = [[D.scale, 'in', 'Scale'], [D.frets, '', 'Frets'], [D.radius, 'in', 'Radius'], [D.nut_width, 'in', 'Nut']]
+    .map(([v, unit, k]) => `<li><b data-v="${v}" data-p="${places(v)}">${v.toFixed(places(v))}</b>${unit ? `<i>${unit}</i>` : '<i></i>'}<span>${k}</span></li>`).join('');
+  cu.specs.innerHTML = [['Body', S.body], ['Neck', S.neck], ['Pickups', S.pickups], ['Bridge', S.bridge], ['Finish', S.finish]]
+    .filter(([, v]) => v).map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
+  cu.ours.textContent = S.ours || '';
+}
+async function openCloseup() {
   if (!room || inCloseup) return;
   inCloseup = true;
+  await fillCloseup(LINEUP[room.index]);
   lenis?.scrollTo(0, { immediate: true, force: true });
   lenis?.stop();
   roomEl.classList.add('is-closeup');
@@ -112,13 +144,24 @@ function openCloseup() {
   gsap.to(roomChrome(), { autoAlpha: 0, duration: 0.6, ease: 'expo.in', stagger: 0.02 });
   gsap.set(ui.closeup, { visibility: 'visible' });
   ui.closeup.setAttribute('aria-hidden', 'false');
-  gsap.fromTo($$('.closeup__back, .closeup__panel > *', ui.closeup), { y: 24, opacity: 0 },
-    { y: 0, opacity: 1, duration: REVEAL, ease: EASE, stagger: 0.07, delay: 0.9 });
+  if (reduced) { gsap.set(cu.shade, { opacity: 1 }); gsap.set($$('.closeup__back, .closeup__panel > *', ui.closeup), { y: 0, opacity: 1 }); return; }
+  // the room goes out behind the sheet, the name comes up out of its mask, the
+  // rest follows row by row and the four figures count up to their numbers
+  gsap.to(cu.shade, { opacity: 1, duration: 1.6, ease: 'expo.inOut', delay: 0.3 });
+  gsap.fromTo($$('.closeup__back, .closeup__panel > *', ui.closeup), { y: 22, opacity: 0 },
+    { y: 0, opacity: 1, duration: REVEAL, ease: EASE, stagger: 0.07, delay: 0.85 });
+  gsap.fromTo(cu.name, { yPercent: 112 }, { yPercent: 0, duration: 1.5, ease: EASE, delay: 0.95 });
+  gsap.fromTo($$('dt, dd', cu.specs), { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.9, ease: EASE, stagger: 0.035, delay: 1.25 });
+  $$('b', cu.figures).forEach((b, i) => {
+    const to = +b.dataset.v, p = +b.dataset.p, n = { v: 0 };
+    gsap.to(n, { v: to, duration: 1.5, ease: 'expo.out', delay: 1.1 + i * 0.08, onUpdate: () => { b.textContent = n.v.toFixed(p); } });
+  });
 }
 function closeCloseup() {
   if (!inCloseup) return;
   inCloseup = false;
   room.exitCloseup();
+  gsap.to(cu.shade, { opacity: 0, duration: 0.9, ease: 'expo.inOut' });
   gsap.to($$('.closeup__back, .closeup__panel > *', ui.closeup), { y: -12, opacity: 0, duration: 0.45, ease: 'expo.in',
     onComplete: () => { gsap.set(ui.closeup, { visibility: 'hidden' }); ui.closeup.setAttribute('aria-hidden', 'true'); } });
   gsap.to(roomChrome(), { autoAlpha: 1, duration: REVEAL, ease: EASE, stagger: 0.04, delay: 0.8 });
@@ -127,6 +170,8 @@ function closeCloseup() {
 }
 ui.view.addEventListener('click', openCloseup);
 $('[data-back]').addEventListener('click', closeCloseup);
+// from the sheet straight into the walk's first stop
+$('[data-cu-walk]').addEventListener('click', () => { closeCloseup(); setTimeout(toFirstStop, 700); });
 
 /* ---------------------------------------------------------------------------
    4) Loader: real download progress of the model, then the lights come on
@@ -155,13 +200,15 @@ async function boot() {
   // SplitText measures lines, so the faces have to be in first
   await Promise.all(FACES.map((f) => document.fonts.load(f))).catch(() => {});
   await document.fonts.ready;
-  const dataP = fetch('assets/data/floe.json').then((r) => r.json());
+  const dataP = sheet('floe');
+  LINEUP.forEach((g) => sheet(g.id));        // the seven sheets are small: have them ready for the panel
   if (room) {
     try {
       await room.load(LINEUP);
     } catch (err) {
       console.error(err);
     }
+    if (initDraft(room)) { walkFor = -1; setWalkGuitar(room.index); }   // the option changes the walk's length
     setStageY();
     // the page accent follows the guitar in the centre, same colour as the room's light
     let accent = '';
@@ -182,10 +229,12 @@ async function boot() {
   introReveal();
 
   const D = await dataP;
+  // pins are made in page order (the room, then anything below it), so each measures from the one before
   buildDrawing(D);
-  buildIndex();
-  initReveals();
   initWalk();
+  await buildIndex();
+  if (FOOTER) await buildFooterOption($('#visit'), { sheet, front: () => room?.index || 0 });
+  initReveals();
   ScrollTrigger.refresh();
 }
 
@@ -201,11 +250,6 @@ function buildDrawing(D) {
     li.innerHTML = `<span class="n">${String(i + 1).padStart(2, '0')}</span><span class="k">${k}</span><span class="v">${v}</span>`;
     specs.appendChild(li);
   });
-  const dl = $('[data-specs]');
-  [['Scale', '25.5 in'], ['Radius', '7.25 in'], ['Frets', '21'], ['Nut', '1.65 in'], ['Body', 'Swamp ash, two-piece'],
-    ['Neck', 'One-piece maple'], ['Finish', 'White blonde'], ['Hardware', 'Nickel, brass saddles']]
-    .forEach(([k, v]) => { dl.insertAdjacentHTML('beforeend', `<dt>${k}</dt><dd>${v}</dd>`); });
-
   if (reduced) return;
   const strokes = $$('[data-draw]', svg);
   gsap.set(strokes, { strokeDasharray: 1, strokeDashoffset: 1 });
@@ -218,7 +262,9 @@ function buildDrawing(D) {
 /* ---------------------------------------------------------------------------
    6) The index: numbered rows that turn the ring when clicked
    ------------------------------------------------------------------------ */
-function buildIndex() {
+const pickGuitar = (i) => { scrollTo('#room', { onComplete: () => room?.goTo(i) }); if (!lenis) room?.goTo(i); };
+async function buildIndex() {
+  if (INDEX) { await buildIndexOption($('#guitars'), { sheet, pick: pickGuitar }); return; }
   const list = $('[data-index]');
   LINEUP.forEach((g, i) => {
     const li = document.createElement('li');
@@ -230,10 +276,7 @@ function buildIndex() {
         <span class="index__meta">${g.woods}</span>
         <span class="index__state ${g.real ? 'is-floor' : ''}">${g.real ? 'On the floor' : 'In the workshop'}</span>
       </button>`;
-    li.firstElementChild.addEventListener('click', () => {
-      scrollTo('#room', { onComplete: () => room?.goTo(i) });
-      if (!lenis) room?.goTo(i);
-    });
+    li.firstElementChild.addEventListener('click', () => pickGuitar(i));
     list.appendChild(li);
   });
 }
@@ -294,12 +337,13 @@ function initWalk() {
     },
   });
   // Scroll in the corner goes to the first stop rather than past the walk
-  $('[data-scroll-cue]').addEventListener('click', (e) => {
-    e.preventDefault();
-    const to = Math.round((BEATS.lift + BEATS.travel + BEATS.hold * 0.4) * innerHeight);
-    lenis ? lenis.scrollTo(to, { duration: 2.6 }) : window.scrollTo({ top: to });
-  });
+  $('[data-scroll-cue]').addEventListener('click', (e) => { e.preventDefault(); toFirstStop(); });
   gsap.ticker.add(walkFrame);
+}
+
+function toFirstStop() {
+  const to = Math.round((BEATS.lift + BEATS.travel + BEATS.hold * 0.4) * innerHeight);
+  lenis ? lenis.scrollTo(to, { duration: 2.6 }) : window.scrollTo({ top: to });
 }
 
 const clamp01 = (x) => Math.min(Math.max(x, 0), 1);
