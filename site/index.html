@@ -62,16 +62,23 @@
           <p class="room__lede" data-intro>Seven guitars rebuilt from the measured drawings of instruments that shaped the sound. One quiet room to hear them in.</p>
         </div>
 
-        <div class="room__title" aria-live="polite">
-          <p class="room__count"><span data-no>01</span><i>/</i>07</p>
-          <h2 class="room__name"><span data-name>Floe</span></h2>
-          <p class="room__line" data-line>Single-cut · Swamp ash · 25.5 in scale</p>
-        </div>
+        <!-- the selector: which guitar is in front, and the way into it -->
+        <div class="room__side">
+          <div class="room__title" aria-live="polite">
+            <p class="room__count">
+              <button class="room__step" type="button" data-prev aria-label="Previous guitar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 6l-6 6 6 6" fill="none" stroke="currentColor"/></svg></button>
+              <span class="room__no"><span data-no>01</span><i>/</i>07</span>
+              <button class="room__step" type="button" data-next aria-label="Next guitar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6l6 6-6 6" fill="none" stroke="currentColor"/></svg></button>
+            </p>
+            <h2 class="room__name"><span data-name>Floe</span></h2>
+            <p class="room__line" data-line><span>Single-cut</span><span>Swamp ash</span><span>25.5 in scale</span></p>
+          </div>
 
-        <button class="room__view" type="button" data-view>
-          <span>View guitar</span>
-          <svg viewBox="0 0 24 10" aria-hidden="true"><path d="M0 5h22M18 1l4 4-4 4" fill="none" stroke="currentColor"/></svg>
-        </button>
+          <button class="room__view" type="button" data-view>
+            <span>View guitar</span>
+            <svg viewBox="0 0 24 10" aria-hidden="true"><path d="M0 5h22M18 1l4 4-4 4" fill="none" stroke="currentColor"/></svg>
+          </button>
+        </div>
 
         <nav class="room__controls" aria-label="Choose a guitar">
           <button class="room__arrow" type="button" data-prev aria-label="Previous guitar">
@@ -102,16 +109,30 @@
         </div>
       </div>
 
+      <!-- View guitar: the camera walks up to it and its sheet comes in on the right -->
       <aside class="closeup" aria-hidden="true" data-closeup>
+        <div class="closeup__shade" data-cu-shade></div>
         <button class="closeup__back" type="button" data-back>
           <svg viewBox="0 0 24 10" aria-hidden="true"><path d="M24 5H2M6 1L2 5l4 4" fill="none" stroke="currentColor"/></svg>
           <span>Back to the room</span>
         </button>
         <div class="closeup__panel">
-          <p class="eyebrow">01 · Floe</p>
-          <h3 class="closeup__h">A single-cut, <em>measured</em> before it was made.</h3>
+          <p class="closeup__no"><span data-cu-no>01</span><i>/</i>07<b data-cu-after>After a 1950s single-cut</b></p>
+          <h3 class="closeup__name"><span data-cu-name>Floe</span></h3>
+          <p class="closeup__claim" data-cu-claim></p>
+          <ul class="closeup__figures" data-cu-figures></ul>
           <dl class="closeup__specs" data-specs></dl>
-          <p class="closeup__hint">Drag to turn it. Scroll to come closer.</p>
+          <div class="closeup__ours">
+            <p class="closeup__k">Ours, not the sheet's</p>
+            <p class="closeup__v" data-cu-ours></p>
+          </div>
+          <div class="closeup__foot">
+            <button class="closeup__walk" type="button" data-cu-walk>
+              <span>Walk the guitar</span>
+              <svg viewBox="0 0 10 24" aria-hidden="true"><path d="M5 0v22M1 18l4 4 4-4" fill="none" stroke="currentColor"/></svg>
+            </button>
+            <p class="closeup__hint">Drag to turn it. Scroll to come closer.</p>
+          </div>
         </div>
       </aside>
     </section>
@@ -136,7 +157,7 @@
     <section class="index" id="guitars">
       <div class="index__head">
         <p class="eyebrow" data-reveal>02 · The room</p>
-        <h2 class="index__h2" data-split>The room holds seven.<br>Only one is <em>finished</em>.</h2>
+        <h2 class="index__h2" data-split>The room holds seven.<br>Find the one that <em>fits</em>.</h2>
       </div>
       <ol class="index__list" data-index></ol>
     </section>
@@ -149,7 +170,7 @@
       <div class="visit__meta" data-reveal>
         <p>KVELD Room 01<br>59.1244° N, 11.3875° E</p>
         <p>Open by appointment<br>Thursday to Saturday</p>
-        <p class="visit__note">KVELD is a fictional maker, made for a concept study. Floe is modelled from published measured drawings of a 1950s single-cut guitar. Its headstock, markers and logo are original. The other six are workshop stand-ins until their drawings are done.</p>
+        <p class="visit__note">KVELD is a fictional maker, made for a concept study. Each of the seven is modelled from published measured drawings of a classic electric guitar, then changed: the headstock, markers and logo are original, and every body departs from its source.</p>
       </div>
     </footer>
   </main>
