@@ -1,0 +1,7 @@
+{ "section": "02 The room", "out": "index-options", "cardSeconds": 3.2, "theme": { "bg": "#0b0a09", "fg": "#ece6da", "accent": "#9fe3f0", "display": { "family": "Panchang", "src": "../../site/vendor/fonts/panchang-500.woff2" }, "body": { "family": "Martian Mono", "src": "../../site/vendor/fonts/martian-mono-300.woff2" }, "mono": { "family": "Martian Mono", "src": "../../site/vendor/fonts/martian-mono-400.woff2" } },
+  "options": [
+    { "n": "00", "name": "Now", "line": "The list I'd fix first: seven rows of text, no guitar in sight.", "desktop": "clips/now-d.mp4", "phone": "clips/now-p.mp4" },
+    { "n": "01", "name": "The Wall", "line": "The seven hang in a row that travels sideways as you scroll, each with its number, three facts, a price and a way into the room.", "desktop": "clips/wall-d.mp4", "phone": "clips/wall-p.mp4" },
+    { "n": "02", "name": "Spotlight", "line": "Seven names on the left. Scrolling moves the light down the list and the guitar, its drawing and its sheet change on the right.", "desktop": "clips/stage-d.mp4", "phone": "clips/stage-p.mp4" },
+    { "n": "03", "name": "To Scale", "line": "All seven on a cream sheet at true size, lined up at the bridge. The light goes along the row and the others fall back to their drawings.", "desktop": "clips/bench-d.mp4", "phone": "clips/bench-p.mp4" }
+  ] }

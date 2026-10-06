@@ -1,0 +1,280 @@
+# KVELD showroom (013 3D Guitars)
+
+A concept landing page for a fictional guitar maker. Seven guitars stand on low
+plinths in a curved ring over a black glass floor. The camera sits close on the
+centre one, under its halo. When the ring turns, the camera pulls back and drops
+low, so the whole ring stands on its reflection for a moment, then pushes in on
+the next guitar.
+
+All seven are real models, each rebuilt in Blender from free published
+full-scale drawings of an existing guitar, then changed enough to read as a
+KVELD design: Floe (Telecaster), Sedge (Music Man Axis), Scree (SG), Moss
+(Jazzmaster), Fjord (ES-335), Rowan (Les Paul), Heath (Stratocaster). The clay
+maquettes in `standins.js` now only stand in for a model while it downloads.
+
+The name, KVELD (Norwegian for evening), lives in `BRAND` at the top of
+`blender/build_floe.py`, which models it into the headstock in Panchang, and in
+the page copy. Model names and each guitar's colour live in `site/src/data.js`.
+
+## Versions
+
+The history is five commits on `main`, one per iteration of the page, each with a tag.
+
+| Tag | What it is |
+|---|---|
+| `v1` | The first page. One guitar (then called Nimbus), the brand still HALDEN, the ring of plinths, a close-up and the drawing chapter. |
+| `v2` | KVELD: the name, the two typefaces, one colour per guitar. Floe's model polished. The hero with the close camera and the mirror floor ("Breathe on Glass"). |
+| `v3` | The walk: scrolling lifts the guitar off its plinth and takes the camera along it, stop by stop. |
+| `v4` | Seven guitars: the other six built from their plans, then all seven corrected one by one in review. |
+| `v5` | The page around them: the drawing that becomes the guitar (Ink on Paper), the View guitar sheet, Spotlight as section 02, Last Light as the footer, the plectrum pointer. |
+
+To look at an older one:
+
+    git checkout v3
+    python3 -m http.server 8013 --directory site      # tools/serve.py only exists from v5
+    git checkout main                                  # to come back
+
+At `v1` to `v4` the repo holds the page only (`site/`). The Blender builds, tools and notes
+arrive with `v5`.
+
+Four side tags keep things that are not on that line: `alt/hero-options` (the four hero
+options behind `?hero=`), `alt/scree-1961-guard` (Scree with the 1961 guard and heel),
+`alt/unpicked-options` (the options not chosen for section 02, the drawing and the footer,
+behind `?index=`, `?draft=`, `?footer=`) and `alt/dark-hero` (the darker hero Sam turned down).
+
+A new tag is for something big, a new section or a redesign. Fixes land in the version they
+belong to.
+
+Not in the repo, on purpose (`.gitignore`): `reference/` (the plan sheets are licensed for
+personal use only), the overlay images that show their ink, the videos in `media/` and `demo/`,
+check stills, and Blender's test renders.
+
+## Run it
+
+```bash
+python3 -m http.server 8013 --directory site
+```
+
+Then open `http://localhost:8013`. The model on its own, to inspect while
+polishing it, is at `http://localhost:8013/inspect.html?g=<id>` (all seven: the buttons along the top or the keys 1 to 7 switch guitars; orbit, set views,
+parts to hide or solo, studio or showroom light, wireframe). It uses ES modules, so it needs a server,
+not `file://`. Everything is vendored in `site/vendor/` (three.js r186, GSAP
+3.13, Lenis 1.1.14, and the two faces in `vendor/fonts/`: Panchang from
+Fontshare, Martian Mono from Fontsource). No network requests.
+
+## How it fits together
+
+```
+reference/telecaster/   the plan PDFs (electricherald.com), their SVGs, parsed JSON
+tools/parse_plan.py     PDF-to-SVG strokes, chained into outlines
+tools/extract_tele.py   traces the body silhouette, lines up pickguard and neck,
+                        writes reference/telecaster/parsed/tele.json
+blender/build_floe.py builds the guitar, bakes the wood textures, exports
+                        site/assets/models/floe.glb and site/assets/data/floe.json
+blender/render_views.py Cycles check renders into blender/renders/
+site/                   the landing page
+```
+
+Rebuild the model:
+
+```bash
+/Applications/Blender.app/Contents/Resources/5.2/python/bin/python3.13 tools/extract_tele.py
+blender -b -P blender/build_floe.py --
+blender -b -P blender/build_floe.py -- --render --no-export
+```
+
+Check the model against the original sheet (independent of the extraction):
+
+```bash
+blender -b blender/floe.blend -P tools/plan_overlay.py
+```
+
+It renders the model straight on at the plan's own scale, finds the alignment by
+itself (cross-correlation, nobody places it) and writes `media/plan-vs-model.png`.
+Last run: the whole body outline within 0.033 in of the drawn line.
+
+The build prints the body size it produced against the plan: 15.960 x 12.758 x
+1.750 in, which is what the drawing says.
+
+## What comes from the drawing and what is ours
+
+From the plans: body outline, 1.75 in thickness and 0.125 in edge radius,
+pickguard outline and screw positions, neck outline and taper, the side
+profile of the neck and headstock transition, 25.5 in scale, fret positions,
+21 frets, dot positions, tuner post positions, string-through holes at 0.425 in
+spacing, bridge and neck pickup positions, control plate screws, jack bore,
+neck screws, skunk stripe.
+
+Ours: the headstock outline (six in line, straight bass edge, slanted tip), the
+logo, the finish and the hardware styling. The headstock shape is the part of a
+real guitar that is trademarked, so it was redrawn on purpose.
+
+The blueprint in the "Drawings" chapter is plotted at runtime from
+`site/assets/data/floe.json`, which the Blender build writes from the same
+numbers it models with. The drawing and the model cannot disagree.
+
+## The walk (scroll sequence)
+
+Scrolling past the room pins it, lifts the guitar in the centre off its plinth
+and takes the camera along it, stop by stop, then lays it flat and straight on
+as the drawing chapter comes up. Built as data:
+
+- `site/src/stops.js`: one list of stops per guitar. Each stop names the parts
+  it aims at (node names in the GLB), the camera's direction in the guitar's own
+  frame, how much to fit, roll, the guitar's turn under the key light, lens, and
+  the copy. Maquettes get `workshopStops(info)`, three stops with workshop copy.
+  A new guitar only adds its own list here.
+- `site/src/sequence.js`: `BEATS` (scroll length of the lift, each travel, each
+  hold, the outro, in screen heights), `LIFT` (how far it rises), the framing
+  maths, and `sample()`, a pure function of scroll position, so scrolling back
+  plays it in reverse.
+- `site/src/showroom.js`: applies the shot (`W` in `update`), `FILL`,
+  `LOOK.dof` (depth of field strength), the lens shift that moves the guitar
+  aside for the copy, the chrome softening that stops knobs blooming.
+- `site/src/main.js` section 8: the pin, the copy, the ticker and the bar.
+  Reduced motion cuts from stop to stop instead of travelling.
+- Wound strings get their winding in a shader (`windStrings` in
+  `guitar-look.js`), faded out once a ridge is under a couple of pixels.
+
+## Knobs
+
+- `site/src/showroom.js`, `LOOK` at the top: exposure, bloom, spot and rim
+  light strength, the centre guitar's spin speed, ring step duration, grain.
+- `DIM` and `GLOW` in the same file: how fast the side guitars fall into the
+  dark, per slot.
+- `layout()`: the ring's path points for wide and tall screens, `camBase` (the
+  close framing at rest) and `camWide` (where a turn pulls back to, low over the
+  glass). `breathe()` blends between them from the ring's speed: out fast, in
+  slow, so steps, drags and flings all breathe. Off with reduced motion.
+- `FloorShader`: the black glass. `uStrength` and `uFres0` set how mirror-like it
+  is; the reflection only shows at a grazing angle, which is why the wide shot is
+  low.
+- `glowGain()`: evens out the glow across the seven colours by luminance, so the
+  blue guitar lights the room as much as the yellow one.
+- `site/styles.css`, `:root`: fonts, ink and bone, the expo easing curve.
+- `site/src/data.js`, `colour` on each guitar: its light. While it is in the
+  centre the halo, cone, dust, wall seams, floor pool, warm rim light and the page accent
+  take it, cross-fading round the colour wheel as the ring turns (`applyPalette`
+  in showroom.js).
+- `site/src/main.js`: Lenis weight (`duration: 1.4`), reveal timing.
+
+## The other six (session 5)
+
+```bash
+PY=/Applications/Blender.app/Contents/Resources/5.2/python/bin/python3.13
+$PY tools/extract_strat.py && blender -b -P blender/build_heath.py --     # Heath
+$PY tools/extract_jm.py    && blender -b -P blender/build_moss.py --      # Moss
+$PY tools/extract_sg.py    && blender -b -P blender/build_scree.py --     # Scree
+$PY tools/extract_335.py   && blender -b -P blender/build_fjord.py --     # Fjord
+$PY tools/extract_axis.py  && blender -b -P blender/build_sedge.py --     # Sedge
+$PY tools/extract_lp.py    && blender -b -P blender/build_rowan.py --     # Rowan
+```
+
+- `tools/plan_kit.py`: reading the sheets (SVG strokes with their transforms,
+  loops, circles, silhouettes, debug plots). Each `extract_<id>.py` writes
+  `reference/<id>/parsed/<id>.json` in the model frame.
+- `blender/kveld_kit.py`: Floe's own builders, moved out unchanged (Floe
+  rebuilds byte for byte identical from it).
+- `blender/kveld_parts.py`: the house parts. `body_shell` builds any body from an
+  outline and two height functions (contours, bevels and carves are just
+  functions), with binding, rim material and f-holes. `BoltOnNeck` and
+  `SetNeck` (built straight, pitched about the joint, 3+3 head on its own
+  angled face). Fretboards with binding, frets, KVELD markers, the house tuner,
+  knob, switch tips, strap button, rim jack and neck plate. Single coils,
+  soapbars, covered and open humbuckers, rings seated under the strings. Vintage
+  vibrato, Jazzmaster bridge and vibrato, tune-o-matic, stopbar, hardtail.
+  `ArchMap` turns a drawing's contour lines into a height field.
+  `figured_top_png` paints burst and flame.
+- Checks: `blender -b blender/<id>.blend -P blender/render_check.py -- <dir> "name:Part+Part:dx,dy,dz:dist"`
+  for Cycles close-ups, `PLAN=<pdf> OUT=media/plan-vs-<id>.png blender -b blender/<id>.blend -P tools/plan_overlay.py`
+  for the overlay (it now finds any quarter turn or mirror by itself),
+  `GUITAR=<ring index> node tools/stills.mjs 1000x575 <label> 2.5 4.3` for page
+  stills, `GUITAR=<i> node tools/tune_turns.mjs <id>` to pick each stop's `turn`
+  by counting blown-out pixels, `tools/sheet.sh <label>` for a contact sheet.
+- Page: each entry in `data.js` has `real: true, model: ...`. `Showroom.load`
+  loads the centre guitar first (the loader's bar) and swaps the others in as
+  they arrive, nearest first. Stops per guitar in `stops.js`.
+
+### What comes from the drawings and what is ours
+
+| | Sheet (free, electricherald.com) | Measured | Judged | Ours (departure from the drawn outline) |
+|---|---|---|---|---|
+| Heath | Strat body front/back, assembled 1:1 plan, 1962 Fender drawing | outline, 1/2 in edges, contour lines, 5/8 in at contoured rim, pickups, bridge, knobs | contour falloff curve | horns 10.3 / 7.2 mm shorter and rounder, guard redrawn (7 screws), controls on their own plate, rim jack |
+| Moss | Jazzmaster body, routes and guard 1:1 | outline, pocket, pickups, bridge posts (the saddle line lands on them to 0.006 in), vibrato route | the comfort contours (the sheet leaves them out), 0.3 in edges | offset softened (treble waist 7.1 mm), horns 11.1 / 5.8 mm, one control plate instead of the rhythm circuit, tortoise guard round the pickups, rim jack |
+| Scree | SG template 1:1 (body, bevel lines), SG plans in mm (scale, bridge, sections) | outline, bevel lines, 35 mm body, 2 and 13 degree pitches, slanted bridge, stopbar, pickups, knobs | bevel depth 0.42 in, board height at the joint | horns blunted and rounded 6.8 / 12.6 mm, waists filled 6.6 mm, bevels as an even band along the rim (fading out at the neck and the horn tips), a guard of our own round both pickups (mirror-symmetric, top corners following the cutaway bevels, sides echoing the waist), rim jack |
+| Fjord | ES-335 1:1 (P. Sharkey) | outline, arched top from its contour map (0.05 to 0.45 in), 1 3/4 in rim, 24.54 in scale from its frets, 4 / 17 degree pitches, bridge, pickups, knobs | the back's arch (85% of the top), board height at the joint | sound holes of our own shape, horns 8.5 / 8.4 mm, no guard, toggle on the treble horn, rim jack |
+| Sedge | Music Man Axis 1:1 | outline, carve start line, scale (648 mm), 22 frets, 10 in radius, pickups, volume knob | the carve (0.3 in at the rim), body 1.75 in | horns 10.1 / 7.4 mm, waists 5.3 mm, gentler carve, fixed string-through bridge for the locking vibrato, tone and three-way added, rim jack |
+| Rowan | Les Paul isolines 1:1, carved-top sections and front plan 1:1 | outline, 12 isolines, cap 3/16 in at the rim and 0.543 in at the crown, 1.845 in mahogany, bridge, stopbar, pickups | scale 24.75 (no frets drawn), saddle line 0.19 in ahead of the treble post (as on the SG plans) | cutaway horn 9 mm, heights between the drawn isolines ours (fuller crown), knobs on an arc, no guard, back cover following the knob arc, rim jack |
+
+All seven share the KVELD headstocks (six in line on bolt-ons, three a side on
+set necks), markers, logo, tuners, knobs, switch tips, strap buttons and jack.
+Overlays of each model on its sheet: `media/plan-vs-<id>.png` (Floe's is
+`media/plan-vs-model.png`).
+
+## Picks made in session 6 (nothing is waiting any more)
+
+Three sections had three options each behind a URL switch. Sam picked one for
+each on 2026-10-06 and the switches are gone from `site/`.
+
+| Section | Pick | Now lives in | The other two |
+|---|---|---|---|
+| The drawing comes first, then becomes the guitar (takes the place of the walk's lift) | Ink on Paper | `site/src/draft.js` (`&g=<id>` still opens on a guitar) | Contour Stack, Lights Down: `versions/v32` with `?draft=stack` or `dark`. Their branches are still in `draft.js`, unreachable, to cut in a cleanup pass |
+| 02 The room index | Spotlight | `site/src/spotlight.js`, "02 · the room" in `styles.css` | `versions/v29` to `v31` |
+| 03 Visit (footer) | Last Light | `site/src/footer.js`, "Last Light" in `styles.css` | Open Strings, The Ticket: `versions/v32` with `?footer=strings` or `ticket` |
+
+With the ink chapter on, the cream chapter that plotted Floe's plan (`#drawings`)
+is removed at boot, and Drawings in the header and Scroll in the corner go to the
+inked plan inside the pinned room (`DRAFT.hold` screen heights). Where the ink
+chapter cannot run (reduced motion, no WebGL) the cream chapter stays as the
+fallback, with `blueprint.js`.
+
+The pointer is a plectrum (`site/src/cursor.js`, "pointer" in `styles.css`): its
+tip is the hot spot, it takes the centre guitar's colour, fills over links, says
+Drag over the room and is drawn in ink over the cream sheet. Mouse only.
+
+The hero camera fits itself under the header: `layout()` in `showroom.js` lifts
+`camBase` a little and opens the lens just enough (at most 4.5 degrees) for the
+tallest guitar's head to clear the header row on any window.
+
+To record a round again (`draft` or `footer`): `sh demo/<round>/record.sh [base-url]`, then
+`node ~/.claude/skills/demo-options/scripts/reel.mjs demo/<round>/reel.json`.
+The base URL defaults to `http://localhost:8013/`. Give it a frozen copy on its
+own port (`python3 tools/serve.py 8029 versions/v29`) to keep editing `site/`
+while it records.
+
+After changing files that are already open in a browser, bump the `?v=` tag in
+`site/index.html` (every entry together): it gives each file a new address, so
+an ordinary reload can't mix old and new copies.
+
+What the drawing-first options rely on, for all seven guitars:
+`assets/data/<id>.json` for the lines, and a depth map of the model rendered
+straight down at load for their heights (so a line rises to the real surface).
+Nothing is drawn by hand per guitar.
+
+### Product stills
+
+`site/assets/shots/` holds transparent WebP stills rendered from the models
+(`<id>-hero`, `<id>-front`, `<id>-body`), `frames.json` (where each front still
+sits in the guitar's own frame, so a drawing can be laid over it) and
+`room-wide.jpg`. Re-render after a model changes:
+
+    # serve the project root on :8030 (launch.json: kveld-root), then
+    node tools/product_shots.mjs            # all seven, or: node tools/product_shots.mjs rowan,floe
+    node tools/room_still.mjs 3             # the wide room, guitar 3 in front; then ffmpeg -i room-wide.png -q:v 3 room-wide.jpg
+
+The front stills use an orthographic camera at 1420 px per metre for every
+guitar, so they compare true to size. Prices and build times in
+`site/src/specs.js` are invented.
+
+## Plan sources and their terms
+
+- Electric Herald free templates, all downloaded with Sam's OK:
+  Telecaster, Stratocaster, Jazzmaster, SG Custom, ES-335, Les Paul and Music
+  Man Axis pages on https://www.electricherald.com/guitar-templates/ .
+- Terms (https://www.electricherald.com/tc.html): view, download and print for
+  your own personal use; no republishing, no showing the material in public,
+  no commercial use, no modified copies. So the PDFs stay in `reference/` for
+  building from. The page shows only our own models and drawings plotted from
+  our own numbers. The overlay images do contain the sheets' ink: keep them
+  private unless Electric Herald agrees, or blank the sheet out before using
+  them in a video. The ES-335 sheet itself is CC BY-NC-SA (P. Sharkey).

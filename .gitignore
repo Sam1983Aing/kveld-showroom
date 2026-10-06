@@ -1,0 +1,20 @@
+# macOS, Python, Blender backups
+.DS_Store
+__pycache__/
+*.pyc
+*.blend1
+
+# Licensed plan sheets, and anything that shows their ink. Electric Herald's terms are
+# personal use only, no republishing (see "Plan sources and their terms" in the README).
+reference/
+media/reference/
+media/plan-vs-*.png
+
+# Heavy or scratch, kept on disk only: videos, check stills, Blender test renders
+media/*.mp4
+media/checks/
+demo/**/*.mp4
+blender/renders/
+
+# The old frozen copies. The history lives in the git tags now.
+versions/

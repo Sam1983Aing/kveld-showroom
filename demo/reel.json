@@ -1,0 +1,17 @@
+{
+  "section": "Name, models, type, colour",
+  "out": "identity-options",
+  "cardSeconds": 2.8,
+  "theme": {
+    "bg": "#0b0a09", "fg": "#ece6da", "accent": "#d8ad6e",
+    "display": { "family": "Jost", "google": true, "weight": 400 },
+    "body": { "family": "Jost", "google": true, "weight": 300 },
+    "mono": { "family": "Martian Mono", "src": "../site/vendor/fonts/martian-mono-400.woff2" }
+  },
+  "options": [
+    { "n": "00", "name": "Now · HALDEN", "line": "Bodoni Moda, the reference image's names, brass glow on every guitar.", "desktop": "clips/now-d.mp4", "phone": "clips/now-p.mp4" },
+    { "n": "01", "name": "ORIEL", "line": "Light calligraphic serif, sky names, the room glows in each guitar's own colour.", "desktop": "clips/oriel-d.mp4", "phone": "clips/oriel-p.mp4" },
+    { "n": "02", "name": "KVELD", "line": "Wide faceplate sans with a mono, Nordic landscape names, signal-bright colours.", "desktop": "clips/kveld-d.mp4", "phone": "clips/kveld-p.mp4" },
+    { "n": "03", "name": "SORREL", "line": "Heavy workshop-catalogue serif, every guitar named after the pigment it glows in.", "desktop": "clips/sorrel-d.mp4", "phone": "clips/sorrel-p.mp4" }
+  ]
+}

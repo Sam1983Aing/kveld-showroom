@@ -1,0 +1,13 @@
+{
+  "section": "Hero v3",
+  "out": "hero-v3",
+  "cardSeconds": 3.0,
+  "theme": { "bg": "#0b0a09", "fg": "#ece6da", "accent": "#9fe3f0",
+    "display": { "family": "Panchang", "src": "../../site/vendor/fonts/panchang-500.woff2" },
+    "body": { "family": "Martian Mono", "src": "../../site/vendor/fonts/martian-mono-300.woff2" },
+    "mono": { "family": "Martian Mono", "src": "../../site/vendor/fonts/martian-mono-400.woff2" } },
+  "options": [
+    { "n": "00", "name": "Before", "line": "The hero I gave 6.5: Floe at rest, then two turns of the ring.", "desktop": "clips/hero-before-d.mp4", "phone": "clips/hero-before-p.mp4" },
+    { "n": "01", "name": "After", "line": "Same moves. A hairline halo, the others waiting in the dark, each finish in its own colour, the copy clear of the scene.", "desktop": "clips/hero-after-d.mp4", "phone": "clips/hero-after-p.mp4" }
+  ]
+}

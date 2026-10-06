@@ -1,0 +1,72 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>KVELD product stills</title>
+<!-- Renders transparent product stills of each guitar with the studio light the viewer uses.
+     Served from the project root (launch.json: kveld-root, port 8030); driven by tools/product_shots.mjs. -->
+<style>html, body { margin: 0; background: transparent; } canvas { display: block; }</style>
+<script type="importmap">{ "imports": { "three": "../site/vendor/three.module.js", "three/addons/": "../site/vendor/addons/" } }</script>
+<canvas id="c"></canvas>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { prepareGuitar, studioEnvironment } from '../site/src/guitar-look.js';
+
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.setClearColor(0x000000, 0);
+const scene = new THREE.Scene();
+scene.environment = studioEnvironment(renderer);
+const key = new THREE.SpotLight('#fff1dc', 10, 8, 0.4, 0.8, 2);
+const rimL = new THREE.SpotLight('#cfdcff', 4, 8, 0.5, 0.9, 2), rimR = new THREE.SpotLight('#ffe2c0', 3.2, 8, 0.5, 0.9, 2);
+scene.add(key, key.target, rimL, rimL.target, rimR, rimR.target);
+const loader = new GLTFLoader(), cache = new Map();
+let current = null;
+
+/** One still. view: hero (three-quarter, perspective), front (straight on, same scale for every guitar),
+ *  body (close on the top). Returns a WebP data URL with alpha. */
+window.__shot = async ({ id, view = 'hero', w = 900, h = 1700, ppm = 1400, yaw = -24, env = 1.0, quality = 0.9 }) => {
+  if (!cache.has(id)) { const g = (await loader.loadAsync(`../site/assets/models/${id}.glb`)).scene; prepareGuitar(g, renderer); cache.set(id, g); }
+  if (current) scene.remove(current);
+  const g = current = cache.get(id);
+  g.rotation.set(0, 0, 0); g.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(g, true), c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3());
+  scene.add(g);
+  scene.environmentIntensity = env;
+  renderer.setSize(w, h, false);
+  key.position.set(c.x + 0.4, box.max.y + 0.9, c.z + 1.2); key.target.position.copy(c);
+  rimL.position.set(c.x - 1.2, c.y + 0.8, c.z - 1.0); rimL.target.position.copy(c);
+  rimR.position.set(c.x + 1.3, c.y + 0.3, c.z - 0.9); rimR.target.position.copy(c);
+  let cam;
+  if (view === 'front') {
+    // every guitar at the same pixels per metre, tail on the same line: they compare true to size
+    const W = w / ppm, H = h / ppm, base = box.min.y - 0.012;
+    cam = new THREE.OrthographicCamera(-W / 2, W / 2, base + H, base, 0.01, 10);
+    cam.position.set(0, 0, 3); cam.lookAt(0, 0, 0); cam.position.y = 0; cam.updateMatrixWorld();
+  } else {
+    g.rotation.y = yaw * Math.PI / 180; g.updateMatrixWorld(true);
+    const b2 = new THREE.Box3().setFromObject(g, true), c2 = b2.getCenter(new THREE.Vector3()), s2 = b2.getSize(new THREE.Vector3());
+    const fov = view === 'body' ? 24 : 18;
+    cam = new THREE.PerspectiveCamera(fov, w / h, 0.05, 20);
+    if (view === 'body') {
+      const body = new THREE.Box3().setFromObject(g.getObjectByName('Body') || g, true), bc = body.getCenter(new THREE.Vector3()), bs = body.getSize(new THREE.Vector3());
+      const dist = (Math.max(bs.y, bs.x * h / w) * 0.62) / Math.tan(fov * Math.PI / 360);
+      cam.position.set(bc.x + dist * 0.16, bc.y + dist * 0.2, bc.z + dist); cam.lookAt(bc.x, bc.y + bs.y * 0.08, bc.z);
+    } else {
+      const half = Math.tan(fov * Math.PI / 360), dist = Math.max(s2.y * 0.54 / half, s2.x * 0.56 / (half * w / h));
+      cam.position.set(c2.x, c2.y + dist * 0.03, c2.z + dist); cam.lookAt(c2);
+    }
+  }
+  renderer.render(scene, cam);
+  return renderer.domElement.toDataURL('image/webp', quality);
+};
+// where a 'front' still sits in the guitar's own frame, so a drawing can be laid over it
+window.__frame = (id, { w = 560, h = 1520, ppm = 1420 } = {}) => {
+  const g = cache.get(id); g.rotation.set(0, 0, 0); g.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(g, true);
+  const neck = new THREE.Box3().setFromObject(g.getObjectByName('Neck') || g, true);
+  return { w, h, ppm, base: +(box.min.y - 0.012).toFixed(5), top: +neck.max.y.toFixed(5) };
+};
+window.__ready = true;
+</script>

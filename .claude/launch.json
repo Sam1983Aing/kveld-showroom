@@ -1,0 +1,27 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "kveld-site",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "tools/serve.py",
+        "8013",
+        "site"
+      ],
+      "port": 8013
+    },
+    {
+      "name": "kveld-root",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8030",
+        "--directory",
+        "."
+      ],
+      "port": 8030
+    }
+  ]
+}

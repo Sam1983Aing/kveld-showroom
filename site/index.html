@@ -7,7 +7,7 @@
   <meta name="description" content="Seven guitars rebuilt from measured drawings. A concept showroom for KVELD.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%230b0a09%22/%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%229%22 fill=%22none%22 stroke=%22%239fe3f0%22 stroke-width=%221.5%22/%3E%3C/svg%3E">
   <link rel="preload" href="vendor/fonts/panchang-500.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=35">
 
   <!--
     CREATIVE DIRECTION (the contract this build obeys)
@@ -27,10 +27,20 @@
   <script src="vendor/ScrollTrigger.min.js"></script>
   <script src="vendor/SplitText.min.js"></script>
   <script src="vendor/lenis.min.js"></script>
+  <!-- The ?v= tag: a browser that kept an older copy of a file (a plain static server sends no
+       cache rules) would mix it with newer ones. A new tag here makes every file a new address,
+       so one ordinary reload is always enough. Bump all of them together after a change that
+       has to show at once. -->
   <script type="importmap">
-  { "imports": { "three": "./vendor/three.module.js", "three/addons/": "./vendor/addons/" } }
+  { "imports": {
+      "three": "./vendor/three.module.js", "three/addons/": "./vendor/addons/",
+      "./src/showroom.js": "./src/showroom.js?v=35", "./src/data.js": "./src/data.js?v=35", "./src/specs.js": "./src/specs.js?v=35",
+      "./src/sequence.js": "./src/sequence.js?v=35", "./src/stops.js": "./src/stops.js?v=35", "./src/standins.js": "./src/standins.js?v=35",
+      "./src/guitar-look.js": "./src/guitar-look.js?v=35", "./src/blueprint.js": "./src/blueprint.js?v=35",
+      "./src/draft.js": "./src/draft.js?v=35", "./src/spotlight.js": "./src/spotlight.js?v=35", "./src/footer.js": "./src/footer.js?v=35", "./src/cursor.js": "./src/cursor.js?v=35"
+  } }
   </script>
-  <script type="module" src="src/main.js"></script>
+  <script type="module" src="src/main.js?v=35"></script>
 </head>
 <body>
 
@@ -83,7 +93,6 @@
           </button>
         </nav>
 
-        <p class="room__foot">Open by appointment<br><span>59.1244° N, 11.3875° E</span></p>
         <a class="room__scroll" href="#drawings" data-scroll-cue><span>Scroll</span><i></i></a>
       </div>
 
@@ -102,16 +111,30 @@
         </div>
       </div>
 
+      <!-- View guitar: the camera walks up to it and its sheet comes in on the right -->
       <aside class="closeup" aria-hidden="true" data-closeup>
+        <div class="closeup__shade" data-cu-shade></div>
         <button class="closeup__back" type="button" data-back>
           <svg viewBox="0 0 24 10" aria-hidden="true"><path d="M24 5H2M6 1L2 5l4 4" fill="none" stroke="currentColor"/></svg>
           <span>Back to the room</span>
         </button>
         <div class="closeup__panel">
-          <p class="eyebrow">01 · Floe</p>
-          <h3 class="closeup__h">A single-cut, <em>measured</em> before it was made.</h3>
+          <p class="closeup__no"><span data-cu-no>01</span><i>/</i>07<b data-cu-after>After a 1950s single-cut</b></p>
+          <h3 class="closeup__name"><span data-cu-name>Floe</span></h3>
+          <p class="closeup__claim" data-cu-claim></p>
+          <ul class="closeup__figures" data-cu-figures></ul>
           <dl class="closeup__specs" data-specs></dl>
-          <p class="closeup__hint">Drag to turn it. Scroll to come closer.</p>
+          <div class="closeup__ours">
+            <p class="closeup__k">Ours, not the sheet's</p>
+            <p class="closeup__v" data-cu-ours></p>
+          </div>
+          <div class="closeup__foot">
+            <button class="closeup__walk" type="button" data-cu-walk>
+              <span>Walk the guitar</span>
+              <svg viewBox="0 0 10 24" aria-hidden="true"><path d="M5 0v22M1 18l4 4 4-4" fill="none" stroke="currentColor"/></svg>
+            </button>
+            <p class="closeup__hint">Drag to turn it. Scroll to come closer.</p>
+          </div>
         </div>
       </aside>
     </section>
@@ -133,13 +156,8 @@
     </section>
 
     <!-- 02 · THE ROOM INDEX ---------------------------------------------- -->
-    <section class="index" id="guitars">
-      <div class="index__head">
-        <p class="eyebrow" data-reveal>02 · The room</p>
-        <h2 class="index__h2" data-split>The room holds seven.<br>Only one is <em>finished</em>.</h2>
-      </div>
-      <ol class="index__list" data-index></ol>
-    </section>
+    <!-- built by spotlight.js: seven names, and the one in the light with its still, outline and sheet -->
+    <section class="spot" id="guitars" aria-label="The seven guitars"></section>
 
     <!-- 03 · VISIT ------------------------------------------------------- -->
     <footer class="visit" id="visit">
@@ -149,7 +167,7 @@
       <div class="visit__meta" data-reveal>
         <p>KVELD Room 01<br>59.1244° N, 11.3875° E</p>
         <p>Open by appointment<br>Thursday to Saturday</p>
-        <p class="visit__note">KVELD is a fictional maker, made for a concept study. Floe is modelled from published measured drawings of a 1950s single-cut guitar. Its headstock, markers and logo are original. The other six are workshop stand-ins until their drawings are done.</p>
+        <p class="visit__note">KVELD is a fictional maker, made for a concept study. Each of the seven is modelled from published measured drawings of a classic electric guitar, then changed: the headstock, markers and logo are original, and every body departs from its source.</p>
       </div>
     </footer>
   </main>

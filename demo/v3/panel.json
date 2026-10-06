@@ -1,0 +1,13 @@
+{
+  "section": "View guitar",
+  "out": "panel-v3",
+  "cardSeconds": 3.0,
+  "theme": { "bg": "#0b0a09", "fg": "#ece6da", "accent": "#ff5a40",
+    "display": { "family": "Panchang", "src": "../../site/vendor/fonts/panchang-500.woff2" },
+    "body": { "family": "Martian Mono", "src": "../../site/vendor/fonts/martian-mono-300.woff2" },
+    "mono": { "family": "Martian Mono", "src": "../../site/vendor/fonts/martian-mono-400.woff2" } },
+  "options": [
+    { "n": "00", "name": "Before", "line": "View guitar on Rowan: the panel still showed Floe's numbers.", "desktop": "clips/panel-before-d.mp4", "phone": "clips/panel-before-p.mp4" },
+    { "n": "01", "name": "After", "line": "Rowan's own sheet: its name large, four figures that count up, what it is made of, and what KVELD changed.", "desktop": "clips/panel-after-d.mp4", "phone": "clips/panel-after-p.mp4" }
+  ]
+}

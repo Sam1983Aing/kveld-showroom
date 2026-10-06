@@ -458,6 +458,18 @@ export class Showroom {
     this.camWide = portrait
       ? { pos: new THREE.Vector3(0, 0.42, 5.9), target: new THREE.Vector3(0, 0.5, -0.6) }
       : { pos: new THREE.Vector3(0, 0.4, 5.6), target: new THREE.Vector3(0, 0.48, -0.9) };
+    // The head of the tallest guitar has to clear the header row with some air, on any window.
+    // The camera lifts a touch (the picture moves down) and the lens opens just enough, never more
+    // than a few degrees: the guitar stays close.
+    {
+      const b = this.camBase, head = document.querySelector('.site-head');
+      const clear = ((head ? head.offsetHeight : 70) + (portrait ? 6 : 18)) / h;      // share of the height to keep free
+      const lift = portrait ? 0.02 : 0.045, TOP = 1.165;                                // metres: the highest tuner, plinth and spin included
+      b.pos.y += lift; b.target.y += lift;
+      const f = b.target.clone().sub(b.pos).normalize(), up = new THREE.Vector3(0, 1, 0).addScaledVector(f, -f.y).normalize();
+      const v = new THREE.Vector3(0, TOP, 0).sub(b.pos), need = Math.atan(v.dot(up) / (v.dot(f) * (1 - 2 * clear))) * 2 * 180 / Math.PI;
+      b.fov = Math.min(Math.max(b.fov, need), b.fov + (portrait ? 3 : 4.5));
+    }
     this.halo.scale.setScalar(portrait ? 0.74 : 0.94);
     this.renderer.setSize(w, h, false);
     this.composer.setSize(w, h);
@@ -580,6 +592,8 @@ export class Showroom {
   }
 
   exitCloseup() {
+    // the stand has been turning: unwind by the short way round
+    this.closeYaw = THREE.MathUtils.euclideanModulo(this.closeYaw + Math.PI, Math.PI * 2) - Math.PI;
     window.gsap.to(this, { focus: 0, closeYaw: 0, closeDist: 0, duration: 1.6, ease: 'expo.inOut' });
   }
 
@@ -636,18 +650,19 @@ export class Showroom {
       if (centre && F < 0.01 && !W && !this.reduced) it.spinV = Math.min(it.spinV + dt * 0.08, LOOK.spinSpeed);
       else it.spinV = 0;
       it.spin += it.spinV * dt;
+      if (centre && F > 0.6 && !this.reduced) this.closeYaw += dt * 0.11;   // View guitar: a slow turn on the stand
       const yaw = face + it.spin + (a < 0.5 ? this.closeYaw * F : 0);
       it.spinner.position.set(0, PED_TOP + HOVER, 0);
       it.spinner.rotation.set(0, yaw, 0);
 
       const hk = this.hover === i && a > 0.5 ? 1 : 0;
       it.hoverK += (hk - it.hoverK) * Math.min(dt * 6, 1);
-      const focusDim = a < 0.5 ? 1 : 1 - 0.85 * F;
+      const focusDim = a < 0.5 ? 1 : 1 - 0.97 * F;
       // the rest of the room goes out while the walk runs
       const walkDim = a < 0.5 ? 1 : 1 - 0.95 * Lw;
       const dim = (curve(DIM, s) + it.hoverK * 0.14) * focusDim * walkDim * (0.15 + 0.85 * smooth(0, 1, L * 1.4 - a * 0.12));
       it.dim.value = dim;
-      const glow = curve(GLOW, s) * (0.6 + 0.4 * smooth(0, 1, L * 1.2 - a * 0.1)) * smooth(0, 1, L * 1.6 - a * 0.25) * (1 - 0.6 * F * (a > 0.5)) * walkDim;
+      const glow = curve(GLOW, s) * (0.6 + 0.4 * smooth(0, 1, L * 1.2 - a * 0.1)) * smooth(0, 1, L * 1.6 - a * 0.25) * (1 - 0.94 * F * (a > 0.5)) * walkDim;
       // the plinth ring stays soft under the guitar in front (the halo is its
       // light) and comes up to full as the guitar moves to the side. When the
       // guitar lifts off, its empty plinth flares once and stays lit.
