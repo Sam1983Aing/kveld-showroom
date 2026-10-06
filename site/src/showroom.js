@@ -353,7 +353,7 @@ export class Showroom {
   }
 
   // ----------------------------------------------------------- guitars ----
-  async load(lineup, glbUrl) {
+  async load(lineup) {
     const clay = new THREE.MeshPhysicalMaterial({ color: '#6c665f', roughness: 0.58, clearcoat: 0.25, clearcoatRoughness: 0.4 });
     const graphite = new THREE.MeshStandardMaterial({ color: '#2d2a27', roughness: 0.42, metalness: 0.4 });
     const pedGeo = new THREE.LatheGeometry([
@@ -362,9 +362,12 @@ export class Showroom {
     const ringGeo = new THREE.TorusGeometry(0.323, 0.0034, 8, 180);
 
     this.setPalette(lineup.map((g) => g.colour));
-    const gltf = await new GLTFLoader().loadAsync(glbUrl, (e) => { if (e.total) this.onProgress(e.loaded / e.total); });
-    const floe = gltf.scene;
-    prepareGuitar(floe, this.renderer);
+    this.loader = new GLTFLoader();
+    this.chrome = [];
+    // the guitar in the centre first, with the loader's progress bar; the
+    // rest stand in as maquettes and are swapped for their models as they land
+    const first = lineup[0];
+    const firstScene = first.real ? (await this.loader.loadAsync(first.model, (e) => { if (e.total) this.onProgress(e.loaded / e.total); })).scene : null;
 
     lineup.forEach((info, i) => {
       const dim = { value: 1 };
@@ -379,20 +382,9 @@ export class Showroom {
       const ring = new THREE.Mesh(ringGeo, ringMat); ring.rotation.x = Math.PI / 2; ring.position.y = PED_TOP - 0.006;
       pedestal.add(ped, ring);
 
-      let guitar;
-      if (info.real) {
-        guitar = floe;
-        guitar.traverse((o) => { if (o.isMesh) addDim(o.material, dim); });
-        // mirror chrome: up close the key light's reflection in a knob blooms
-        // into a white blob, so the walk takes the polish down a touch
-        this.chrome = [];
-        guitar.traverse((o) => { if (o.isMesh && /^(Chrome|Nickel)$/.test(o.material.name) && !this.chrome.includes(o.material)) this.chrome.push(o.material); });
-        this.chrome.forEach((m) => { m.userData.rough = m.roughness; });
-      } else {
-        const c = clay.clone(), gr = graphite.clone();
-        addDim(c, dim); addDim(gr, dim);
-        guitar = buildStandin(info.shape, c, gr);
-      }
+      const c = clay.clone(), gr = graphite.clone();
+      addDim(c, dim); addDim(gr, dim);
+      const guitar = info.shape ? buildStandin(info.shape, c, gr) : new THREE.Group();
       const spinner = new THREE.Group();
       spinner.add(guitar);
       spinner.position.y = PED_TOP + HOVER;
@@ -404,11 +396,48 @@ export class Showroom {
       group.add(hit);
 
       this.scene.add(group);
-      this.items.push({ info, group, pedestal, spinner, guitar, dim, ringMat, hit, spin: 0, spinV: 0, hoverK: 0 });
+      this.items.push({ info, group, pedestal, spinner, guitar, dim, ringMat, hit, spin: 0, spinV: 0, hoverK: 0, ready: false });
     });
+    if (firstScene) this.swapIn(0, firstScene);
     this.hits = this.items.map((it) => it.hit);
     this.update(0);
     this.emitChange();
+    this.loadRest(lineup);
+  }
+
+  /** The other real guitars, nearest the centre first. */
+  async loadRest(lineup) {
+    const order = [1, 6, 2, 5, 3, 4].filter((i) => i < lineup.length && lineup[i].real);
+    for (const i of order) {
+      try {
+        const gltf = await this.loader.loadAsync(lineup[i].model);
+        this.swapIn(i, gltf.scene);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
+
+  /** Put a loaded model on its plinth in place of the maquette. */
+  swapIn(i, root) {
+    const it = this.items[i];
+    prepareGuitar(root, this.renderer);
+    root.traverse((o) => { if (o.isMesh) addDim(o.material, it.dim); });
+    // mirror chrome: up close the key light's reflection in a knob blooms
+    // into a white blob, so the walk takes the polish down a touch
+    root.traverse((o) => {
+      if (o.isMesh && /^(Chrome|Nickel)$/.test(o.material.name) && !this.chrome.includes(o.material)) {
+        o.material.userData.rough = o.material.roughness;
+        this.chrome.push(o.material);
+      }
+    });
+    const old = it.guitar;
+    it.spinner.remove(old);
+    old.traverse((o) => { if (o.isMesh) o.geometry.dispose(); });
+    it.spinner.add(root);
+    it.guitar = root;
+    it.ready = true;
+    this.walk.forget(it.info.id);
   }
 
   // ------------------------------------------------------------ layout ----

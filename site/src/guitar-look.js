@@ -5,7 +5,7 @@ import * as THREE from 'three';
 // Parts that lie on another surface (inlays, logo, dark holes, the walnut
 // stripe). The model keeps them 0.1 mm clear already; the polygon offset makes
 // sure they still win the depth test from across the room.
-const DECALS = new Set(['Dot_Black', 'Logo_Black', 'Hole_Dark', 'Walnut']);
+const DECALS = new Set(['Dot_Black', 'Dot_Pearl', 'Logo_Black', 'Logo_Bone', 'Hole_Dark', 'Walnut']);
 
 // Wound strings are smooth tubes in the model. Up close (the walk's nut and
 // bridge stops) the winding is drawn here instead: a ridge every 0.35 mm

@@ -1,5 +1,7 @@
-// Workshop viewer for the Floe model (inspect.html). Not part of the landing
-// page: a place to look at the GLB from any distance while polishing it.
+// Workshop viewer for the guitars (inspect.html). Not part of the landing
+// page: a place to look at each GLB from any distance while polishing it.
+// ?g=<id> picks the guitar (floe, sedge, scree, moss, fjord, rowan, heath);
+// the buttons along the top switch between them, so do the keys 1 to 7.
 // Views and part framing are computed from the named nodes in the GLB, so they
 // keep working when the model is rebuilt.
 import * as THREE from 'three';
@@ -7,6 +9,21 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { prepareGuitar, studioEnvironment } from './guitar-look.js';
+import { LINEUP } from './data.js';
+
+const INFO = LINEUP.find((g) => g.id === new URLSearchParams(location.search).get('g')) || LINEUP[0];
+document.title = `KVELD ${INFO.name} · Inspect`;
+document.documentElement.style.setProperty('--accent', INFO.colour);
+document.querySelector('.mark span').textContent = INFO.name;
+const pick = document.querySelector('[data-guitars]');
+LINEUP.forEach((g, i) => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.textContent = `${g.no} ${g.name}`;
+  b.setAttribute('aria-pressed', String(g.id === INFO.id));
+  b.addEventListener('click', () => { location.search = `?g=${g.id}`; });
+  pick.appendChild(b);
+});
+addEventListener('keydown', (e) => { const k = +e.key; if (k >= 1 && k <= LINEUP.length) location.search = `?g=${LINEUP[k - 1].id}`; });
 
 const canvas = document.querySelector('.gl');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -33,7 +50,7 @@ controls.zoomSpeed = 0.9;
 const key = new THREE.SpotLight('#fff1dc', 0, 8, 0.4, 0.8, 2);
 key.castShadow = true; key.shadow.mapSize.set(2048, 2048); key.shadow.bias = -0.0002; key.shadow.normalBias = 0.01;
 const rimL = new THREE.SpotLight('#cfdcff', 0, 8, 0.5, 0.9, 2);
-const rimR = new THREE.SpotLight('#9fe3f0', 0, 8, 0.5, 0.9, 2);   // Floe's own colour
+const rimR = new THREE.SpotLight(INFO.colour, 0, 8, 0.5, 0.9, 2);   // the guitar's own colour
 scene.add(key, key.target, rimL, rimL.target, rimR, rimR.target);
 const floor = new THREE.Mesh(new THREE.CircleGeometry(3, 96), new THREE.MeshStandardMaterial({ color: '#0b0a09', roughness: 0.85, metalness: 0 }));
 floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true;
@@ -54,7 +71,7 @@ function setLight(name) {
 }
 
 // ------------------------------------------------------------- model ----
-const gltf = await new GLTFLoader().loadAsync('assets/models/floe.glb');
+const gltf = await new GLTFLoader().loadAsync(INFO.model);
 const guitar = gltf.scene;
 prepareGuitar(guitar, renderer);
 scene.add(guitar);
@@ -69,7 +86,8 @@ key.position.set(centre.x + 0.4, all.max.y + 0.9, centre.z + 1.2); key.target.po
 rimL.position.set(centre.x - 1.2, centre.y + 0.8, centre.z - 1.0); rimL.target.position.copy(centre);
 rimR.position.set(centre.x + 1.3, centre.y + 0.3, centre.z - 0.9); rimR.target.position.copy(centre);
 
-const parts = guitar.getObjectByName('KVELD_Floe')?.children.length ? guitar.getObjectByName('KVELD_Floe').children : guitar.children;
+const rootNode = guitar.getObjectByName(`KVELD_${INFO.name}`);
+const parts = rootNode?.children.length ? rootNode.children : guitar.children;
 const byName = (n) => guitar.getObjectByName(n);
 const boxOf = (...names) => {
   const b = new THREE.Box3();
@@ -100,7 +118,8 @@ const VIEWS = [
   ['Nut', () => frame(boxOf('Nut'), V(0.5, 0.35, 1), 2.4)],
   ['Frets', () => frame(boxOf('Frets'), V(0.9, 0.1, 0.6), 0.75)],
   ['Pickups', () => frame(boxOf('NeckPickup', 'BridgePickup'), V(0.3, 0.15, 1), 1.1)],
-  ['Bridge', () => frame(boxOf('Saddles', 'Bridge'), V(0.4, -0.35, 1), 1.0)],
+  ['Bridge', () => frame(boxOf('Saddles', 'Bridge', 'Tailpiece'), V(0.4, -0.35, 1), 1.0)],
+  ['Back plate', () => frame(boxOf('BackHardware'), V(-0.3, 0.1, -1), 0.9)],
   ['Controls', () => frame(boxOf('Controls'), V(0.3, 0.1, 1), 1.15)],
 ];
 const views = document.querySelector('[data-views]');

@@ -47,6 +47,11 @@ export class Walk {
     this.plans = new Map();
   }
 
+  /** Drop the measured shots for a guitar (its model has just been swapped in). */
+  forget(id) {
+    for (const k of [...this.plans.keys()]) if (k.startsWith(`${id}:`)) this.plans.delete(k);
+  }
+
   /** Stops for a guitar: its own list, or the workshop walk for a maquette. */
   stopsFor(info) {
     return STOPS[info.id] || workshopStops(info);
