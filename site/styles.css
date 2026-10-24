@@ -251,15 +251,15 @@ img, svg { display: block; }
 .wo__ruler { position: absolute; right: var(--gutter); top: 16vh; bottom: 14vh; width: 120px; }
 .wo__rk { position: absolute; right: 0; top: -40px; margin: 0; font: 400 10px var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
 .wo__rline { position: absolute; right: 0; top: 0; bottom: 0; width: 1px; background: rgba(237, 230, 218, 0.16); }
-.wo__rline b { position: absolute; inset: 0; background: var(--accent); transform: scaleY(0); transform-origin: top; box-shadow: 0 0 8px var(--accent); transition: transform 0.6s var(--ease); }
+.wo__rline b { position: absolute; inset: 0; background: var(--accent); transform: scaleY(0); transform-origin: top; box-shadow: 0 0 8px var(--accent); }
 .wo__ruler ol { list-style: none; margin: 0; padding: 0; }
 .wo__ruler li { position: absolute; right: 0; display: flex; align-items: center; gap: 10px; translate: 0 -50%; }
 .wo__ruler li::after { content: ''; width: 12px; height: 1px; background: rgba(237, 230, 218, 0.4); }
-.wo__ruler li span { font: 400 9.5px var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: rgba(237, 230, 218, 0.34); transition: color 0.6s var(--ease); }
+.wo__ruler li span { font: 400 9.5px var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: rgba(237, 230, 218, 0.42); transition: color 0.6s var(--ease); text-shadow: 0 0 6px rgba(5, 4, 4, 0.95), 0 0 14px rgba(5, 4, 4, 0.8); }   /* readable over pale wood too */
 .wo__ruler li.is-done span { color: rgba(237, 230, 218, 0.6); }
 .wo__ruler li.is-on span { color: var(--text); }
 .wo__ruler li.is-on::after { width: 22px; background: var(--accent); }
-.wo__rnow { position: absolute; right: -4px; width: 9px; height: 9px; border-radius: 50%; translate: 0 -50%; background: var(--accent); box-shadow: 0 0 12px var(--accent), 0 0 30px var(--accent); transition: top 0.7s var(--ease); }
+.wo__rnow { position: absolute; right: -4px; width: 9px; height: 9px; border-radius: 50%; translate: 0 -50%; background: var(--accent); box-shadow: 0 0 12px var(--accent), 0 0 30px var(--accent); }
 
 
 /* close-up state (View guitar): the body on the left, its sheet on the right, the seven along the bottom */

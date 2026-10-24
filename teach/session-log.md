@@ -135,3 +135,7 @@ Teachable: the first recordings showed every loader frozen for most of its life.
 **17. "OK I like Halo, it's simple and creative."** (2026-10-24)
 Halo became the page's own loader (`loader.js`, markup in `index.html` so the faint track and KVELD 000 show before any script loads). The other two are under `alt/v7-loaders`. Checked on desktop, phone, reduced motion (the arch is drawn whole and the loader simply goes) and a throttled 20 Mbps connection. That last one showed the count sitting at 100 for seconds while the page finished setting up after the downloads, so the downloads now count to 80% and the page's own steps (drawing, GPU warm-up, bench) count the rest.
 On camera: a progress number should be honest. "100" that then waits three seconds reads as broken.
+
+**18. "On the right side there's an issue with the tracking progress. Fix that."** (2026-10-24, with a screenshot)
+The tour's ruler placed each stop where its part sits on the guitar, so Pickups landed on Back and Controls on Bridge, with an empty gap above them and the order not matching the tour. Now the stops are evenly down the ruler in the tour's order and the light slides from one to the next while the camera travels (`walkTrack()` in main.js, from the walk's own beats). Checked at all seven stops at 1725 x 990: the light sits on the stop being shown, 0 to 1 px off.
+On camera: "true to the object" lost to "readable". A progress indicator has to read as progress first.

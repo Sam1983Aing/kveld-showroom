@@ -1,10 +1,12 @@
 // The close-up tour's words and progress: Callout (V7, picked by Sam on 2026-10-24 from three: Chapter
 // and Viewfinder are under the tag alt/v7-options, behind ?walk=). The words stand beside the part the
 // camera is on, with a line to it, and change side as the part moves across the screen. The progress is
-// a ruler down the guitar's real length, each stop a tick at its place, a light at the one you are on.
+// a ruler down the right edge, the stops evenly down it in the tour's order, and a light that slides from
+// one to the next as the camera travels. (It first placed each stop where its part sits on the guitar,
+// which piled the pickups on the back and the bridge on the controls: Sam's note, 2026-10-24.)
 //   createCallout(walkEl).frame(W, ctx) every frame of the tour: W the walk state (stop, copy 0..1),
-//   ctx.anchor() the part on screen (showroom.js walkAnchor), ctx.stops, ctx.info, ctx.along() where
-//   each stop sits along the guitar, 0 headstock to 1 tail.
+//   ctx.anchor() the part on screen (showroom.js walkAnchor), ctx.stops, ctx.info, ctx.track how far down
+//   the ruler the tour is, in stops (0 the first, stops - 1 the last), moving while the camera travels.
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const clamp01 = (x) => Math.min(Math.max(x, 0), 1);
@@ -31,15 +33,15 @@ function callout(box) {
     <div class="wo__ruler" aria-hidden="true"><p class="wo__rk" data-rk></p><i class="wo__rline"><b data-rfill></b></i><ol data-ticks></ol><span class="wo__rnow" data-rnow></span></div>`;
   const el = { copy: $('[data-copy]', box), no: $('[data-no]', box), label: $('[data-label]', box), title: $('[data-title]', box), text: $('[data-text]', box),
     lead: $('[data-lead]', box), ring: $('.wo__ring', box), dot: $('.wo__dot', box), ticks: $('[data-ticks]', box), fill: $('[data-rfill]', box), now: $('[data-rnow]', box), rk: $('[data-rk]', box) };
-  let at = -2, side = 1, forGuitar = '', pos = [];
+  let at = -2, side = 1, forGuitar = '';
   return {
     frame(W, ctx) {
-      // the ruler: one tick per stop, placed where its part sits along the guitar, headstock at the top
+      // the ruler: one tick per stop, evenly down it in the tour's order
+      const n = ctx.stops.length, at01 = (i) => (n > 1 ? i / (n - 1) : 0);
       if (ctx.info.id !== forGuitar) {
         forGuitar = ctx.info.id;
-        pos = ctx.along();
         el.rk.textContent = `${ctx.info.name} · up close`;
-        el.ticks.innerHTML = ctx.stops.map((s, i) => `<li style="top:${(pos[i] * 100).toFixed(1)}%"><span>${s.label}</span></li>`).join('');
+        el.ticks.innerHTML = ctx.stops.map((s, i) => `<li style="top:${(at01(i) * 100).toFixed(1)}%"><span>${s.label}</span></li>`).join('');
       }
       const s = ctx.stops[W.stop];
       if (W.stop !== at && s) {
@@ -47,7 +49,7 @@ function callout(box) {
         el.no.textContent = pad(W.stop + 1); el.label.textContent = s.label; el.title.innerHTML = titleHTML(s.title); el.text.textContent = s.text;
       }
       $$('li', el.ticks).forEach((li, i) => { li.classList.toggle('is-on', i === W.stop); li.classList.toggle('is-done', i < W.stop); });
-      const here = W.stop < 0 ? 0 : pos[W.stop] ?? 1;
+      const here = at01(Math.min(Math.max(ctx.track, 0), n - 1));
       el.fill.style.transform = `scaleY(${here.toFixed(4)})`;
       el.now.style.top = `${(here * 100).toFixed(2)}%`;
       // the callout: beside the part, on the side with room, the line drawn as the copy arrives

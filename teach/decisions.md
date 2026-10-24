@@ -70,3 +70,4 @@ Running table for 009 Guitars (KVELD). Started with the V6 session. For earlier 
 | 10-24 | A frame between the heavy boot steps so the loader keeps moving | Claude (measured a 1.7 s freeze) | Not reviewed | Built |
 | 10-24 | Loader: Halo | Claude (options) | Sam ("simple and creative") | Built for good |
 | 10-24 | Downloads count to 80%, the page's own steps the rest | Claude (found on a throttled run) | Not reviewed | Built |
+| 10-24 | Tour ruler: stops evenly spaced in tour order, the light sliding between them | Sam (found the overlap) | Sam | Fixed |

@@ -467,12 +467,14 @@ function initWalk() {
   gsap.ticker.add(walkFrame);
 }
 
-// Where each stop of the tour sits along the guitar, 0 at the tip of the headstock, 1 at the tail
-function walkAlong() {
-  const front = room?.items[room.index];
-  if (!front) return walkStops.map((_, i) => i / Math.max(walkStops.length - 1, 1));
-  const plan = room.walk.plan(front, room.portrait), lo = plan.centre.y - plan.size.y / 2;
-  return walkStops.map((_, i) => { const a = plan.shots[2 * i + 1]?.aim; return a ? Math.min(Math.max(1 - (a.y - lo) / plan.size.y, 0), 1) : i / walkStops.length; });
+// How far down the ruler the tour is, in stops: it moves from one stop to the next while the camera
+// travels (sequence.js BEATS) and rests while it holds. The drawing chapter takes the lift's place.
+function walkTrack() {
+  const { travel, hold } = BEATS, seg = travel + hold;
+  const u = room.walkAt - (draft ? DRAFT.len : BEATS.lift);
+  if (u <= 0) return 0;
+  const i = Math.floor(u / seg), k = Math.min((u - i * seg) / travel, 1);
+  return i - 1 + k * k * (3 - 2 * k);
 }
 
 function toFirstStop() {
@@ -497,7 +499,7 @@ function walkFrame() {
   const on = clamp01((lift - 0.5) / 0.5) * (1 - W.outro);
   walkUI.shade.style.opacity = on;
   callout.box.style.opacity = on.toFixed(3);
-  callout.frame(W, { anchor: () => room.walkAnchor(), stops: walkStops, info: LINEUP[walkFor], along: walkAlong });
+  callout.frame(W, { anchor: () => room.walkAnchor(), stops: walkStops, info: LINEUP[walkFor], track: walkTrack() });
 }
 
 let resizeT;
