@@ -67,6 +67,9 @@ let room = null, draft = null, shop = null;
 const NAV = new URLSearchParams(location.search).get('nav');
 // Font pairings (V7 demo round): ?type=faceplate|luthier|poster (type-options.js), applied before lines are measured
 const TYPE = new URLSearchParams(location.search).get('type');
+// The tour's words and progress (V7 demo round): ?walk=callout|chapter|lens (walk-options.js)
+const WALK = new URLSearchParams(location.search).get('walk');
+let walkOpt = null;
 try {
   room = new Showroom($('.room__gl'), { onProgress, onChange });
   room.reduced = reduced;
@@ -483,6 +486,15 @@ function initWalk() {
   $('[data-scroll-cue]').addEventListener('click', (e) => { e.preventDefault(); draft ? toDrawing() : toFirstStop(); });
   $$('.site-nav a[href="#drawings"]').forEach((a) => a.addEventListener('click', (e) => { if (draft) { e.preventDefault(); toDrawing(); } }));
   gsap.ticker.add(walkFrame);
+  if (WALK) import('./walk-options.js?v=3').then((m) => m.buildWalk(WALK, walkUI.el, { sheet })).then((o) => { walkOpt = o; }).catch((err) => console.error(err));
+}
+
+// Where each stop of the tour sits along the guitar, 0 at the tip of the headstock, 1 at the tail
+function walkAlong() {
+  const front = room?.items[room.index];
+  if (!front) return walkStops.map((_, i) => i / Math.max(walkStops.length - 1, 1));
+  const plan = room.walk.plan(front, room.portrait), lo = plan.centre.y - plan.size.y / 2;
+  return walkStops.map((_, i) => { const a = plan.shots[2 * i + 1]?.aim; return a ? Math.min(Math.max(1 - (a.y - lo) / plan.size.y, 0), 1) : i / walkStops.length; });
 }
 
 function toFirstStop() {
@@ -525,6 +537,11 @@ function walkFrame() {
   walkUI.rail.style.opacity = clamp01((lift - 0.5) / 0.5) * (1 - W.outro);
   walkUI.shade.style.opacity = clamp01((lift - 0.5) / 0.5) * (1 - W.outro);
   walkUI.bar.style.transform = `scaleX(${clamp01(room.walkAt / walkLen).toFixed(4)})`;
+  if (walkOpt) {
+    walkOpt.frame(W, { anchor: () => room.walkAnchor(), stops: walkStops, prog: clamp01(room.walkAt / walkLen), info: LINEUP[walkFor], along: walkAlong });
+    walkOpt.box ??= walkUI.el.querySelector('.wo');
+    walkOpt.box.style.opacity = (clamp01((lift - 0.5) / 0.5) * (1 - W.outro)).toFixed(3);
+  }
 }
 
 let resizeT;

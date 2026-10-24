@@ -1,0 +1,15 @@
+{
+  "section": "Close-up tour",
+  "out": "walk-options",
+  "cardSeconds": 3.0,
+  "theme": { "bg": "#0b0a09", "fg": "#ece6da", "accent": "#9fe3f0",
+    "display": { "family": "Panchang", "src": "../../site/vendor/fonts/panchang-500.woff2" },
+    "body": { "family": "Martian Mono", "src": "../../site/vendor/fonts/martian-mono-300.woff2" },
+    "mono": { "family": "Martian Mono", "src": "../../site/vendor/fonts/martian-mono-400.woff2" } },
+  "options": [
+    { "n": "00", "name": "Now", "line": "The words on the left at every stop, the names of the stops along a bar at the bottom.", "desktop": "clips/walk-now-d.mp4", "phone": "clips/walk-now-p.mp4" },
+    { "n": "01", "name": "Callout", "line": "The words stand beside the part with a line to it. The progress is a ruler down the guitar's real length.", "desktop": "clips/walk-callout-d.mp4", "phone": "clips/walk-callout-p.mp4" },
+    { "n": "02", "name": "Chapter", "line": "A huge glowing word for the part, the words in a new corner each stop, the guitar's outline as the progress.", "desktop": "clips/walk-chapter-d.mp4", "phone": "clips/walk-chapter-p.mp4" },
+    { "n": "03", "name": "Viewfinder", "line": "Brackets close on the part like a camera focusing. The progress is a focus scale sliding under a mark.", "desktop": "clips/walk-lens-d.mp4", "phone": "clips/walk-lens-p.mp4" }
+  ]
+}

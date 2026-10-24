@@ -222,6 +222,7 @@ export class Showroom {
     this.swayT = 0;           // seconds the close-up has been swaying
     this.parallax = new THREE.Vector2();
     this.restPos = new THREE.Vector3(); this.restTgt = new THREE.Vector3();
+    this.walkAimW = new THREE.Vector3();     // the point a tour stop looks at, in the world (walkAnchor)
     this.mobile = matchMedia('(max-width: 760px)').matches;
 
     this.breath = 0;          // 0..1, how far the camera has pulled back for a turn
@@ -558,6 +559,16 @@ export class Showroom {
     this.wake();
   }
 
+  /** On screen, in px from the room's top left: the point the tour's camera is looking at (the part a stop
+   *  is about), or null outside the tour. For words that point at it. */
+  walkAnchor() {
+    if (!this.walkState) return null;
+    this.camera.updateMatrixWorld();
+    _v6.copy(this.walkAimW).project(this.camera);
+    const w = this.canvas.clientWidth || innerWidth, h = this.canvas.clientHeight || innerHeight;
+    return [(_v6.x * 0.5 + 0.5) * w, (0.5 - _v6.y * 0.5) * h];
+  }
+
   /** Where the hero's DOM sits, in px from the room's top left, seen from the camera at rest:
    *  the pointer's parallax is in, the pull-back of a turn is not, so the arrows hold still under
    *  a click while the ring turns and the halo comes back to them.
@@ -848,6 +859,7 @@ export class Showroom {
       const halfH = Math.atan(Math.tan(halfV) * cam.aspect);
       const dist = sh.radius / (FILL * Math.tan(Math.min(halfV, halfH)));
       const aimW = _v4.copy(sh.aim).applyMatrix4(sp.matrixWorld);
+      this.walkAimW.copy(aimW);
       const camW = _v5.copy(sh.dir).applyQuaternion(Q).multiplyScalar(dist).add(aimW);
       pos.lerp(camW, Lc);
       look.lerp(aimW, Lc);
