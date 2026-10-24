@@ -4,8 +4,8 @@
 cd "$(dirname "$0")"
 R=~/.claude/skills/demo-options/scripts/record.mjs
 U=${1:-http://localhost:8013/}
-READY="window.__room && window.__room.items.every(it=>it.ready) && !document.querySelector('.loader') && document.querySelector('.order__step') && document.querySelector('#workshop')?.dataset.ready"
-PLAN="0:#order@-0.7; 2:#order@-0.7; 5:#order; 6.5:#order; 12:#order@end; 14:#visit; 16:#visit"
+READY="window.__room && window.__room.items.every(it=>it.ready) && !document.querySelector('.loader') && document.querySelector('.slip__line') && document.querySelector('#workshop')?.dataset.ready"
+PLAN="0:#order@-0.6; 1.5:#order@-0.6; 3.5:#order; 15:#visit@-1.0; 17:#visit@-1.0"
 node $R --url "$U" --out clips/order-d.mp4 --size 1380x792 --wait "$READY" --settle 3000 --scroll "$PLAN" 2>&1 | tail -1
 PPLAN="0:#order@-0.7; 2:#order@-0.7; 5:#order; 6:#order; 15:#order@end; 17:#visit; 19:#visit"
 node $R --url "$U" --out clips/order-p.mp4 --phone --wait "$READY" --settle 3000 --scroll "$PPLAN" 2>&1 | tail -1

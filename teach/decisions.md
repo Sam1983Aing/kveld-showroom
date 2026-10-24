@@ -71,3 +71,6 @@ Running table for 009 Guitars (KVELD). Started with the V6 session. For earlier 
 | 10-24 | Loader: Halo | Claude (options) | Sam ("simple and creative") | Built for good |
 | 10-24 | Downloads count to 80%, the page's own steps the rest | Claude (found on a throttled run) | Not reviewed | Built |
 | 10-24 | Tour ruler: stops evenly spaced in tour order, the light sliding between them | Sam (found the overlap) | Sam | Fixed |
+| 10-24 | Hear them arch: the canvas covers the whole section, no straight cut | Sam (found it) | Sam | Fixed |
+| 10-24 | How to order in one view: head, the seven, Book a visit left, slip right | Sam | Sam | Built |
+| 10-24 | Each step in a guitar's colour: edge bar, highlighter, rising words, filled box, coloured tag | Sam (asked for colour), Claude (how) | Waiting for his view | Built |
