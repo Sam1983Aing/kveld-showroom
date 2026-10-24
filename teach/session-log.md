@@ -84,3 +84,11 @@ Teachable bug: after resizing mid-section the guitar kept the old orientation. A
 
 **6. "After the workshop section, what are the next sections to build?"**
 Asked while the bench was being finished. Answered in the chat (see the reply).
+
+**7. "Build the section here, and when you're done create the section How to order. You have my approval for the first iteration, so go ahead."** (2026-10-24)
+Sam approved a first version of both without stopping for options.
+02 became Hear them: a click on a name plays that guitar's phrase and turns the sound on, after which pointing plays it. The hero's halo comes back as an arch behind the guitar that carries the waveform while it plays. The jump to the hero is a small "See it in the room" link now, so 02 no longer sends you back up.
+The sound is synthesized in the browser (`src/voices.js`): plucked-string models (Karplus-Strong, with the pick and pickup positions as combs, two coils for a humbucker) through a small rig per guitar (pickup resonance, amp drive, cabinet, room). No recordings, no licences, nothing to download. Each guitar plays its kind of phrase: Floe twangs on the bridge pickup, Sedge chugs, Fjord plays soft jazz chords, Rowan an overdriven blues line.
+Claude cannot listen. What it could check: no clipping or broken samples, the same loudness for all seven (they were 8 dB apart at first), and the pitch of held notes measured against the notes written (329.5 Hz for an E4 at 329.6). Sam is the judge of how it sounds.
+The reel needed its own recorder (`demo/v7/record-hear.mjs`): the demo recorder mutes sound and cannot click, and a browser only starts sound from a real click. Playwright clicks for real, the page logs when each phrase starts, and the rendered phrases are laid under the frames at those moments.
+On camera: sound you can build from a formula. And when the model cannot hear, say so and measure what can be measured.

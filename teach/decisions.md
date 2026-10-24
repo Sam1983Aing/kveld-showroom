@@ -42,3 +42,6 @@ Running table for 009 Guitars (KVELD). Started with the V6 session. For earlier 
 | 10-23 | Workshop options: On the Bench, Twelve Weeks, Where the Weeks Go | Claude | Sam picked On the Bench | Built, the other two under alt/workshop-options |
 | 10-23 | The tour's flat last shot leads into the guitar lying on a bench | Claude | Sam (picked the option) | Built |
 | 10-23 | Workshop copy: two makers, Halden, one guitar to a bench, "that is what the price pays for" | Claude | Waiting | Invented, like the maker |
+| 10-24 | 02 becomes Hear them: sound per guitar, pointing plays it, the room is a small link | Claude (proposed), Sam (approved the first version) | Sam | Built, waiting for his view |
+| 10-24 | The sound synthesized in the browser, no recordings | Claude | Not reviewed yet | Built. Claude cannot listen, Sam judges |
+| 10-24 | The arch behind the guitar carries the waveform | Claude | Not reviewed yet | Built |

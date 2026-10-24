@@ -417,6 +417,24 @@ img, svg { display: block; }
 .spot.is-in .spot__stage { opacity: 1; }
 .spot__names button:focus-visible, .spot__go:focus-visible { outline: 1px solid var(--own); outline-offset: 6px; }
 .spot__dots { display: none; list-style: none; margin: 0; padding: 0; }
+/* Hear them: the sound switch, the arch that carries the sound, the quiet way back to the room */
+.spot__sound { align-self: flex-start; display: inline-flex; align-items: center; gap: 11px; margin-top: 3.4vh; padding: 9px 15px 9px 13px; border: 1px solid var(--line); border-radius: 99px;
+  font: 400 10px var(--sans); letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); transition: border-color 0.6s var(--ease), color 0.6s var(--ease); }
+.spot__sound:hover, .spot__sound:focus-visible { border-color: color-mix(in srgb, var(--own) 60%, transparent); color: var(--text); outline: none; }
+.spot__sound[aria-pressed='true'] { color: var(--text); border-color: color-mix(in srgb, var(--own) 70%, transparent); }
+.spot__bars { display: flex; align-items: flex-end; gap: 2px; height: 12px; }
+.spot__bars b { width: 2px; height: 3px; background: currentColor; border-radius: 1px; transition: height 0.4s var(--ease), background 0.6s var(--ease); }
+.spot__sound[aria-pressed='true'] .spot__bars b { background: var(--own); height: 6px; }
+.spot__sound.is-playing .spot__bars b { animation: bars 0.9s var(--ease) infinite alternate; }
+.spot__sound.is-playing .spot__bars b:nth-child(2) { animation-delay: -0.3s; }
+.spot__sound.is-playing .spot__bars b:nth-child(3) { animation-delay: -0.6s; }
+.spot__sound.is-playing .spot__bars b:nth-child(4) { animation-delay: -0.15s; }
+@keyframes bars { from { height: 3px; } to { height: 12px; } }
+.spot__arch { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.spot__go svg[viewBox='0 0 12 12'] { width: 10px; height: 10px; }
+.spot__room { display: inline-flex; align-items: center; gap: 10px; margin-top: 2.2vh; padding: 4px 0; font: 400 9.5px var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); transition: color 0.6s var(--ease), gap 0.6s var(--ease); }
+.spot__room svg { width: 16px; height: 8px; }
+.spot__room:hover, .spot__room:focus-visible { color: var(--text); gap: 14px; outline: none; }
 
 /* ----------------------------------------------------------------- visit */
 .visit { position: relative; padding: 24vh var(--gutter) 8vh; background: radial-gradient(120% 80% at 50% 0%, #17130f 0%, var(--ink) 60%); overflow: hidden; }
@@ -573,6 +591,7 @@ html.has-cursor, html.has-cursor * { cursor: none !important; }
   /* one name at a time on a phone: seven dots say where it is in the list and jump to any */
   /* the dots are how a finger changes guitar here, so each one gets a real target round it */
   .spot__dots { display: flex; gap: 0; margin: 0.6vh 0 0 calc(2.2em + 0.8rem - 9px); }
+  .spot__sound { position: absolute; right: var(--gutter); top: calc(11vh - 9px); margin: 0; padding: 7px 12px 7px 11px; }
   .spot__dots button { display: grid; place-items: center; width: 26px; height: 30px; }
   .spot__dots button::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: color-mix(in srgb, var(--own) 36%, transparent); transition: background 0.5s var(--ease), transform 0.5s var(--ease); }
   .spot__dots button[aria-current='true']::before { background: var(--own); transform: scale(1.4); }
