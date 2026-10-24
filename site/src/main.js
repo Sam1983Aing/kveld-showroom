@@ -288,7 +288,7 @@ function introReveal() {
 
 async function boot() {
   // SplitText measures lines, so the faces have to be in first
-  if (TYPE) await import('./type-options.js?v=1').then((m) => m.applyType(TYPE)).catch((err) => console.error(err));
+  if (TYPE) await import('./type-options.js?v=4').then((m) => m.applyType(TYPE)).catch((err) => console.error(err));
   await Promise.all(FACES.map((f) => document.fonts.load(f))).catch(() => {});
   await document.fonts.ready;
   const dataP = sheet('floe');

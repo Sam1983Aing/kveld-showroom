@@ -1,0 +1,15 @@
+{
+  "section": "Type, round two",
+  "out": "type2-options",
+  "cardSeconds": 3.0,
+  "theme": { "bg": "#0b0a09", "fg": "#ece6da", "accent": "#9fe3f0",
+    "display": { "family": "Panchang", "src": "../../site/vendor/fonts/panchang-500.woff2" },
+    "body": { "family": "Martian Mono", "src": "../../site/vendor/fonts/martian-mono-300.woff2" },
+    "mono": { "family": "Martian Mono", "src": "../../site/vendor/fonts/martian-mono-400.woff2" } },
+  "options": [
+    { "n": "00", "name": "Faceplate", "line": "Your pick of round one, on the page as it is now: Unbounded, Instrument Sans, JetBrains Mono.", "desktop": "clips/type-faceplate-d.mp4", "phone": "clips/type-faceplate-p.mp4" },
+    { "n": "01", "name": "Stage", "line": "Clash Display and Satoshi: sharp and bold like Faceplate, narrower, more modern. Both from Fontshare, like Panchang.", "desktop": "clips/type-stage-d.mp4", "phone": "clips/type-stage-p.mp4" },
+    { "n": "02", "name": "Amp Plate", "line": "Archivo stretched to its widest and set heavy, like lettering screwed onto an amp.", "desktop": "clips/type-amp-d.mp4", "phone": "clips/type-amp-p.mp4" },
+    { "n": "03", "name": "Gig Poster", "line": "Syne at its heaviest: wide and a little strange. The creative one.", "desktop": "clips/type-gig-d.mp4", "phone": "clips/type-gig-p.mp4" }
+  ]
+}

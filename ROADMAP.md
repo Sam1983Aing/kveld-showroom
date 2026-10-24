@@ -529,3 +529,8 @@ reads as a copy. Full brief, sources and specs: `BRIEF-session-5.md`.
     everyone. After each pick: remove the other two and the switch, and bring the winner to full quality.
   - Found on the way: the drawing's paper flag stayed on after any jump past it, so the pointer went
     dark over dark sections. Fixed. Cache tag `?v=71`.
+- 2026-10-24, V7, Sam's picks made permanent (options tagged `alt/v7-options`): the Fretboard header
+  (`nav.js`), Callout for the tour (`walk-callout.js`), Big Name for the drawing, smaller and bottom right
+  (`draft-name.js`), the Order Slip (`order.js`), and Big Words with the Log, grouped by step
+  (`workshop-words.js`). Fonts: round two behind `?type=faceplate|stage|amp|gig` (type2-options-*.mp4),
+  waiting for his pick. Cache tag `?v=76`.
