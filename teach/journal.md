@@ -464,3 +464,10 @@ Teaches: a full path to another project is a hidden dependency. It works until s
 ## 2026-10-23 · v6 · Wrap · V6: the guitar up close, and a lighter page
 What changed since `v5`: the View guitar sheet sells instead of measuring, View guitar became a body portrait with the seven names to change guitar in place, section 02 follows the pointer, the footer carries the room's details and dust in its light, and a performance pass took the page from 60 MB to 10 MB and from about 25 to 60 fps on Sam's Retina screen. Sam, after seeing it: "I like, let's push it."
 Before: tag `v5`. Reels and stills: `demo/v6/`, `teach/shots/v6-*.jpg`. Still open for V7: the walk's copy and ending (see BRIEF-v7.md).
+
+## 2026-10-23 · V7: the hero fix and the workshop round
+
+- Hero, Sam's notes: arrows into the halo, dots out, name and View guitar under the guitar. Technique worth a lesson: project 3D points to the screen every frame (`heroAnchors()`) and stand DOM on them. The arrows ride the halo's line with the pointer parallax but not with the camera's pull-back on a turn, so they never move away from under a click. Three looks for the arrows were rendered side by side as stills before choosing (the bead of light won).
+- Sam asked "is any section missing?" before building. The diagnosis that mattered: the hero and 02 do the same job (pick one of seven), so 02 can only send you back up. Proposed: sound, the workshop, how to order.
+- Workshop round, three options behind `?shop=`. The strongest technique: the guitar assembled from its named GLB parts on a bench, with the finish as a shader sweep (raw colour ahead of a moving plane, the real material behind it, a wet edge at the line) and the saw as a clipping plane through two box blanks. Then the same scene rendered the gallery option's pictures, so one build gave two options.
+- Before: `teach/shots/v7-hero-before.png`, after: `v7-hero-after.png`. Reels in `demo/v7/`.

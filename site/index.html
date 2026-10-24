@@ -7,7 +7,7 @@
   <meta name="description" content="Seven guitars rebuilt from measured drawings. A concept showroom for KVELD.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%230b0a09%22/%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%229%22 fill=%22none%22 stroke=%22%239fe3f0%22 stroke-width=%221.5%22/%3E%3C/svg%3E">
   <link rel="preload" href="vendor/fonts/panchang-500.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=43">
+  <link rel="stylesheet" href="styles.css?v=46">
 
   <!--
     CREATIVE DIRECTION (the contract this build obeys)
@@ -34,13 +34,13 @@
   <script type="importmap">
   { "imports": {
       "three": "./vendor/three.module.js", "three/addons/": "./vendor/addons/",
-      "./src/showroom.js": "./src/showroom.js?v=43", "./src/data.js": "./src/data.js?v=43", "./src/specs.js": "./src/specs.js?v=43",
-      "./src/sequence.js": "./src/sequence.js?v=43", "./src/stops.js": "./src/stops.js?v=43", "./src/standins.js": "./src/standins.js?v=43",
-      "./src/guitar-look.js": "./src/guitar-look.js?v=43", "./src/blueprint.js": "./src/blueprint.js?v=43",
-      "./src/draft.js": "./src/draft.js?v=43", "./src/spotlight.js": "./src/spotlight.js?v=43", "./src/footer.js": "./src/footer.js?v=43", "./src/cursor.js": "./src/cursor.js?v=43"
+      "./src/showroom.js": "./src/showroom.js?v=46", "./src/data.js": "./src/data.js?v=46", "./src/specs.js": "./src/specs.js?v=46",
+      "./src/sequence.js": "./src/sequence.js?v=46", "./src/stops.js": "./src/stops.js?v=46", "./src/standins.js": "./src/standins.js?v=46",
+      "./src/guitar-look.js": "./src/guitar-look.js?v=46", "./src/blueprint.js": "./src/blueprint.js?v=46",
+      "./src/draft.js": "./src/draft.js?v=46", "./src/spotlight.js": "./src/spotlight.js?v=46", "./src/footer.js": "./src/footer.js?v=46", "./src/cursor.js": "./src/cursor.js?v=46"
   } }
   </script>
-  <script type="module" src="src/main.js?v=43"></script>
+  <script type="module" src="src/main.js?v=46"></script>
 </head>
 <body>
 
@@ -72,23 +72,26 @@
           <p class="room__lede" data-intro>Seven guitars rebuilt from the measured drawings of instruments that shaped the sound. One quiet room to hear them in.</p>
         </div>
 
-        <div class="room__title" aria-live="polite">
-          <p class="room__count"><span data-no>01</span><i>/</i>07</p>
-          <h2 class="room__name"><span data-name>Floe</span></h2>
-          <p class="room__line" data-line>Single-cut · Swamp ash · 25.5 in scale</p>
+        <!-- under the guitar: the name on the plinth in front of it, View guitar on the plinth's face.
+             The stage fades while a turn pulls the camera back off the plinth (main.js placeArrows) -->
+        <div class="room__stage">
+          <div class="room__title" aria-live="polite">
+            <p class="room__count"><span data-no>01</span><i>/</i>07</p>
+            <h2 class="room__name"><span data-name>Floe</span></h2>
+          </div>
+
+          <button class="room__view" type="button" data-view>
+            <span>View guitar</span>
+            <svg viewBox="0 0 24 10" aria-hidden="true"><path d="M0 5h22M18 1l4 4-4 4" fill="none" stroke="currentColor"/></svg>
+          </button>
         </div>
 
-        <button class="room__view" type="button" data-view>
-          <span>View guitar</span>
-          <svg viewBox="0 0 24 10" aria-hidden="true"><path d="M0 5h22M18 1l4 4-4 4" fill="none" stroke="currentColor"/></svg>
-        </button>
-
+        <!-- the arrows sit on the halo's line, one each side (placed every frame, main.js placeArrows) -->
         <nav class="room__controls" aria-label="Choose a guitar">
-          <button class="room__arrow" type="button" data-prev aria-label="Previous guitar">
+          <button class="room__arrow room__arrow--halo" type="button" data-prev aria-label="Previous guitar">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 6l-6 6 6 6" fill="none" stroke="currentColor"/></svg>
           </button>
-          <ol class="room__dots" data-dots></ol>
-          <button class="room__arrow" type="button" data-next aria-label="Next guitar">
+          <button class="room__arrow room__arrow--halo" type="button" data-next aria-label="Next guitar">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6l6 6-6 6" fill="none" stroke="currentColor"/></svg>
           </button>
         </nav>

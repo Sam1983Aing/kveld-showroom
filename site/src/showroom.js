@@ -218,6 +218,7 @@ export class Showroom {
     this.closeDist = 0;
     this.swayT = 0;           // seconds the close-up has been swaying
     this.parallax = new THREE.Vector2();
+    this.restPos = new THREE.Vector3(); this.restTgt = new THREE.Vector3();
     this.mobile = matchMedia('(max-width: 760px)').matches;
 
     this.breath = 0;          // 0..1, how far the camera has pulled back for a turn
@@ -554,12 +555,38 @@ export class Showroom {
     this.wake();
   }
 
-  /** Where the front of the stage lands on screen, so the DOM can sit under it. */
-  stageScreenY() {
-    this.camera.updateMatrixWorld();
-    // centre of the centre plinth's front face
-    const v = new THREE.Vector3(0, PED_TOP * 0.5, 0.325).project(this.camera);
-    return (1 - (v.y * 0.5 + 0.5)) * (this.canvas.clientHeight || innerHeight);
+  /** Where the hero's DOM sits, in px from the room's top left, seen from the camera at rest:
+   *  the pointer's parallax is in, the pull-back of a turn is not, so the arrows hold still under
+   *  a click while the ring turns and the halo comes back to them.
+   *  arrows: where the halo's bright line crosses its left and right side. Where the window is too
+   *  narrow for that (phones) they slide down the line until a button of `inset` px fits, and
+   *  they slide down as well until the left one clears `avoid` (the intro copy's box, if any).
+   *  foot: the bottom of the guitar in front. rim: the front edge of its plinth's lit ring.
+   *  `still` leaves the parallax out too, for things placed once per window size. */
+  heroAnchors(inset = 30, still = false, avoid = null) {
+    const w = this.canvas.clientWidth || innerWidth, h = this.canvas.clientHeight || innerHeight;
+    const cam = this._restCam ||= new THREE.PerspectiveCamera();
+    const b = this.camBase, moving = !still && this.restPos.lengthSq() > 0;      // still: without the parallax
+    cam.fov = b.fov; cam.aspect = w / h; cam.near = 0.1; cam.far = 50;
+    cam.position.copy(moving ? this.restPos : b.pos); cam.lookAt(moving ? this.restTgt : b.target);
+    cam.updateProjectionMatrix(); cam.updateMatrixWorld();
+    const to = (x, y, z) => { _v6.set(x, y, z).project(cam); return [(_v6.x * 0.5 + 0.5) * w, (0.5 - _v6.y * 0.5) * h]; };
+    // the halo is at rest here (focus 0), the arch open by 0.503 rad below the horizontal on each side
+    const R = 0.6 * this.haloRest, HY = 0.5, HZ = -0.5;
+    const hits = (p) => avoid && p[0] - inset < avoid.right && p[0] + inset > avoid.left && p[1] - inset < avoid.bottom && p[1] + inset > avoid.top;
+    let a = 0, right = to(R, HY, HZ), left = to(-R, HY, HZ);
+    while (a < 0.5 && (right[0] > w - inset || hits(left))) {
+      a += 0.02;
+      right = to(R * Math.cos(a), HY - R * Math.sin(a), HZ);
+      left = to(-R * Math.cos(a), HY - R * Math.sin(a), HZ);
+    }
+    const lift = 0.045;                                         // the centre plinth stands this much proud (update)
+    return {
+      left, right,
+      foot: to(0, PED_TOP + HOVER + lift, 0.02)[1],
+      rim: to(0, PED_TOP - 0.006 + lift, 0.323)[1],
+      turning: this.breath,
+    };
   }
 
   // ------------------------------------------------------- interaction ----
@@ -727,6 +754,7 @@ export class Showroom {
     const px = this.parallax.x * 0.08 * (1 - F) * (1 - Lw), py = this.parallax.y * 0.04 * (1 - F) * (1 - Lw);
     const pos = b.pos.clone().add(new THREE.Vector3(px, py, 0));
     const tgt = b.target.clone().add(new THREE.Vector3(px * 0.3, 0, 0));
+    this.restPos.copy(pos); this.restTgt.copy(tgt);      // the hero's arrows ride the halo from here (heroAnchors)
     this.breathe(pos, tgt, dt);
 
     // hover highlight

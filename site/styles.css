@@ -22,7 +22,6 @@
 
   --ease: cubic-bezier(0.16, 1, 0.3, 1);   /* expo.out, mirrors EASE in main.js */
   --gutter: clamp(20px, 3.2vw, 48px);
-  --stage-y: 78vh;                          /* set from the 3D stage position in JS */
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -104,21 +103,23 @@ img, svg { display: block; }
 }
 .room__lede { margin: 1.8rem 0 0; max-width: 21rem; font: 300 12.5px/1.85 var(--sans); color: var(--muted); }
 
-/* the camera is close, so the headstock takes the top centre: the name sits
-   on the right edge, level with the guitar, with View guitar under it */
+/* under the guitar: the name stands on the centre plinth, between the guitar's foot and the plinth's
+   lit front edge, and View guitar sits on the plinth's face below that edge. --plate-y and --face-y
+   are where those land on screen, set on .room from the 3D stage (main.js placeStage) */
+.room { --plate-y: 88%; --face-y: 96%; }
+.room__ui > .room__stage { position: absolute; inset: 0; pointer-events: none; }
 .room__title {
-  position: absolute; right: var(--gutter); top: 50%; transform: translateY(-62%); text-align: right; pointer-events: none;
-  text-shadow: 0 0 28px rgba(5, 4, 4, 0.95), 0 0 8px rgba(5, 4, 4, 0.8);
+  position: absolute; left: 0; right: 0; top: var(--plate-y); translate: 0 -50%; text-align: center; pointer-events: none;
+  text-shadow: 0 0 22px rgba(5, 4, 4, 0.95), 0 0 6px rgba(5, 4, 4, 0.85);
 }
-.room__count { margin: 0 0 12px; font: 400 11px var(--sans); letter-spacing: 0.14em; color: var(--muted); font-variant-numeric: tabular-nums; }
+.room__count { margin: 0 0 clamp(4px, 0.8vh, 9px); font: 400 clamp(9.5px, 0.64vw, 11px) var(--sans); letter-spacing: 0.14em; color: var(--muted); font-variant-numeric: tabular-nums; }
 .room__count i { font-style: normal; margin: 0 0.6em; opacity: 0.5; }
 .room__name {
   margin: 0; overflow: hidden;
-  font: 500 clamp(1.25rem, 1.9vw, 2rem)/1.1 var(--serif);
-  letter-spacing: 0.16em; margin-right: -0.16em; text-transform: uppercase;
+  font: 500 clamp(1.15rem, min(1.9vw, 3.3vh), 2rem)/1.1 var(--serif);
+  letter-spacing: 0.16em; padding-left: 0.16em; text-transform: uppercase;   /* the padding evens out the tracking after the last letter */
 }
 .room__name span { display: inline-block; }
-.room__line { margin: 14px 0 0; font: 400 10.5px var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
 .room__status {
   display: inline-flex; align-items: center; gap: 9px;
   margin: 18px 0 0; padding: 6px 12px 6px 10px;
@@ -129,10 +130,11 @@ img, svg { display: block; }
 .room__status.is-bench::before { background: var(--muted); box-shadow: none; }
 
 .room__view {
-  position: absolute; right: calc(var(--gutter) - 4px); top: calc(50% + 34px);
+  position: absolute; left: 50%; top: var(--face-y); pointer-events: auto; translate: -50% -50%;     /* not transform: the intro tweens that */
   display: inline-flex; align-items: center; gap: 14px;
-  padding: 10px 4px 9px;
+  padding: 10px 4px 9px 6px;
   font: 400 11px var(--sans); letter-spacing: 0.14em; text-transform: uppercase;
+  text-shadow: 0 0 14px rgba(5, 4, 4, 0.9);
   border-bottom: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
   transition: gap 0.6s var(--ease), border-color 0.6s var(--ease);
 }
@@ -142,10 +144,6 @@ img, svg { display: block; }
 .room__view.is-bench svg { width: 0; opacity: 0; }
 .room__view svg { transition: width 0.6s var(--ease), opacity 0.6s var(--ease); }
 
-.room__controls {
-  position: absolute; left: 50%; bottom: 4.8vh; transform: translateX(-50%);
-  display: flex; align-items: center; gap: 26px;
-}
 .room__arrow {
   width: 46px; height: 46px; border-radius: 50%;
   border: 1px solid var(--line);
@@ -154,9 +152,37 @@ img, svg { display: block; }
 }
 .room__arrow svg { width: 20px; height: 20px; }
 .room__arrow:hover { border-color: color-mix(in srgb, var(--accent) 70%, transparent); background: color-mix(in srgb, var(--accent) 6%, transparent); }
-.room__dots { display: flex; gap: 12px; margin: 0; padding: 0; list-style: none; }
-.room__dots button { display: block; width: 6px; height: 6px; border-radius: 50%; background: color-mix(in srgb, var(--dot) 34%, transparent); transition: background 0.5s var(--ease), transform 0.5s var(--ease); }
-.room__dots button[aria-current='true'] { background: var(--dot); box-shadow: 0 0 10px var(--dot); transform: scale(1.35); }
+
+/* the hero's arrows sit on the halo's line, one each side: two beads of the same light threaded on
+   it, the chevron dark on top. Each is placed by its `translate` (main.js placeArrows). --on is 1
+   with the halo round them and drops toward 0 while a turn pulls the halo away, so the beads go out
+   to dark glass and light again when it comes back. */
+.room__controls { position: absolute; inset: 0; pointer-events: none; --on: 1; }
+.room__arrow--halo {
+  position: absolute; left: 0; top: 0; margin: -23px 0 0 -23px; pointer-events: auto; isolation: isolate;
+  background: rgba(5, 4, 4, 0.82);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  color: color-mix(in srgb, #0b0a09 calc(100% * var(--on)), var(--text));
+  box-shadow: 0 0 calc(26px * var(--on)) color-mix(in srgb, var(--accent) calc(85% * var(--on)), transparent),
+    0 0 calc(64px * var(--on)) color-mix(in srgb, var(--accent) calc(38% * var(--on)), transparent);
+  transition: scale 0.5s var(--ease);
+}
+.room__arrow--halo::before {
+  content: ''; position: absolute; inset: -1px; z-index: -1; border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 48%, #fff), var(--accent));
+  opacity: var(--on);
+  transition: filter 0.5s var(--ease);
+}
+.room__arrow--halo svg { stroke-width: 1.5; transition: translate 0.5s var(--ease); }
+.room__arrow--halo:hover { scale: 1.08; }
+.room__arrow--halo:hover::before { filter: brightness(1.12); }
+.room__arrow--halo:focus-visible { outline: 1px solid var(--accent); outline-offset: 5px; }
+.room__arrow--halo[data-prev]:hover svg { translate: -3px 0; }
+.room__arrow--halo[data-next]:hover svg { translate: 3px 0; }
+@media (max-width: 560px) {
+  .room__arrow--halo { width: 40px; height: 40px; margin: -20px 0 0 -20px; }
+  .room__arrow--halo svg { width: 18px; height: 18px; }
+}
 
 .room__scroll {
   position: absolute; right: var(--gutter); bottom: 5.2vh;
@@ -442,10 +468,6 @@ html.has-cursor, html.has-cursor * { cursor: none !important; }
 /* ------------------------------------------------------------ responsive */
 @media (max-width: 900px) {
   .room__copy { display: none; }
-  /* phones: name back at the top centre, the button on the plinth's front face */
-  .room__title { right: auto; left: 0; top: 12vh; width: 100%; transform: none; text-align: center; }
-  .room__name { margin-right: 0; padding-left: 0.16em; }
-  .room__view { right: auto; left: 50%; top: var(--stage-y); transform: translate(-50%, -50%); }
   .room__scroll { display: none; }
   /* phones: the guitar takes the top of the screen, the copy the bottom */
   .walk__copy { top: auto; bottom: calc(4.6vh + 46px); transform: none; width: auto; right: var(--gutter); }
@@ -512,8 +534,6 @@ html.has-cursor, html.has-cursor * { cursor: none !important; }
   .site-nav { gap: 16px; }
   .site-nav a { letter-spacing: 0.1em; font-size: 9.5px; }
   .brand { font-size: 13px; letter-spacing: 0.28em; }
-  .room__controls { gap: 14px; }
-  .room__dots { gap: 9px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

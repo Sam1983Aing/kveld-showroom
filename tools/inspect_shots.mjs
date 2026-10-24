@@ -6,7 +6,7 @@
 // Each shot aims at a point inside the box of the meshes whose name starts with
 // `part` (fractions: x across, y up the neck, z back to front) and looks from
 // direction d, `dist` metres away. PORT picks another served copy (a frozen
-// version). Needs the site on :8013 and playwright-core in tools/node_modules.
+// version), W and H another shape than 900 x 900. Needs the site on :8013 and playwright-core in tools/node_modules.
 import { createRequire } from 'module';
 import { mkdirSync } from 'fs';
 const require = createRequire(import.meta.url);
@@ -14,11 +14,12 @@ const { chromium } = require('playwright-core');
 const OUT = process.argv[2], G = process.argv[3], shots = JSON.parse(process.argv[4]);
 mkdirSync(OUT, { recursive: true });
 const browser = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', args: ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'] });
-const page = await (await browser.newContext({ viewport: { width: 900, height: 900 } })).newPage();
+const page = await (await browser.newContext({ viewport: { width: +(process.env.W || 900), height: +(process.env.H || 900) } })).newPage();   // W, H: another shape
 const errs = []; page.on('pageerror', (e) => errs.push(e.message));
 await page.goto('http://localhost:' + (process.env.PORT || 8013) + '/inspect.html?g=' + G + '&t=' + Date.now());
 await page.waitForFunction(() => window.__inspect?.guitar?.children?.length > 0, null, { timeout: 60000 });
 await page.waitForTimeout(4000);
+if (process.env.NOUI) await page.addStyleTag({ content: '.ui { display: none !important; }' });   // NOUI=1: the picture only
 for (const [name, part, aim, dir, dist] of shots) {
   await page.evaluate(([part, aim, dir, dist]) => {
     const { camera, controls, guitar } = window.__inspect; const V = camera.position.constructor;

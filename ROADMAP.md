@@ -494,3 +494,14 @@ reads as a copy. Full brief, sources and specs: `BRIEF-session-5.md`.
     (the Mac idles at about 30%).
   - Side effect to put to Sam: after 10 s untouched the View guitar's slow sway and the hero's spin
     freeze, and Sam asked for that sway on 10-07.
+- 2026-10-23, V7. Hero fix to Sam's notes: arrows as beads on the halo's line (placed every frame from
+  `heroAnchors()` in showroom.js), dots out, name on the plinth and View guitar on its face (main.js
+  `placeStage`, `placeArrows`). The spec line under the name is gone. Not committed yet. Cache tag `?v=46`.
+  - Then Sam asked what sections are missing. Answer: sound, the workshop, how to order. He chose the
+    workshop first. Demo round: three options behind `?shop=bench|weeks|gallery`, all in
+    `src/workshop-options.js` and `workshop-options.css`, loaded only with the switch (main.js hook after
+    `initWalk`). The section goes between the end of the tour and 02. Gallery pictures in
+    `site/assets/shop/<id>-<stage>.jpg`, made by `tools/shop_pictures.mjs <guitar index>` from the bench
+    scene. Reels: `demo/v7/shop-options-desktop.mp4` and `-phone.mp4`, clips by `demo/v7/record-shop.sh`.
+    Waiting for Sam's pick. After he picks: remove the other two and the switch, and make the winner the
+    page's own section.

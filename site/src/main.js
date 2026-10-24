@@ -56,10 +56,14 @@ if (!reduced) {
    ------------------------------------------------------------------------ */
 const roomEl = $('.room');
 const ui = {
-  no: $('[data-no]'), name: $('[data-name]'), line: $('[data-line]'),
-  view: $('[data-view]'), dots: $('[data-dots]'), closeup: $('[data-closeup]'),
+  no: $('[data-no]'), name: $('[data-name]'),
+  view: $('[data-view]'), closeup: $('[data-closeup]'),
+  prev: $('.room__arrow--halo[data-prev]'), next: $('.room__arrow--halo[data-next]'), controls: $('.room__controls'), stage: $('.room__stage'),
 };
-let room = null, draft = null;
+let room = null, draft = null, shop = null;
+// The workshop chapter: three options behind ?shop=bench|weeks|gallery (workshop-options.js, V7 demo
+// round). Without the switch the page has no workshop and nothing below changes.
+const SHOP = new URLSearchParams(location.search).get('shop');
 try {
   room = new Showroom($('.room__gl'), { onProgress, onChange });
   room.reduced = reduced;
@@ -69,40 +73,58 @@ try {
   document.documentElement.classList.add('no-webgl');
 }
 
-LINEUP.forEach((g, i) => {
-  const li = document.createElement('li');
-  li.innerHTML = `<button type="button" aria-label="${g.name}" style="--dot: ${g.colour}"></button>`;
-  li.firstChild.addEventListener('click', () => room?.goTo(i));
-  ui.dots.appendChild(li);
-});
-
-// The button sits on the centre pedestal's front face, but never lower than
-// a clear gap above the arrows: on short windows the pedestal lands on them.
-function setStageY() {
+// Under the guitar: the name stands on the centre plinth between the guitar's foot and the plinth's
+// lit front edge, and View guitar sits on the plinth's face below that edge. Placed once per window
+// size, from the camera at rest.
+function placeStage() {
   if (!room) return;
-  const view = ui.view.getBoundingClientRect(), controls = $('.room__controls').getBoundingClientRect();
-  const floor = controls.top - roomEl.getBoundingClientRect().top - 22 - view.height / 2;
-  document.documentElement.style.setProperty('--stage-y', `${Math.round(Math.min(room.stageScreenY(), floor))}px`);
+  const A = room.heroAnchors(30, true), h = roomEl.clientHeight;
+  const face = Math.min(Math.max(A.rim + 30, (A.rim + h) / 2), h - 26);
+  roomEl.style.setProperty('--plate-y', `${Math.round((A.foot + A.rim) / 2)}px`);
+  roomEl.style.setProperty('--face-y', `${Math.round(face)}px`);
+}
+
+// The arrows ride the halo's line, left and right, and follow the pointer's parallax with it. On a
+// turn the camera pulls back and the halo shrinks away from them: they stay where they are (still
+// under the pointer for the next click) and their light goes out until the halo comes back. The
+// name and View guitar go sooner and come back later, only once the plinth is under them again.
+const smooth = (a, b, x) => { const t = Math.min(Math.max((x - a) / (b - a), 0), 1); return t * t * (3 - 2 * t); };
+let arrowsAt = '', copyBox = null;
+const measureCopy = () => {
+  const c = $('.room__copy'), r = c.getBoundingClientRect(), o = roomEl.getBoundingClientRect();
+  copyBox = r.width ? { left: r.left - o.left, right: r.right - o.left, top: r.top - o.top, bottom: r.bottom - o.top } : null;
+};
+function placeArrows() {
+  const inset = ui.prev.offsetWidth / 2 + 8;
+  const A = room.heroAnchors(inset, false, copyBox);
+  const on = (1 - smooth(0.03, 0.35, A.turning)).toFixed(2), stage = (1 - smooth(0.02, 0.12, A.turning)).toFixed(2);
+  const key = `${A.left[0].toFixed(1)} ${A.left[1].toFixed(1)} ${A.right[0].toFixed(1)} ${on} ${stage}`;
+  if (key === arrowsAt) return;
+  arrowsAt = key;
+  ui.prev.style.translate = `${A.left[0].toFixed(1)}px ${A.left[1].toFixed(1)}px`;
+  ui.next.style.translate = `${A.right[0].toFixed(1)}px ${A.right[1].toFixed(1)}px`;
+  ui.controls.style.setProperty('--on', on);
+  ui.stage.style.opacity = stage;
+  ui.stage.style.visibility = +stage > 0 ? '' : 'hidden';
 }
 
 let firstChange = true;
 function onChange(i, info) {
   setWalkGuitar(i);
+  shop?.setGuitar(i);
   closeupArrived(i, info);
-  $$('button', ui.dots).forEach((b, k) => b.setAttribute('aria-current', k === i ? 'true' : 'false'));
   const apply = () => {
     ui.no.textContent = info.no;
     ui.name.textContent = info.name;
-    ui.line.textContent = info.line;
     ui.view.disabled = !info.real;
     ui.view.querySelector('span').textContent = info.real ? 'View guitar' : 'In the workshop';
     ui.view.classList.toggle('is-bench', !info.real);
   };
   if (firstChange || reduced) { firstChange = false; apply(); return; }
   gsap.timeline({ overwrite: true })
-    .to([ui.name, ui.line, ui.no], { yPercent: -110, opacity: 0, duration: 0.42, ease: 'expo.in', stagger: 0.03 })
+    .to([ui.name, ui.no], { yPercent: -110, opacity: 0, duration: 0.42, ease: 'expo.in', stagger: 0.03 })
     .add(apply)
-    .fromTo([ui.name, ui.line, ui.no], { yPercent: 110, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 1.1, ease: EASE, stagger: 0.05 });
+    .fromTo([ui.name, ui.no], { yPercent: 110, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 1.1, ease: EASE, stagger: 0.05 });
 }
 
 $$('[data-prev]').forEach((b) => b.addEventListener('click', () => room?.step(-1)));
@@ -292,11 +314,14 @@ async function boot() {
     }
     // Compile shaders and upload all guitar GPU buffers behind the opaque loader curtain
     room.warmGPU();
-    setStageY();
+    placeStage();
+    measureCopy();
+    placeArrows();
     // the page accent follows the guitar in the centre, same colour as the room's light
     let accent = '';
     gsap.ticker.add(() => {
       room.render();
+      if (room.running && !inCloseup) placeArrows();
       const hex = room.accentHex;
       if (hex !== accent) { accent = hex; document.documentElement.style.setProperty('--accent', hex); }
     });
@@ -320,6 +345,7 @@ async function boot() {
   // run (reduced motion, no WebGL). With the ink chapter on, the drawing lives inside the pinned room.
   if (draft) $('#drawings').remove(); else buildDrawing(D);
   initWalk();
+  if (SHOP && room) shop = await import('./workshop-options.js?v=1').then((m) => m.buildWorkshop(SHOP, { room, reduced, before: $('#guitars') })).catch((err) => { console.error(err); return null; });
   await buildIndex();
   buildFooter($('#visit'), { reduced });
   initReveals();
@@ -465,7 +491,7 @@ function walkFrame() {
 let resizeT;
 addEventListener('resize', () => {
   clearTimeout(resizeT);
-  resizeT = setTimeout(() => { room?.layout(); setStageY(); ScrollTrigger.refresh(); }, 120);
+  resizeT = setTimeout(() => { room?.layout(); placeStage(); measureCopy(); ScrollTrigger.refresh(); }, 120);
 });
 
 initCursor({ room: () => room, draft: () => draft, reduced });

@@ -1,0 +1,113 @@
+/* The workshop chapter, three options behind ?shop= (src/workshop-options.js). Loaded only with the switch. */
+
+.shop { position: relative; height: 100vh; height: 100svh; min-height: 560px; overflow: hidden; background: #050404; color: var(--text); }
+.shop__frame { position: absolute; inset: 0; }
+
+/* shared words: the head, one stage, the week counter, the rail */
+.shop__head { position: absolute; left: var(--gutter); top: clamp(84px, 14vh, 150px); width: min(30rem, 34vw); z-index: 2; }
+.shop__head .eyebrow { margin: 0 0 clamp(12px, 2vh, 22px); }
+.shop__h2 { margin: 0; font: 400 clamp(1.5rem, 2.5vw, 2.8rem)/1.08 var(--serif); letter-spacing: -0.01em; }
+.shop__lede { margin: clamp(12px, 2vh, 22px) 0 0; max-width: 24rem; font: 300 clamp(11.5px, 0.78vw, 13.5px)/1.8 var(--sans); color: var(--muted); }
+
+.shop__stage { position: absolute; left: var(--gutter); top: 50%; width: min(28rem, 32vw); z-index: 2; }
+.shop__when { display: flex; align-items: baseline; gap: 1.2em; margin: 0 0 clamp(10px, 1.8vh, 18px); font: 400 clamp(10px, 0.68vw, 12px) var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); font-variant-numeric: tabular-nums; }
+.shop__when b { font-weight: 400; color: var(--accent); }
+.shop__when i { font-style: normal; }
+.shop__title { margin: 0; overflow: hidden; padding-bottom: 0.1em; font: 400 clamp(1.25rem, 1.9vw, 2.2rem)/1.12 var(--serif); letter-spacing: -0.01em; }
+.shop__title span { display: inline-block; }
+.shop__text { margin: clamp(10px, 1.8vh, 20px) 0 0; max-width: 25rem; font: 300 clamp(11.5px, 0.78vw, 13.5px)/1.85 var(--sans); color: #b3ab9f; }
+
+.shop__week { position: absolute; right: var(--gutter); top: clamp(84px, 14vh, 150px); margin: 0; z-index: 2; display: grid; justify-items: end; gap: 4px;
+  font: 400 clamp(10px, 0.68vw, 12px) var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); font-variant-numeric: tabular-nums; }
+.shop__week b { font-weight: 400; }
+.shop__wk { font: 500 clamp(3rem, 7vw, 7.5rem)/0.9 var(--serif); letter-spacing: 0.02em; color: transparent; -webkit-text-stroke: 1px color-mix(in srgb, var(--accent) 80%, transparent); font-variant-numeric: lining-nums tabular-nums; }
+.shop__week i { font-style: normal; }
+
+.shop__rail { position: absolute; left: var(--gutter); right: var(--gutter); bottom: clamp(18px, 4.4vh, 44px); margin: 0; padding: 0; list-style: none; display: flex; gap: 6px; z-index: 2; }
+.shop__rail li { min-width: 0; }
+.shop__rail i { display: block; height: 1px; background: var(--line); overflow: hidden; }
+.shop__rail i b { display: block; height: 100%; background: var(--accent); transform: scaleX(0); transform-origin: left; box-shadow: 0 0 8px var(--accent); }
+.shop__rail span { display: block; margin-top: 10px; font: 400 clamp(9.5px, 0.62vw, 11px) var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: rgba(237, 230, 218, 0.34); white-space: nowrap; overflow: hidden; text-overflow: clip; transition: color 0.6s var(--ease); }
+.shop__rail li.is-on span { color: var(--text); }
+
+/* ------------------------------------------------- 01 · On the Bench */
+.bn__gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.bn__shade { position: absolute; inset: 0; pointer-events: none; z-index: 1;
+  background: linear-gradient(90deg, rgba(5, 4, 4, 0.82) 0%, rgba(5, 4, 4, 0.55) 26%, rgba(5, 4, 4, 0) 46%),
+              linear-gradient(0deg, rgba(5, 4, 4, 0.7) 0%, rgba(5, 4, 4, 0) 18%); }
+
+/* ------------------------------------------------- 02 · Twelve Weeks */
+.shop--weeks .shop__stage { left: auto; right: var(--gutter); top: clamp(84px, 14vh, 150px); width: min(26rem, 30vw); }
+.wk { --cal-b: calc(clamp(18px, 4.4vh, 44px) + 34px); --cal-h: 36vh; }
+.wk__pool { position: absolute; left: 50%; bottom: -30vh; width: 140vw; height: 80vh; translate: -50% 0; pointer-events: none;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 30%, transparent), transparent 72%); }
+.wk__big { position: absolute; left: 0; right: 0; bottom: calc(var(--cal-b) + 2vh); margin: 0; text-align: center; overflow: hidden; pointer-events: none;
+  font: 500 clamp(9rem, 30vw, 30rem)/0.8 var(--serif); letter-spacing: 0.02em; color: transparent; -webkit-text-stroke: 1.5px color-mix(in srgb, var(--accent) 34%, transparent); font-variant-numeric: lining-nums tabular-nums; }
+.wk__big span { display: inline-block; }
+.wk__rods, .wk__spans { position: absolute; left: var(--gutter); right: var(--gutter); margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); }
+.wk__rods { bottom: var(--cal-b); height: var(--cal-h); z-index: 1; }
+.wk__rods li { position: relative; }
+.wk__rods i { position: absolute; left: 50%; top: 0; bottom: 26px; width: 2px; translate: -50% 0; background: rgba(237, 230, 218, 0.1); overflow: visible; transition: width 0.5s var(--ease); }
+.wk__rods b { position: absolute; inset: 0; transform: scaleY(0); transform-origin: bottom; background: linear-gradient(0deg, var(--accent), color-mix(in srgb, var(--accent) 55%, #fff)); box-shadow: 0 0 16px var(--accent), 0 0 44px color-mix(in srgb, var(--accent) 45%, transparent); }
+.wk__rods li.is-wait b { background: repeating-linear-gradient(0deg, var(--accent) 0 4px, transparent 4px 10px); box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 40%, transparent); }
+.wk__rods li.is-now i { width: 5px; }
+.wk__rods li.is-now b::after { content: ''; position: absolute; left: 50%; top: -5px; width: 9px; height: 9px; translate: -50% 0; border-radius: 50%; background: var(--accent); box-shadow: 0 0 16px var(--accent), 0 0 40px var(--accent); }
+.wk__rods span { position: absolute; left: 0; right: 0; bottom: 0; text-align: center; font: 400 clamp(9.5px, 0.64vw, 11px) var(--sans); letter-spacing: 0.1em; color: rgba(237, 230, 218, 0.3); font-variant-numeric: tabular-nums; transition: color 0.5s var(--ease); }
+.wk__rods li.is-done span, .wk__rods li.is-now span { color: var(--text); }
+.wk__spans { bottom: calc(var(--cal-b) + var(--cal-h) + 14px); z-index: 1; }
+.wk__spans li { margin: 0 6px; padding-top: 10px; border-top: 1px solid rgba(237, 230, 218, 0.16); font: 400 clamp(9.5px, 0.64vw, 11px) var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: rgba(237, 230, 218, 0.34); white-space: nowrap; transition: color 0.6s var(--ease), border-color 0.6s var(--ease); }
+.wk__spans li.is-on { color: var(--accent); border-color: var(--accent); }
+.wk__key { position: absolute; right: var(--gutter); bottom: clamp(18px, 4.4vh, 44px); margin: 0; display: flex; gap: 22px; font: 400 clamp(9.5px, 0.62vw, 11px) var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.wk__key span { display: inline-flex; align-items: center; gap: 9px; }
+.wk__key i { width: 2px; height: 14px; background: var(--accent); }
+.wk__key i.is-wait { background: repeating-linear-gradient(0deg, var(--accent) 0 3px, transparent 3px 6px); }
+
+/* ------------------------------------------ 03 · Where the Weeks Go */
+.gl__track { position: absolute; left: 0; top: 0; bottom: 0; display: flex; align-items: center; gap: 7vw; padding: 0 0 0 var(--gutter); will-change: transform; }
+.gl__intro { position: relative; flex: none; width: min(30rem, 34vw); align-self: center; }
+.gl__intro .shop__head { position: static; width: auto; }
+.gl__card { position: relative; flex: none; width: min(40vw, 62vh * 1.5); margin: 0; translate: 0 -4vh; }
+.gl__card.is-low { translate: 0 4vh; }
+.gl__pic { position: relative; aspect-ratio: 3 / 2; overflow: hidden; background: #0e0b09; }
+.gl__pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(1.18); will-change: transform; filter: saturate(0.92) brightness(0.86); transition: filter 0.9s var(--ease); }
+.gl__card.is-on .gl__pic img { filter: none; }
+.gl__no { position: absolute; left: -0.06em; top: -0.5em; font: 500 clamp(4rem, 8.6vw, 9.5rem)/1 var(--serif); color: transparent; -webkit-text-stroke: 1px color-mix(in srgb, var(--accent) 75%, transparent); pointer-events: none; transition: -webkit-text-stroke-color 0.8s var(--ease); }
+.gl__card figcaption { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr); gap: 3vw; margin-top: clamp(14px, 2.6vh, 28px); }
+.gl__card .shop__when { grid-column: 1 / -1; margin: 0; }
+.gl__title { margin: 0; font: 400 clamp(1.1rem, 1.6vw, 1.9rem)/1.15 var(--serif); letter-spacing: -0.01em; }
+.gl__card .shop__text { margin: 0; }
+.gl__end { flex: none; width: 10vw; height: 1px; }
+.gl__week { position: absolute; right: var(--gutter); bottom: calc(clamp(18px, 4.4vh, 44px) + 18px); margin: 0; font: 400 clamp(10px, 0.68vw, 12px) var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); font-variant-numeric: tabular-nums; }
+.gl__week span { color: var(--accent); }
+.gl__week i { font-style: normal; }
+.gl__ruler { position: absolute; left: var(--gutter); right: var(--gutter); bottom: clamp(18px, 4.4vh, 44px); height: 12px; }
+.gl__line { position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--line); }
+.gl__line b { position: absolute; inset: 0; background: var(--accent); transform: scaleX(0); transform-origin: left; box-shadow: 0 0 8px var(--accent); }
+.gl__ruler ol { margin: 0; padding: 0; list-style: none; }
+.gl__ruler li { position: absolute; bottom: 0; width: 1px; height: 7px; background: rgba(237, 230, 218, 0.25); transition: background 0.5s var(--ease), height 0.5s var(--ease); }
+.gl__ruler li.is-done { background: var(--accent); height: 11px; }
+
+@media (max-width: 900px) {
+  .shop__head { top: 76px; width: auto; right: calc(var(--gutter) + 84px); }
+  .shop__lede { display: none; }
+  .shop__stage { top: auto; bottom: calc(clamp(18px, 4.4vh, 44px) + 44px); width: auto; right: var(--gutter); }
+  .shop__text { max-width: none; }
+  .shop__week { top: 76px; }
+  .shop__wk { font-size: 2.6rem; }
+  .shop__rail span { font-size: 0; }
+  .shop--weeks .shop__stage { left: var(--gutter); right: var(--gutter); top: 26vh; bottom: auto; width: auto; }
+  .wk { --cal-h: 24vh; }
+  .wk__spans li { margin: 0 2px; font-size: 0; }
+  .wk__spans li.is-on { font-size: 9px; letter-spacing: 0.08em; overflow: visible; }
+  .wk__rods span { font-size: 8.5px; letter-spacing: 0; }
+  .wk__key { left: var(--gutter); right: auto; }
+  .wk__big { font-size: 46vw; }
+  .gl__intro { width: 78vw; }
+  .gl__intro .shop__lede { display: block; }
+  .gl__card { width: 80vw; translate: 0 -3vh; }
+  .gl__card.is-low { translate: 0 3vh; }
+  .gl__card figcaption { grid-template-columns: 1fr; gap: 10px; }
+  .gl__no { font-size: 4.2rem; }
+  .bn__shade { background: linear-gradient(180deg, rgba(5, 4, 4, 0.85) 0%, rgba(5, 4, 4, 0) 22%),
+                           linear-gradient(0deg, rgba(5, 4, 4, 0.92) 0%, rgba(5, 4, 4, 0.75) 26%, rgba(5, 4, 4, 0) 44%); }
+}

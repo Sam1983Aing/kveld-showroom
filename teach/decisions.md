@@ -33,3 +33,12 @@ Running table for 009 Guitars (KVELD). Started with the V6 session. For earlier 
 | 10-22 | Performance pass: Draco models, cheaper mirror floor, culling, the room resting when nothing moves | Claude (in another session, after Sam asked how the performance was and what makes the fan run) | Sam ("I like, let's push it") | Built |
 | 10-23 | The sway in View guitar freezing after 10 s untouched (a side effect of the pass) | Claude (side effect) | Open, put to Sam | Waiting |
 | 10-23 | Tag the state as V6 and brief V7 | Sam | Sam | Done |
+| 10-23 | Hero: arrows on the halo's left and right, dots out, name and View guitar under the guitar | Sam | Sam | Built, waiting for his view |
+| 10-23 | Arrows as beads of light on the halo's line (picked from three looks rendered side by side) | Claude | Not reviewed yet | Built |
+| 10-23 | The spec line under the hero name removed (no room on the plinth) | Claude | Not reviewed yet | Built |
+| 10-23 | On a turn the beads stay put and go dark, the name and button fade until the camera lands | Claude (found in recorded frames) | Not reviewed yet | Built |
+| 10-23 | Section 02 sends you back to the hero, the flow feels wrong. Is a section missing? | Sam | Open | Answered in words, nothing built |
+| 10-23 | Which missing sections: sound, the workshop, how to order. Sam started with the workshop | Claude (list), Sam (picked) | Sam | Workshop in a demo round |
+| 10-23 | Workshop options: On the Bench, Twelve Weeks, Where the Weeks Go | Claude | Waiting for Sam's pick | Built behind ?shop= |
+| 10-23 | The tour's flat last shot leads into the guitar lying on a bench | Claude | Waiting | In option 01 |
+| 10-23 | Workshop copy: two makers, Halden, one guitar to a bench, "that is what the price pays for" | Claude | Waiting | Invented, like the maker |

@@ -55,3 +55,25 @@ On camera: the before and after numbers come from the same script and the same G
 
 **15. "Provide preview link." then "I like, let's push it, and then start a new brief for a new session for V7."** (2026-10-23)
 Committed and tagged as `v6`, pushed to GitHub, and wrote `BRIEF-v7.md` with what V7 could be (biggest first: finish the walk), the decisions Sam still owes, and the traps found in V6. The two measuring scripts moved from the scratchpad into `tools/` so the next session measures the same way.
+
+## V7 session, from 2026-10-23
+
+**1. "009 V7: <what you want to build>. Read BRIEF-v7.md first."**
+The placeholder again. Claude read the brief and asked which of the five items V7 was, with "finish the close-up tour" recommended. Sam answered with something else.
+
+**2. "Fix the hero. The arrows not underneath the guitar, maybe in the circle light, on the left and right side. Remove the colour dots, they don't make sense anymore. The name and View guitar can appear underneath the guitar. Start with that first."**
+Claude projected the halo and the plinth from 3D to screen points (`heroAnchors()` in showroom.js) and placed the DOM on them: the two arrows sit on the halo's line at its left and right side, the name stands on the plinth top in front of the guitar, View guitar on the plinth's face. Three looks for the arrows were rendered side by side (frosted glass, a bead of light, a dark button with a lit ring) and the bead won, because it is the only one that reads as part of the light. The spec line under the name went, there was no room for it on the plinth.
+Two bugs found in recorded frames, not in stills: the arrow bead landed on the intro paragraph at 1000 x 575 (fixed by sliding the beads down the line until they clear it), and on a turn the camera pulls back so the name was left floating over the floor reflection (fixed by fading the name and button out while the camera is back and in again as it lands). The beads stay put under the pointer during a turn and go dark, then light again when the halo returns.
+On camera: the page DOM can stand on 3D things if you project their positions every frame. And a still at rest hides what a turn does to anything pinned to the scene.
+
+**3. "Now I just want to make sure we have a nice landing page. From section 02, selecting one guitar goes back to the hero. I think the flow is not that great. Before you do anything, even though it's a fictional landing page, is there any section that is missing?"**
+Asked mid-build. Claude finished the hero fix, sent the reel, and answered in words before building anything (see the reply in the chat for the list).
+
+**4. "Start with the workshop section."** (2026-10-23)
+Claude ran the demo-options round: "00 Now" recorded first (the tour's flat last shot, then 02), then three options built into the real page behind `?shop=`, all in `site/src/workshop-options.js` and `site/workshop-options.css`:
+01 On the Bench (`?shop=bench`): the tour ends on the guitar lying flat, so the workshop opens on it lying on a walnut bench under one lamp, and it builds itself as you scroll. Two blanks are set down, a saw line runs down them and leaves the body and the neck, the frets drop in, the finish is wiped on from the tail with a wet edge, the hardware is set down, strings last. The camera tilts from straight above to three quarters.
+02 Twelve Weeks (`?shop=weeks`): one rod of light per week, the stages bracketed over them. The weeks where the wood rests and the lacquer hardens fill dotted, so "more than half is waiting" is something you see.
+03 Where the Weeks Go (`?shop=gallery`): a sideways gallery, one picture per stage, taken in the bench scene at that moment of the build (`tools/shop_pictures.mjs`).
+The copy (stagesFor) is per guitar: the weeks come from specs.js, so Rowan's says sixteen and its carve stage talks about the carved top.
+Teachable bugs: the guitar floated 15 cm above the bench because one part (BackHardware) stores bounds 33 cm deep, fixed by measuring from the vertices. The raw wood looked finished because the lamp was too bright, so tan read as cream. Two quiet seconds after each pin (nothing moving) were found in the recordings, and fixed by setting the blanks down and letting the rods rise in.
+On camera: one 3D scene made two options, the live build and the stills for the gallery. And the models' named parts (Body, Neck, Frets, Tuners...) are what made a build-it-yourself animation possible at all.
