@@ -322,6 +322,13 @@ img, svg { display: block; }
 /* The bench (workshop.js): its own canvas, the head and one stage's words over it on the left, the week
    counter top right, a rail of the stages along the bottom. Pinned for five screens. */
 .shop { position: relative; height: 100vh; height: 100svh; min-height: 560px; overflow: hidden; background: #050404; color: var(--text); }
+/* The workshop rises over the end of the tour like a sheet (V7, Sam's idea): it overlaps the room's last
+   1.4 screens (the tour's outro), so it comes up from the bottom while the guitar is still moving into its last pose underneath,
+   its top corners flattening as it arrives. --rise goes 1 to 0 on the way up (workshop.js), and the
+   room sinks back a little under it (--sink on .room). */
+.shop { z-index: 3; margin-top: calc(-1.4 * max(100vh, 560px)); margin-top: calc(-1.4 * max(100svh, 560px));   /* 1.4: it starts up as the guitar starts to move */
+  border-radius: calc(var(--rise, 0) * 26px) calc(var(--rise, 0) * 26px) 0 0; box-shadow: 0 -40px 80px rgba(0, 0, 0, calc(0.6 * var(--rise, 0))); }
+.room__gl, .walk { transform-origin: 50% 42%; transform: scale(calc(1 - 0.07 * var(--sink, 0))); filter: brightness(calc(1 - 0.6 * var(--sink, 0))); }
 .shop__frame { position: absolute; inset: 0; }
 
 /* the words: the head, one stage, the week counter, the rail */

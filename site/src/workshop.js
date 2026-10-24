@@ -450,6 +450,14 @@ export async function createWorkshop(section, { room, reduced }) {
   }
   return {
     pin() {
+      // the rise: from its top at the bottom of the screen to its top at the top, over the room's last screen
+      const roomEl = document.querySelector('#room');
+      ScrollTrigger.create({
+        trigger: section, start: 'top bottom', end: 'top top',
+        onUpdate: (st) => { section.style.setProperty('--rise', (1 - st.progress).toFixed(3)); roomEl?.style.setProperty('--sink', st.progress.toFixed(3)); },
+        onLeave: () => { section.style.setProperty('--rise', 0); roomEl?.style.setProperty('--sink', 1); },
+        onLeaveBack: () => { section.style.setProperty('--rise', 1); roomEl?.style.setProperty('--sink', 0); },
+      });
       ScrollTrigger.create({
         trigger: section, start: 'top top', end: () => `+=${Math.round(LEN * innerHeight)}`, pin: true, anticipatePin: 1,
         onUpdate: (st) => { pTarget = st.progress; dirty = true; },

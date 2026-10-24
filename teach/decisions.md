@@ -50,3 +50,5 @@ Running table for 009 Guitars (KVELD). Started with the V6 session. For earlier 
 | 10-24 | The ring turn: shorter, a third of the pull-back, more lean | Sam (asked), Claude (how) | Waiting for his view | Built |
 | 10-24 | Navigation options: Halo Mark, Fretboard, Index | Claude | Waiting for Sam's pick | Built behind ?nav= |
 | 10-24 | The drawing's paper only counts while in the drawing (pointer and header) | Claude (found the bug) | Not reviewed | Fixed |
+| 10-24 | Font pairings: Faceplate, Luthier, Poster | Claude | Waiting for Sam's pick | Built behind ?type= |
+| 10-24 | The workshop rises over the end of the tour as a sheet while the guitar still moves | Sam | Sam | Built (1.4 screens of overlap, the room sinks under it) |
