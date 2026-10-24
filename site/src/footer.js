@@ -1,4 +1,4 @@
-// The footer (03 Visit): Last Light, Sam's pick of 2026-10-06, tidied to his notes on 2026-10-07.
+// The footer (04 Visit, 03 until How to order came in on 2026-10-24): Last Light, Sam's pick of 2026-10-06, tidied to his notes on 2026-10-07.
 // The whole room as the last picture. It is dark and close when the footer first shows, and the
 // lights come up as it fills the screen. Dust drifts up through the light on the guitar in the
 // centre and fades into the dark above it. Under the guitars: where the room is, when it is open
@@ -114,7 +114,7 @@ export function buildFooter(section, { reduced = false } = {}) {
     </div>
     <div class="ftl__in">
       <div>
-        <p class="eyebrow ft__up">03 · Visit</p>
+        <p class="eyebrow ft__up">04 · Visit</p>
         <h2 class="ftl__h2">${lines('Come and hear', 'them <em>played</em>.')}</h2>
       </div>
       <a class="ft__cta ft__up" href="#room" style="--d: 2"><span>Book the room</span>${ARROW}</a>

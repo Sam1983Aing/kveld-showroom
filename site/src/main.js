@@ -12,7 +12,8 @@ import { BEATS } from './sequence.js';
 import { initDraft, DRAFT } from './draft.js';     // the drawing comes first (Ink on Paper)
 import { buildSpotlight } from './spotlight.js';
 import { createWorkshop } from './workshop.js';
-import { buildFooter } from './footer.js';         // 03 Visit (Last Light)
+import { buildOrder } from './order.js';           // 03 How to order
+import { buildFooter } from './footer.js';         // 04 Visit (Last Light)
 import { initCursor } from './cursor.js';
 
 const { gsap, ScrollTrigger, SplitText, Lenis } = window;
@@ -347,6 +348,7 @@ async function boot() {
   initWalk();
   if (shop) shop.pin(); else $('#workshop').remove();     // no WebGL: no bench, and no empty screen for it
   await buildIndex();
+  buildOrder($('#order'), { toVisit: () => (lenis ? lenis.scrollTo('#visit', { duration: 1.8 }) : $('#visit').scrollIntoView({ behavior: 'smooth' })), reduced });
   buildFooter($('#visit'), { reduced });
   initReveals();
   ScrollTrigger.refresh();

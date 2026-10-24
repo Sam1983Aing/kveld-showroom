@@ -233,6 +233,17 @@ Overlays of each model on its sheet: `media/plan-vs-<id>.png` (Floe's is
   and is compiled behind the loader. Tunable light: `window.__shop.LIGHT` in the console.
   Reduced motion shows each stage done. Measured at 1725 x 990 at 2x: 60 fps while scrolling it.
 
+- **02 · Hear them** (`site/src/spotlight.js`, `site/src/voices.js`): a click on a name plays that
+  guitar's phrase and turns the sound on, then pointing at a name plays it. The arch behind the
+  guitar ripples with the waveform. The jump to the hero is a small "See it in the room" link. The
+  sound is synthesized in the browser (plucked-string models through a rig per guitar, all in
+  `RIG` and `PHRASE` at the top of `voices.js`). `node tools/voices_render.mjs` writes the seven to
+  WAV in `media/checks/voices/`. `demo/v7/record-hear.mjs` records the section with its sound.
+- **03 · How to order** (`site/src/order.js`, `#order`): a light chapter on the drawing's paper.
+  Four steps joined by a line that draws as you scroll, the seven with weeks and prices, and Book
+  a visit, which scrolls down to the footer. The footer is 04 now. The terms (deposit, delivery,
+  the Friday pictures) are invented like the rest.
+
 ## What V6 changed (2026-10-06 to 10-23)
 
 - **View guitar** is a portrait of the body. Every number is in `CLOSE` at the top of

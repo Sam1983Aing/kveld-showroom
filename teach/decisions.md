@@ -45,3 +45,5 @@ Running table for 009 Guitars (KVELD). Started with the V6 session. For earlier 
 | 10-24 | 02 becomes Hear them: sound per guitar, pointing plays it, the room is a small link | Claude (proposed), Sam (approved the first version) | Sam | Built, waiting for his view |
 | 10-24 | The sound synthesized in the browser, no recordings | Claude | Not reviewed yet | Built. Claude cannot listen, Sam judges |
 | 10-24 | The arch behind the guitar carries the waveform | Claude | Not reviewed yet | Built |
+| 10-24 | How to order: a cream chapter, four steps joined by a self-drawing line, a price list, Book a visit | Claude (proposed), Sam (approved the first version) | Sam | Built, waiting for his view |
+| 10-24 | The order terms: free visit, 30% deposit, a picture every Friday, delivery in Europe | Claude | Not reviewed yet | Invented |

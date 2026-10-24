@@ -511,3 +511,9 @@ reads as a copy. Full brief, sources and specs: `BRIEF-session-5.md`.
     its old size until then), and in reduced motion shows each stage done. Checked at 1725 x 990 at
     2x: 60 fps scrolling through, the same state scrolling back, a flick, resizing mid-section to a
     phone and back, Rowan's words. Cache tag `?v=48`. Final reel `demo/v7/shop-final-*.mp4`.
+- 2026-10-24, V7. Sam approved a first version of two sections without options. 02 is Hear them
+  (`spotlight.js` reworked, sound from `voices.js`, synthesized, Claude cannot listen, so Sam judges
+  the sound). 03 is How to order (`order.js`, a cream chapter), the footer became 04. Reels:
+  `demo/v7/hear-desktop.mp4` and `-phone.mp4` (with sound), `demo/v7/clips/order-d.mp4` and `-p.mp4`.
+  Cache tag `?v=50`. Not tagged, not pushed. Still open: the tour's 17 lines, footer placeholders, a
+  Workshop link in the header.
