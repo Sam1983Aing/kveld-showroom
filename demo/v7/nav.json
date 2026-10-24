@@ -1,0 +1,15 @@
+{
+  "section": "Navigation",
+  "out": "nav-options",
+  "cardSeconds": 3.0,
+  "theme": { "bg": "#0b0a09", "fg": "#ece6da", "accent": "#9fe3f0",
+    "display": { "family": "Panchang", "src": "../../site/vendor/fonts/panchang-500.woff2" },
+    "body": { "family": "Martian Mono", "src": "../../site/vendor/fonts/martian-mono-300.woff2" },
+    "mono": { "family": "Martian Mono", "src": "../../site/vendor/fonts/martian-mono-400.woff2" } },
+  "options": [
+    { "n": "00", "name": "Now", "line": "KVELD and three links. It hides as you scroll down, and the logo lands on the end of the tour.", "desktop": "clips/nav-now-d.mp4", "phone": "clips/nav-now-p.mp4" },
+    { "n": "01", "name": "Halo Mark", "line": "The hero's arch as the logo, all seven sections as tabs, a light that slides to where you are.", "desktop": "clips/nav-halo-d.mp4", "phone": "clips/nav-halo-p.mp4" },
+    { "n": "02", "name": "Fretboard", "line": "KVELD's own headstock as the logo, the sections laid out as frets, a fingertip of light in the one you are in.", "desktop": "clips/nav-fret-d.mp4", "phone": "clips/nav-fret-p.mp4" },
+    { "n": "03", "name": "Index", "line": "A quiet header that says where you are, and Menu opens the seven as big lines across the screen.", "desktop": "clips/nav-index-d.mp4", "phone": "clips/nav-index-p.mp4" }
+  ]
+}

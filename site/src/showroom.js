@@ -32,7 +32,10 @@ export const LOOK = {
   spot: 46,               // centre key light, candela
   rim: 16,
   spinSpeed: 0.16,        // rad/s, the centre guitar's slow turn
-  stepDuration: 1.7,      // seconds per ring step
+  stepDuration: 1.15,     // seconds per ring step (1.7 until V7: Sam found the turn too long)
+  // a turn: how far toward camWide the camera backs off (0 none, 1 the whole ring on the glass), how
+  // hard it leans into the turn, how fast it comes back in on the guitar that arrives
+  turn: { back: 0.34, lean: 0.62, settle: 4.2 },
   grain: 0.035,
   dof: 0.0075,            // walk depth of field: blur per metre off focus, times 1/focus²
 };
@@ -959,14 +962,15 @@ export class Showroom {
     if (this.reduced || !dt) return;
     const want = Math.min(Math.abs(v) / 0.9, 1);
     // out quickly, in slowly: the push-in lands after the guitar does
-    this.breath += (want - this.breath) * Math.min(dt * (want > this.breath ? 5 : 2.2), 1);
+    this.breath += (want - this.breath) * Math.min(dt * (want > this.breath ? 5 : LOOK.turn.settle), 1);
     this.lean += (THREE.MathUtils.clamp(v * 0.35, -0.5, 0.5) - this.lean) * Math.min(dt * 3, 1);
-    const k = this.breath * this.breath * (3 - 2 * this.breath);
+    // only part of the way back: the ring glides past a camera that stays close (V7)
+    const k = this.breath * this.breath * (3 - 2 * this.breath) * LOOK.turn.back;
     const B = this.camBase, W = this.camWide;
-    pos.x += (W.pos.x - B.pos.x) * k + this.lean * 0.5;
+    pos.x += (W.pos.x - B.pos.x) * k + this.lean * LOOK.turn.lean;
     pos.y += (W.pos.y - B.pos.y) * k;
     pos.z += (W.pos.z - B.pos.z) * k;
-    tgt.x += this.lean * 0.25;
+    tgt.x += this.lean * LOOK.turn.lean * 0.5;
     tgt.y += (W.target.y - B.target.y) * k;
     tgt.z += (W.target.z - B.target.z) * k;
   }

@@ -63,6 +63,8 @@ const ui = {
   prev: $('.room__arrow--halo[data-prev]'), next: $('.room__arrow--halo[data-next]'), controls: $('.room__controls'), stage: $('.room__stage'),
 };
 let room = null, draft = null, shop = null;
+// Navigation options (V7 demo round): ?nav=halo|fret|index (nav-options.js). Without it, the old header.
+const NAV = new URLSearchParams(location.search).get('nav');
 try {
   room = new Showroom($('.room__gl'), { onProgress, onChange });
   room.reduced = reduced;
@@ -96,7 +98,8 @@ const measureCopy = () => {
 function placeArrows() {
   const inset = ui.prev.offsetWidth / 2 + 8;
   const A = room.heroAnchors(inset, false, copyBox);
-  const on = (1 - smooth(0.03, 0.35, A.turning)).toFixed(2), stage = (1 - smooth(0.02, 0.12, A.turning)).toFixed(2);
+  // the camera only backs off a third of the way now (LOOK.turn), so both can come back early
+  const on = (1 - smooth(0.08, 0.5, A.turning)).toFixed(2), stage = (1 - smooth(0.06, 0.3, A.turning)).toFixed(2);
   const key = `${A.left[0].toFixed(1)} ${A.left[1].toFixed(1)} ${A.right[0].toFixed(1)} ${on} ${stage}`;
   if (key === arrowsAt) return;
   arrowsAt = key;
@@ -352,7 +355,38 @@ async function boot() {
   buildFooter($('#visit'), { reduced });
   initReveals();
   ScrollTrigger.refresh();
+  if (NAV) import('./nav-options.js?v=3').then((m) => m.buildNav(NAV, { go: navGo, where: navWhere, paper: navPaper })).catch((err) => console.error(err));
 }
+
+/* ---------------------------------------------------------------------------
+   Navigation helpers for nav-options.js: which section is in view, and the way to each. Sections
+   inside the room's pin are told apart by how far into the pin the scroll is.
+   ------------------------------------------------------------------------ */
+const pageTop = (sel) => { const el = $(sel); if (!el) return Infinity; const box = el.parentElement?.classList.contains('pin-spacer') ? el.parentElement : el; return box.getBoundingClientRect().top + scrollY; };
+const NAV_AT = { workshop: '#workshop', hear: '#guitars', order: '#order', visit: '#visit' };
+function navWhere() {
+  const mid = scrollY + innerHeight * 0.5;
+  for (const k of ['visit', 'order', 'hear', 'workshop']) if (mid >= pageTop(NAV_AT[k])) return k;
+  const at = (scrollY - (walkST ? walkST.start : 0)) / innerHeight;      // screens into the room's pin
+  if (at < 0.35) return 'room';
+  if (draft && at < DRAFT.len) return 'drawing';
+  return 'closeup';
+}
+function navGo(key) {
+  const vh = innerHeight, start = walkST ? walkST.start : 0;
+  const y = key === 'home' || key === 'room' ? 0
+    : key === 'drawing' ? start + (draft ? DRAFT.hold : 0.6) * vh
+      : key === 'closeup' ? start + ((draft ? DRAFT.len : BEATS.lift) + BEATS.travel + BEATS.hold * 0.4) * vh
+        : pageTop(NAV_AT[key]);
+  if (!Number.isFinite(y)) return;
+  // near: glide there. Far: the dark jump, so the room's twenty screens are not raced through
+  if (lenis && Math.abs(y - scrollY) < vh * 2.5 && !inCloseup) lenis.scrollTo(y, { duration: 1.6 });
+  else jump(Math.round(y), inCloseup ? closeCloseup : undefined);
+}
+// The drawing's paper only counts while the scroll is in the drawing: after a jump past it, its state
+// stays where it was, and the pointer (and a header) went dark-on-dark over the rest of the page.
+const inDrawing = () => !!draft && !!walkST && (scrollY - walkST.start) / innerHeight < DRAFT.len;
+const navPaper = () => !!((inDrawing() && draft.S && draft.S.paper > 0.5) || document.elementFromPoint(innerWidth * 0.5, innerHeight * 0.22)?.closest('[data-theme="light"]'));
 
 /* ---------------------------------------------------------------------------
    5) The drawing: the plan draws itself as you scroll past it
@@ -496,5 +530,5 @@ addEventListener('resize', () => {
   resizeT = setTimeout(() => { room?.layout(); placeStage(); measureCopy(); ScrollTrigger.refresh(); }, 120);
 });
 
-initCursor({ room: () => room, draft: () => draft, reduced });
+initCursor({ room: () => room, draft: () => (inDrawing() ? draft : null), reduced });
 boot();
