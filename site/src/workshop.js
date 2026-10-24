@@ -19,9 +19,9 @@ import * as THREE from 'three';
 import { LINEUP } from './data.js';
 import { SPECS } from './specs.js';
 import { gltfLoader, prepareGuitar, studioEnvironment } from './guitar-look.js';
+import { createStageWords } from './workshop-words.js';
 
 const { gsap, ScrollTrigger } = window;
-const EASE = 'expo.out';
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const clamp01 = (x) => Math.min(Math.max(x, 0), 1);
@@ -32,33 +32,25 @@ const LEN = 5;                  // screens of scroll the bench holds for
 /* ------------------------------------------------------------- the words ---- */
 const WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve',
   'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen'];
-const TIMBER = { floe: 'The ash', sedge: 'The maple and basswood', scree: 'The mahogany', moss: 'The alder', fjord: 'The maple', rowan: 'The maple and mahogany', heath: 'The alder' };
 
-/** The five stages of a guitar's weeks, scaled to how long it takes (specs.js). */
+/** The five stages of a guitar's weeks, scaled to how long it takes (specs.js). Their words: workshop-words.js. */
 export function stagesFor(info) {
   const S = SPECS[info.id], W = S.weeks, id = info.id;
   const ends = [0.25, 0.5, 0.6, 0.92, 1].map((f) => Math.max(1, Math.round(f * W)));
   const label = (a, b) => (a >= b ? `Week ${b}` : `Weeks ${a} to ${b}`);
   const carved = id === 'sedge' || id === 'rowan', semi = id === 'fjord';
   const stages = [
-    { key: 'wood', label: 'The wood', title: 'The wood <em>waits</em>.',
-      text: `${TIMBER[id]} is bought a year ahead and rests in the room for ${WORDS[ends[0]]} weeks before anything is cut, until it holds the same air the guitar will live in.` },
-    { key: 'carve', label: carved ? 'Carve' : semi ? 'Arch' : 'Cut', title: carved ? 'Carved, line by <em>line</em>.' : semi ? 'Arched, then <em>hollowed</em>.' : 'Cut to the <em>line</em>.',
-      text: carved ? 'The top is carved by hand to the drawing\'s contour lines, a millimetre at a time. Then the neck is shaped with a spokeshave until it fills the hand.'
-        : semi ? 'The two faces are pressed into their arch and the inside is routed hollow round a solid centre block. The sound holes are cut last.'
-          : 'The body is sawn just outside the drawn line and brought to it by hand. The neck is shaped with a spokeshave until it fills the hand.' },
-    { key: 'frets', label: 'Frets', title: 'Frets, one at a <em>time</em>.',
-      text: 'Each fret is pressed in, levelled with its neighbours and its ends rounded by hand, so a thumb running down the edge of the board finds nothing.' },
-    { key: 'finish', label: 'Finish', title: 'Thin coats, long <em>waits</em>.',
-      text: `The ${S.finish.toLowerCase()} goes on a thin coat a day, sanded back between, then the guitar hangs while the lacquer hardens. Counting the wood's rest, more than half of the ${WORDS[W]} weeks is waiting.` },
-    { key: 'setup', label: 'Set up', title: 'Strung, then <em>played</em>.',
-      text: 'Wired, strung and set to a tenth of a millimetre. Then it is played in the room for a day before it goes home with you.' },
+    { key: 'wood', label: 'The wood' },
+    { key: 'carve', label: carved ? 'Carve' : semi ? 'Arch' : 'Cut' },
+    { key: 'frets', label: 'Frets' },
+    { key: 'finish', label: 'Finish' },
+    { key: 'setup', label: 'Set up' },
   ].map((s, k) => ({ ...s, n: pad(k + 1), from: k ? ends[k - 1] : 0, to: ends[k], when: label(k ? ends[k - 1] + 1 : 1, ends[k]) }));
   return {
     weeks: W, price: S.price, name: info.name, stages,
     eyebrow: 'Workshop · Halden',
     h2: `${info.name} takes ${WORDS[W]} <em>weeks</em>.`,
-    lede: `Two makers build every KVELD from the plank to the strings, one guitar to a bench. That is what the ${S.price} pays for.`,
+    lede: `Two makers, one bench, no shortcuts. Here is where the ${S.price} goes.`,
   };
 }
 
@@ -68,33 +60,6 @@ const headHTML = (T) => `
     <h2 class="shop__h2" data-shop-h2>${T.h2}</h2>
     <p class="shop__lede" data-shop-lede>${T.lede}</p>
   </div>`;
-
-// One stage's words, the title sliding up out of a mask when it changes (the same move as the tour's copy)
-const stageHTML = () => `
-  <div class="shop__stage" data-stage>
-    <p class="shop__when"><span data-st-n>01</span><b data-st-label></b><i data-st-when></i></p>
-    <h3 class="shop__title"><span data-st-title></span></h3>
-    <p class="shop__text" data-st-text></p>
-  </div>`;
-function stageSwapper(root, reduced) {
-  const el = { n: $('[data-st-n]', root), label: $('[data-st-label]', root), when: $('[data-st-when]', root), title: $('[data-st-title]', root), text: $('[data-st-text]', root) };
-  let at = -1, T = null;
-  const fill = (s) => { el.n.textContent = s.n; el.label.textContent = s.label; el.when.textContent = s.when; el.title.innerHTML = s.title; el.text.textContent = s.text; };
-  return {
-    words(t) { T = t; if (at >= 0) fill(T.stages[at]); },
-    show(k) {
-      if (k === at || !T) return;
-      const first = at < 0; at = k;
-      if (first || reduced) { fill(T.stages[k]); return; }
-      gsap.timeline({ overwrite: true })
-        .to(el.title, { yPercent: -110, duration: 0.35, ease: 'expo.in' })
-        .to([el.text, el.when], { opacity: 0, y: -6, duration: 0.3, ease: 'expo.in' }, 0)
-        .add(() => fill(T.stages[k]))
-        .fromTo(el.title, { yPercent: 110 }, { yPercent: 0, duration: 0.9, ease: EASE })
-        .fromTo([el.when, el.text], { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.8, ease: EASE, stagger: 0.06 }, '<0.1');
-    },
-  };
-}
 
 // The week rail along the bottom: one segment per stage, as long as its weeks, filling as the weeks pass
 const railHTML = (T) => `<ol class="shop__rail" data-rail>${T.stages.map((s) => `
@@ -255,16 +220,10 @@ export async function createWorkshop(section, { room, reduced }) {
       <canvas class="shop__gl" aria-hidden="true"></canvas>
       <div class="shop__shade"></div>
       ${headHTML(T)}
-      ${stageHTML()}
-      <p class="shop__week"><b>Week</b><span class="shop__wk"><span data-week>01</span></span><i data-of>/ ${T.weeks}</i></p>
       ${railHTML(T)}
     </div>`;
-  const words = stageSwapper(section, reduced);
-  // the words options (V7 demo round): ?words=tag|big|log (workshop-words.js)
-  const WORDS = new URLSearchParams(location.search).get('words');
-  const wo = WORDS ? await import('./workshop-words.js?v=3').then((m) => m.buildWords(WORDS, section, T, first, { reduced })).catch((err) => { console.error(err); return null; }) : null;
-  words.words(T);
-  const weekEl = $('[data-week]', section);
+  // the words: the stage's big word, and the maker's log for its weeks (workshop-words.js)
+  const words = createStageWords(section.querySelector('.shop__frame'), reduced);
 
   const canvas = $('.shop__gl', section);
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
@@ -385,11 +344,7 @@ export async function createWorkshop(section, { room, reduced }) {
     holder.add(dust);
     blanks.push(dust);
 
-    // points on the bench the words can point at, in the holder's frame
-    const top = (b) => new THREE.Vector3((b.min.x + b.max.x) / 2, b.max.y, (b.min.z + b.max.z) / 2);
-    const brB = box(['Saddles', 'Bridge']);
-    const anchors = { blank: top(bodyB).add(new THREE.Vector3(0, 0.008, 0)), neck: top(neckB).add(new THREE.Vector3(0, 0.01, 0)), bridge: brB.isEmpty() ? top(bodyB) : top(brB) };
-    G = { info, lie, parts, blanks, saw, glow, dust, anchors, tail: -all.max.z + c.z, head: -all.min.z + c.z, width: bodyB.max.x - bodyB.min.x,
+    G = { info, lie, parts, blanks, saw, glow, dust, tail: -all.max.z + c.z, head: -all.min.z + c.z, width: bodyB.max.x - bodyB.min.x,
       sawY: Math.max(bodyB.max.y, neckBlankB.max.y) + 0.0055 };
     // stagger the drops within each stage, in a sensible order
     const ORDER = ['Fretboard', 'Nut', 'Frets', 'Dots', 'Logo', 'Pickguard', 'NeckPickup', 'MiddlePickup', 'BridgePickup', 'Bridge', 'Tailpiece', 'Tremolo', 'Saddles', 'Controls', 'Tuners', 'Screws', 'BackHardware', 'Strings'];
@@ -399,18 +354,6 @@ export async function createWorkshop(section, { room, reduced }) {
     }
     layout();
     dirty = true;
-  }
-
-  // a point on the bench, on screen (px in the section)
-  const _a = new THREE.Vector3();
-  function anchorAt(name) {
-    if (!G) return null;
-    const y = G.sawY;
-    if (name === 'saw') _a.set(0, y, -Math.min(Math.max(G.sawNow, G.tail + 0.05), G.head - 0.05));
-    else if (name === 'sweep') _a.set(0, y - 0.004, -Math.min(Math.max(fin.uSweep.value, G.tail + 0.06), G.head - 0.06));
-    else _a.copy(G.anchors[name] || G.anchors.blank);
-    holder.localToWorld(_a).project(camera);
-    return [(_a.x * 0.5 + 0.5) * section.clientWidth, (0.5 - _a.y * 0.5) * section.clientHeight];
   }
 
   function layout() {
@@ -440,7 +383,6 @@ export async function createWorkshop(section, { room, reduced }) {
     // the saw: down the blanks from the tail to the head during the cut
     const L = G.head - G.tail;
     const sawAt = G.tail - 0.03 + (L + 0.06) * smooth(BOUNDS[1] + 0.01, BOUNDS[2] - 0.02, p);
-    G.sawNow = sawAt;
     cut.constant = -sawAt;
     const sawing = p > BOUNDS[1] && p < BOUNDS[2] - 0.02;
     G.saw.visible = G.glow.visible = sawing;
@@ -491,9 +433,7 @@ export async function createWorkshop(section, { room, reduced }) {
     camera.updateProjectionMatrix();
 
     // the words
-    wo?.update(p, S, anchorAt);
-    words.show(S.k);
-    weekEl.textContent = pad(Math.max(1, Math.ceil(S.week - 1e-6)));
+    words.update(S, T, G.info);
     railFill(section, T, S.week);
   }
 
@@ -533,9 +473,7 @@ export async function createWorkshop(section, { room, reduced }) {
     T = stagesFor(info);
     $('[data-shop-h2]', section).innerHTML = T.h2;
     $('[data-shop-lede]', section).innerHTML = T.lede;
-    $('[data-of]', section).textContent = `/ ${T.weeks}`;
     $('[data-rail]', section).outerHTML = railHTML(T);
-    words.words(T);
     dirty = true;
   }
   return {
@@ -561,7 +499,6 @@ export async function createWorkshop(section, { room, reduced }) {
         if (info.id === onBench) return;
         onBench = info.id;
         retitle(info);
-        wo?.retitle(T, info);
         await load(info);
         // compiled off the main thread, in both states (the blanks only show early on)
         for (const p of [1, BOUNDS[1] + 0.05]) { frame(p); await renderer.compileAsync(scene, camera).catch(() => {}); }

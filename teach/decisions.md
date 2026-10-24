@@ -57,3 +57,10 @@ Running table for 009 Guitars (KVELD). Started with the V6 session. For earlier 
 | 10-24 | Tour words and progress options: Callout, Chapter, Viewfinder | Claude | Waiting for Sam's pick | Built behind ?walk= |
 | 10-24 | Drawing words options: Title Block, Margin Notes, Big Name (the name instead of 03 / 07) | Sam (asked), Claude (options) | Waiting for Sam's pick | Built behind ?ink= |
 | 10-24 | How to order options: Two by Two, Card Deck, Order Slip | Sam (asked), Claude (options) | Waiting for Sam's pick | Built behind ?order= |
+| 10-24 | Navigation: Fretboard | Claude (options) | Sam ("I love Fret") | Built for good |
+| 10-24 | Workshop words: Big Words and the Log together, the log grouped by step | Sam (the combination) | Sam | Built |
+| 10-24 | Close-up tour: Callout | Claude (options) | Sam | Built for good |
+| 10-24 | Drawing: Big Name, smaller, bottom right in the band with the words | Sam (the placement) | Sam | Built |
+| 10-24 | How to order: Order Slip | Claude (options) | Sam | Built for good |
+| 10-24 | Phone header: the fret board in the header row, not fixed to the bottom | Claude (found it collided) | Not reviewed yet | Built |
+| 10-24 | Fonts: Faceplate the best of three, Sam wants more options | Sam | Open | New round |

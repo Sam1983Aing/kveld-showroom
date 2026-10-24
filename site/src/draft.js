@@ -21,6 +21,7 @@
 // any more and can be cut in a cleanup pass. Both run in versions/v32 with
 // ?draft=stack and ?draft=dark.
 import * as THREE from 'three';
+import { createDraftName } from './draft-name.js';
 import { BEATS } from './sequence.js';
 import { LINEUP } from './data.js';
 
@@ -683,13 +684,8 @@ class Draft {
     room.swapIn = (i, root) => { swapIn(i, root); this.patch(room.items[i]); };
     room.items.forEach((it) => { if (it.ready) this.patch(it); });
 
-    this.buildCopy();
-    // the words options (V7 demo round): ?ink=block|notes|name (draft-words.js)
-    const INK = new URLSearchParams(location.search).get('ink');
-    if (INK) {
-      document.documentElement.classList.add('ink-opt');
-      import('./draft-words.js?v=2').then((m) => m.buildDraftWords(INK, document.querySelector('.room'))).then((o) => { this.inkOpt = o; }).catch((err) => console.error(err));
-    }
+    // the words: the guitar's name and two inked headlines (draft-name.js)
+    this.words = createDraftName(document.querySelector('.room'));
     const gi = LINEUP.findIndex((x) => x.id === Q.get('g'));
     if (gi > 0) { room.u = room.lastU = gi; room.update(0); room.emitChange(); }
   }
@@ -709,49 +705,6 @@ class Draft {
     const kit = new Kit(this, it, this.data.get(id));
     this.kits.set(id, kit);
     return kit;
-  }
-
-  // ------------------------------------------------------------- copy ----
-  buildCopy() {
-    const css = document.createElement('style');
-    css.textContent = `
-      .draft { position: absolute; left: var(--gutter); top: 50%; transform: translateY(-50%); width: min(17rem, 24vw); pointer-events: none; opacity: 0; color: var(--text); }
-      .draft.is-paper { color: #1a1612; }
-      .draft__no { display: flex; align-items: baseline; margin: 0 0 1.4rem; font: 400 10.5px var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); font-variant-numeric: tabular-nums; }
-      .draft.is-paper .draft__no { color: var(--muted-ink); }
-      .draft__no i { font-style: normal; margin: 0 0.6em; opacity: 0.5; }
-      .draft__no b { font-weight: 400; color: var(--draft-accent); margin-left: 1.4em; }
-      .draft__title { margin: 0; overflow: hidden; padding-bottom: 0.1em; font: 400 clamp(1.25rem, 2vw, 2.1rem)/1.12 var(--serif); letter-spacing: -0.01em; }
-      .draft__title span { display: block; will-change: transform; }
-      .draft__title em { color: var(--draft-accent); }
-      .draft__text { margin: 1.4rem 0 0; font: 300 12px/1.8 var(--sans); color: #b3ab9f; }
-      .draft.is-paper .draft__text { color: #4a433b; }
-      @media (max-width: 900px) {
-        .draft { top: auto; bottom: 5.4vh; transform: none; width: auto; right: var(--gutter); }
-        .draft__title { font-size: 1.25rem; }
-        .draft__no { margin-bottom: 0.9rem; }
-        .draft__text { margin-top: 0.9rem; font-size: 11.5px; line-height: 1.7; }
-      }`;
-    document.head.appendChild(css);
-    const el = this.el = document.createElement('div');
-    el.className = 'draft';
-    el.innerHTML = '<p class="draft__no"><span data-n></span><i>/</i>07<b data-l></b></p><h3 class="draft__title"><span data-t></span></h3><p class="draft__text" data-x></p>';
-    document.querySelector('.room').appendChild(el);
-    this.ui = { n: el.querySelector('[data-n]'), l: el.querySelector('[data-l]'), t: el.querySelector('[data-t]'), x: el.querySelector('[data-x]'), beat: '' };
-  }
-
-  beats(kit) {
-    const D = kit.D, name = kit.info.name;
-    const carve = D.isolines ? `, and ${D.isolines.length} height lines for the carve` : D.arch ? `, and ${D.arch.length} height lines for the arch` : '';
-    return [
-      { label: 'From the drawing', title: 'The numbers came <em>first</em>.',
-        text: `${name} starts as a sheet: a ${D.scale.toFixed(2)} in scale, a ${D.nut_width.toFixed(2)} in nut, ${D.frets} frets${carve}.` },
-      this.mode === 'stack'
-        ? { label: 'Off the sheet', title: 'Cut level by <em>level</em>.', text: 'Every line is a slice of the guitar at one height. Stacked in order they are the body, the neck and the head.' }
-        : this.mode === 'dark'
-          ? { label: 'Into the room', title: 'Then the lights come <em>up</em>.', text: 'The same lines, standing where the guitar stands. The wood and the finish arrive from the tail.' }
-          : { label: 'Off the sheet', title: 'Then it leaves the <em>page</em>.', text: 'The outline takes its depth from the same sheet, section by section. The finish goes on from the bridge outward.' },
-    ];
   }
 
   // ----------------------------------------------------------- shots ----
@@ -829,7 +782,7 @@ class Draft {
   // ----------------------------------------------------------- frame ----
   frame() {
     const room = this.room, S = this.S, on = S.stamp === room.time;
-    if (!on) { if (this.live) this.rest(); this.inkOpt?.hide(); this.warm(); return; }
+    if (!on) { if (this.live) this.rest(); this.words.hide(); this.warm(); return; }
     this.live = true;
     const kit = S.kit, m = this.mode, dark = m === 'dark', paper = S.paper;
     const L = kit.layer(S.layout), U = this.reveal.get(kit.info.id), root = kit.root;
@@ -917,20 +870,9 @@ class Draft {
     su.uRadial.value = m === 'ink' ? 1 : 0; su.uSweep.value = sweep;
     su.uOpacity.value = 0.34 * (m === 'ink' ? sm(0, 0.15, S.fill) : sm(0.3, 1, S.fill)) * (1 - S.back) * paper;
 
-    // the copy
-    const ui = this.ui, key = `${kit.info.id}:${S.beat}`;
-    if (ui.beat !== key) {
-      ui.beat = key;
-      const b = this.beats(kit)[S.beat];
-      ui.n.textContent = kit.info.no; ui.l.textContent = b.label; ui.t.innerHTML = b.title; ui.x.textContent = b.text;
-    }
-    this.el.classList.toggle('is-paper', paper > 0.5);
+    // the words
     const accentHex = paper > 0.5 ? `#${new THREE.Color(accent).lerp(new THREE.Color('#1a1612'), 0.42).getHexString()}` : `#${accent.getHexString()}`;
-    this.el.style.setProperty('--draft-accent', accentHex);
-    this.inkOpt?.frame(S, { info: kit.info, D: kit.D, mode: this.mode, paper, accent: accentHex, anchor: () => room.walkAnchor() });
-    this.el.style.opacity = Math.min(S.copy * 1.6, 1);
-    ui.t.style.transform = `translate3d(0, ${((1 - S.copy) * 108).toFixed(2)}%, 0)`;
-    ui.x.style.opacity = clamp01((S.copy - 0.25) / 0.75);
+    this.words.frame(S, { info: kit.info, D: kit.D, mode: this.mode, paper, accent: accentHex });
   }
 
   /** While the room is at rest, get the guitar in front ready (depth maps, lines, the sheet's
@@ -960,7 +902,7 @@ class Draft {
       kit.root.children.forEach((c) => { if (c !== kit.group) c.visible = true; });
     }
     for (const U of this.reveal.values()) { U.uSweep.value = BIG; U.uGhost.value = 0; U.uEdge.value.set(0, 0, 0); }
-    this.el.style.opacity = 0;
+    this.words.hide();
   }
 }
 

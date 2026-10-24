@@ -12,6 +12,8 @@ import { BEATS } from './sequence.js';
 import { initDraft, DRAFT } from './draft.js';     // the drawing comes first (Ink on Paper)
 import { buildSpotlight } from './spotlight.js';
 import { createWorkshop } from './workshop.js';
+import { buildNav } from './nav.js';
+import { createCallout } from './walk-callout.js';
 import { buildOrder } from './order.js';           // 03 How to order
 import { buildFooter } from './footer.js';         // 04 Visit (Last Light)
 import { initCursor } from './cursor.js';
@@ -40,18 +42,8 @@ if (!reduced) {
   window.__lenis = lenis;
 }
 
-// The header steps aside while the page is read downward and comes back on the
-// way up: fixed over the chapters it ran through their headlines and copy.
-{
-  const head = $('.site-head');
-  let lastY = 0;
-  const onScroll = () => {
-    const y = window.scrollY;
-    if (y < 80 || y < lastY - 2) head.classList.remove('is-away'); else if (y > lastY + 2) head.classList.add('is-away');
-    lastY = y;
-  };
-  if (lenis) lenis.on('scroll', onScroll); else addEventListener('scroll', onScroll, { passive: true });
-}
+// The header (nav.js), built now so the room can measure it when it frames the hero
+const nav = buildNav();
 
 /* ---------------------------------------------------------------------------
    2) The room
@@ -63,13 +55,8 @@ const ui = {
   prev: $('.room__arrow--halo[data-prev]'), next: $('.room__arrow--halo[data-next]'), controls: $('.room__controls'), stage: $('.room__stage'),
 };
 let room = null, draft = null, shop = null;
-// Navigation options (V7 demo round): ?nav=halo|fret|index (nav-options.js). Without it, the old header.
-const NAV = new URLSearchParams(location.search).get('nav');
 // Font pairings (V7 demo round): ?type=faceplate|luthier|poster (type-options.js), applied before lines are measured
 const TYPE = new URLSearchParams(location.search).get('type');
-// The tour's words and progress (V7 demo round): ?walk=callout|chapter|lens (walk-options.js)
-const WALK = new URLSearchParams(location.search).get('walk');
-let walkOpt = null;
 try {
   room = new Showroom($('.room__gl'), { onProgress, onChange });
   room.reduced = reduced;
@@ -361,11 +348,11 @@ async function boot() {
   buildFooter($('#visit'), { reduced });
   initReveals();
   ScrollTrigger.refresh();
-  if (NAV) import('./nav-options.js?v=3').then((m) => m.buildNav(NAV, { go: navGo, where: navWhere, paper: navPaper })).catch((err) => console.error(err));
+  nav.start({ go: navGo, where: navWhere, paper: navPaper });
 }
 
 /* ---------------------------------------------------------------------------
-   Navigation helpers for nav-options.js: which section is in view, and the way to each. Sections
+   Navigation helpers for nav.js: which section is in view, and the way to each. Sections
    inside the room's pin are told apart by how far into the pin the scroll is.
    ------------------------------------------------------------------------ */
 const pageTop = (sel) => { const el = $(sel); if (!el) return Infinity; const box = el.parentElement?.classList.contains('pin-spacer') ? el.parentElement : el; return box.getBoundingClientRect().top + scrollY; };
@@ -448,13 +435,9 @@ function initReveals() {
    off its plinth and takes the camera along it (sequence.js). The stops and
    their copy are data per guitar (stops.js); this only shows the copy.
    ------------------------------------------------------------------------ */
-const pad = (n) => String(n).padStart(2, '0');
-const walkUI = {
-  el: $('[data-walk]'), no: $('[data-walk-no]'), of: $('[data-walk-of]'), label: $('[data-walk-label]'),
-  title: $('[data-walk-title]'), text: $('[data-walk-text]'), ticker: $('[data-walk-ticker]'), bar: $('[data-walk-bar]'),
-  model: $('[data-walk-model]'), copy: $('.walk__copy'), rail: $('.walk__rail'), shade: $('.walk__shade'), roomUI: $('.room__ui'),
-};
-let walkST = null, walkStops = [], walkLen = 0, walkStop = -2, walkFor = -1;
+const walkUI = { el: $('[data-walk]'), shade: $('.walk__shade'), roomUI: $('.room__ui') };
+const callout = createCallout(walkUI.el);
+let walkST = null, walkStops = [], walkLen = 0, walkFor = -1;
 
 function setWalkGuitar(i) {
   if (!room || i === walkFor) return;
@@ -462,10 +445,6 @@ function setWalkGuitar(i) {
   const info = LINEUP[i];
   walkStops = room.walk.stopsFor(info);
   walkLen = room.walk.length(info);
-  walkUI.of.textContent = pad(walkStops.length);
-  walkUI.model.textContent = `${info.name} · ${info.real ? 'Up close' : 'In the workshop'}`;
-  walkUI.ticker.innerHTML = walkStops.map((s, k) => `<li data-n="${pad(k + 1)}">${s.label}</li>`).join('');
-  walkStop = -2;
   if (walkST) ScrollTrigger.refresh();     // a maquette's walk is shorter, so the pin is too
 }
 
@@ -484,9 +463,7 @@ function initWalk() {
   // Scroll in the corner goes to the drawing (or the first stop) rather than past the walk,
   // and so does Drawings in the header once the drawing lives inside the pinned room
   $('[data-scroll-cue]').addEventListener('click', (e) => { e.preventDefault(); draft ? toDrawing() : toFirstStop(); });
-  $$('.site-nav a[href="#drawings"]').forEach((a) => a.addEventListener('click', (e) => { if (draft) { e.preventDefault(); toDrawing(); } }));
   gsap.ticker.add(walkFrame);
-  if (WALK) import('./walk-options.js?v=3').then((m) => m.buildWalk(WALK, walkUI.el, { sheet })).then((o) => { walkOpt = o; }).catch((err) => console.error(err));
 }
 
 // Where each stop of the tour sits along the guitar, 0 at the tip of the headstock, 1 at the tail
@@ -516,32 +493,10 @@ function walkFrame() {
   walkUI.roomUI.style.visibility = roomA > 0 ? '' : 'hidden';
   walkUI.el.style.visibility = lift > 0 ? 'visible' : 'hidden';
   if (!W) return;
-
-  if (W.stop !== walkStop) {
-    walkStop = W.stop;
-    const s = walkStops[W.stop];
-    walkUI.ticker.querySelectorAll('li').forEach((li, k) => li.classList.toggle('is-on', k === W.stop));
-    if (s) {
-      walkUI.no.textContent = pad(W.stop + 1);
-      walkUI.label.textContent = s.label;
-      walkUI.title.innerHTML = s.title;
-      walkUI.text.textContent = s.text;
-    }
-  }
-  // the copy rides the scroll: the title slides up out of its mask, the rest fades
-  const c = W.stop >= 0 ? W.copy : 0;
-  walkUI.title.style.transform = `translate3d(0, ${((1 - c) * 108).toFixed(2)}%, 0)`;
-  walkUI.copy.style.opacity = Math.min(c * 1.6, 1);
-  walkUI.text.style.transform = `translate3d(0, ${((1 - c) * 14).toFixed(1)}px, 0)`;
-  walkUI.text.style.opacity = clamp01((c - 0.25) / 0.75);
-  walkUI.rail.style.opacity = clamp01((lift - 0.5) / 0.5) * (1 - W.outro);
-  walkUI.shade.style.opacity = clamp01((lift - 0.5) / 0.5) * (1 - W.outro);
-  walkUI.bar.style.transform = `scaleX(${clamp01(room.walkAt / walkLen).toFixed(4)})`;
-  if (walkOpt) {
-    walkOpt.frame(W, { anchor: () => room.walkAnchor(), stops: walkStops, prog: clamp01(room.walkAt / walkLen), info: LINEUP[walkFor], along: walkAlong });
-    walkOpt.box ??= walkUI.el.querySelector('.wo');
-    walkOpt.box.style.opacity = (clamp01((lift - 0.5) / 0.5) * (1 - W.outro)).toFixed(3);
-  }
+  const on = clamp01((lift - 0.5) / 0.5) * (1 - W.outro);
+  walkUI.shade.style.opacity = on;
+  callout.box.style.opacity = on.toFixed(3);
+  callout.frame(W, { anchor: () => room.walkAnchor(), stops: walkStops, info: LINEUP[walkFor], along: walkAlong });
 }
 
 let resizeT;

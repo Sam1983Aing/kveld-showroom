@@ -1,8 +1,11 @@
-// 03 · How to order (V7, 2026-10-24, first version, approved by Sam before it was built).
-// Between Hear them and the footer: the buyer's side of the weeks the workshop shows. A light chapter,
-// on the same paper as the drawing, because ordering one starts on paper too. Four steps in a row,
-// joined by a line that draws itself as you scroll past, then the seven with their weeks and prices,
-// and Book a visit, which takes you down to the footer. Styles: "03 · how to order" in styles.css.
+// 03 · How to order (V7, 2026-10-24). Between Hear them and the footer: the buyer's side of the weeks the
+// workshop shows. A light chapter, on the same paper as the drawing, because ordering one starts on paper
+// too. The four steps are an order slip that fills in as you scroll, line by line, each ticked as it is
+// done, then signed and stamped "Bench reserved" (Sam picked the Order Slip on 2026-10-24 from three:
+// Two by Two and Card Deck are under the tag alt/v7-options, behind ?order=). With reduced motion it is
+// simply filled in. After it, the seven with
+// their weeks and prices, and Book a visit, which takes you down to the footer. Styles: "03 · how to
+// order" in styles.css.
 // The terms (deposit, delivery, the Friday pictures) are invented, like the maker.
 import { LINEUP } from './data.js';
 import { SPECS } from './specs.js';
@@ -28,17 +31,19 @@ export function buildOrder(section, { toVisit, reduced }) {
       <h2 class="order__h2" data-split>From a visit<br>to your <em>hands</em>.</h2>
       <p class="order__lede" data-reveal>Every KVELD is made to order, one at a time, for the person who will play it. This is how that goes, from the first hour in the room to the day you take it home.</p>
     </div>
-    <div class="order__steps">
-      <i class="order__line" aria-hidden="true"><b></b></i>
-      <ol>${STEPS.map((s, k) => `
-        <li class="order__step" data-reveal>
-          <span class="order__node" aria-hidden="true"></span>
-          <span class="order__no" aria-hidden="true">${String(k + 1).padStart(2, '0')}</span>
-          <h3 class="order__title">${s.title}</h3>
-          <p class="order__text">${s.text}</p>
-          <p class="order__meta">${s.meta}</p>
-        </li>`).join('')}
-      </ol>
+    <div class="order__stage">
+      <div class="slip">
+        <header class="slip__head"><b>KVELD</b><span>Order slip · Room 01, Halden</span><i>No. 0417</i></header>
+        <ol class="slip__lines">${STEPS.map((s, k) => `
+          <li class="slip__line">
+            <span class="slip__box" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4L16.5 5"/></svg></span>
+            <span class="slip__no">${String(k + 1).padStart(2, '0')}</span>
+            <div><h3 class="slip__title">${s.title}</h3><p class="slip__text">${s.text}</p></div>
+            <span class="slip__meta">${s.meta}</span>
+          </li>`).join('')}
+        </ol>
+        <footer class="slip__foot"><span>Signed</span><svg class="slip__sig" viewBox="0 0 220 50" aria-hidden="true"><path d="M6 36c10-18 18-26 24-20s-8 22 2 20 14-26 22-24-4 26 6 24 12-18 20-18 2 14 10 14 16-10 26-10 14 8 24 6 20-8 30-12"/></svg><span class="slip__stamp">Bench reserved</span></footer>
+      </div>
     </div>
     <div class="order__foot">
       <div class="order__list" data-reveal>
@@ -56,20 +61,26 @@ export function buildOrder(section, { toVisit, reduced }) {
     </div>`;
 
   $('[data-order-book]', section).addEventListener('click', toVisit);
-  // more interactive versions (V7 demo round): ?order=pairs|deck|ticket (order-options.js)
-  const OPT = new URLSearchParams(location.search).get('order');
-  if (OPT) return import('./order-options.js?v=2').then((m) => m.enhanceOrder(OPT, section, { reduced })).catch((err) => console.error(err));
-
-  // the line draws across the four steps as they pass, and each step's node lights when it gets there
-  const line = $('.order__line b', section), nodes = $$('.order__node', section);
-  const draw = (p) => {
-    line.style.transform = `scale${innerWidth > 900 ? 'X' : 'Y'}(${p.toFixed(4)})`;
-    nodes.forEach((n, k) => n.classList.toggle('is-on', p >= (k + 0.02) / STEPS.length - (innerWidth > 900 ? 0 : 0.08)));
+  // the slip fills in while the stage is pinned: each line writes in and is ticked, then the signature
+  // and the stamp. Reduced motion: it fills in a step at a time.
+  const lines = $$('.slip__line', section), sig = $('.slip__sig path', section), stamp = $('.slip__stamp', section);
+  const L = sig.getTotalLength();
+  sig.style.strokeDasharray = L;
+  const sm = (a, b, x) => { const t = Math.min(Math.max((x - a) / (b - a), 0), 1); return t * t * (3 - 2 * t); };
+  const fill = (p) => {
+    lines.forEach((li, i) => {
+      li.style.setProperty('--w', sm(0.05 + i * 0.18, 0.2 + i * 0.18, p).toFixed(3));
+      li.classList.toggle('is-done', p > 0.25 + i * 0.18);
+    });
+    sig.style.strokeDashoffset = (L * (1 - sm(0.8, 0.92, p))).toFixed(1);
+    const st = sm(0.93, 0.97, p);
+    stamp.style.opacity = st.toFixed(3);
+    stamp.style.transform = `rotate(-8deg) scale(${(1.8 - 0.8 * st).toFixed(3)})`;
   };
-  if (reduced) { draw(1); return; }
-  draw(0);
+  if (reduced) { fill(1); return; }                    // reduced motion: the slip is filled in, and nothing pins
+  fill(0);
   ScrollTrigger.create({
-    trigger: $('.order__steps', section), start: 'top 78%', end: () => (innerWidth > 900 ? 'top 22%' : 'bottom 60%'), scrub: 0.8,
-    onUpdate: (st) => draw(st.progress),
+    trigger: $('.order__stage', section), start: 'top top', end: () => `+=${Math.round(2.6 * innerHeight)}`, pin: true, anticipatePin: 1,
+    onUpdate: (st) => fill(st.progress),
   });
 }

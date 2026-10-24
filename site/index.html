@@ -7,7 +7,7 @@
   <meta name="description" content="Seven guitars rebuilt from measured drawings. A concept showroom for KVELD.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%230b0a09%22/%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%229%22 fill=%22none%22 stroke=%22%239fe3f0%22 stroke-width=%221.5%22/%3E%3C/svg%3E">
   <link rel="preload" href="vendor/fonts/panchang-500.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=71">
+  <link rel="stylesheet" href="styles.css?v=74">
 
   <!--
     CREATIVE DIRECTION (the contract this build obeys)
@@ -34,13 +34,13 @@
   <script type="importmap">
   { "imports": {
       "three": "./vendor/three.module.js", "three/addons/": "./vendor/addons/",
-      "./src/showroom.js": "./src/showroom.js?v=71", "./src/data.js": "./src/data.js?v=71", "./src/specs.js": "./src/specs.js?v=71",
-      "./src/sequence.js": "./src/sequence.js?v=71", "./src/stops.js": "./src/stops.js?v=71", "./src/standins.js": "./src/standins.js?v=71",
-      "./src/guitar-look.js": "./src/guitar-look.js?v=71", "./src/blueprint.js": "./src/blueprint.js?v=71",
-      "./src/draft.js": "./src/draft.js?v=71", "./src/spotlight.js": "./src/spotlight.js?v=71", "./src/workshop.js": "./src/workshop.js?v=71", "./src/voices.js": "./src/voices.js?v=71", "./src/order.js": "./src/order.js?v=71", "./src/footer.js": "./src/footer.js?v=71", "./src/cursor.js": "./src/cursor.js?v=71"
+      "./src/showroom.js": "./src/showroom.js?v=74", "./src/data.js": "./src/data.js?v=74", "./src/specs.js": "./src/specs.js?v=74",
+      "./src/sequence.js": "./src/sequence.js?v=74", "./src/stops.js": "./src/stops.js?v=74", "./src/standins.js": "./src/standins.js?v=74",
+      "./src/guitar-look.js": "./src/guitar-look.js?v=74", "./src/blueprint.js": "./src/blueprint.js?v=74",
+      "./src/draft.js": "./src/draft.js?v=74", "./src/spotlight.js": "./src/spotlight.js?v=74", "./src/workshop.js": "./src/workshop.js?v=74", "./src/voices.js": "./src/voices.js?v=74", "./src/order.js": "./src/order.js?v=74", "./src/nav.js": "./src/nav.js?v=74", "./src/walk-callout.js": "./src/walk-callout.js?v=74", "./src/draft-name.js": "./src/draft-name.js?v=74", "./src/workshop-words.js": "./src/workshop-words.js?v=74", "./src/footer.js": "./src/footer.js?v=74", "./src/cursor.js": "./src/cursor.js?v=74"
   } }
   </script>
-  <script type="module" src="src/main.js?v=71"></script>
+  <script type="module" src="src/main.js?v=74"></script>
 </head>
 <body>
 
@@ -50,14 +50,6 @@
     <p class="loader__count"><span data-count>000</span></p>
   </div>
 
-  <header class="site-head">
-    <a class="brand" href="#room" aria-label="KVELD, back to the room">KVELD</a>
-    <nav class="site-nav" aria-label="Main">
-      <a href="#guitars">Guitars</a>
-      <a href="#drawings">Drawings</a>
-      <a href="#visit">Visit</a>
-    </nav>
-  </header>
 
   <main>
     <!-- 00 · THE ROOM ---------------------------------------------------- -->
@@ -99,19 +91,9 @@
         <a class="room__scroll" href="#drawings" data-scroll-cue><span>Scroll</span><i></i></a>
       </div>
 
-      <!-- the walk: copy for each stop as the camera travels along the guitar -->
+      <!-- the walk: the words for each stop stand beside the part (walk-callout.js) -->
       <div class="walk" data-walk aria-hidden="true">
         <div class="walk__shade"></div>
-        <div class="walk__copy">
-          <p class="walk__no"><span data-walk-no>01</span><i>/</i><span data-walk-of>07</span><b data-walk-label>Headstock</b></p>
-          <h3 class="walk__title"><span data-walk-title></span></h3>
-          <p class="walk__text" data-walk-text></p>
-        </div>
-        <div class="walk__rail">
-          <p class="walk__model" data-walk-model>Floe · Up close</p>
-          <ol class="walk__ticker" data-walk-ticker></ol>
-          <div class="walk__bar"><span data-walk-bar></span></div>
-        </div>
       </div>
 
       <!-- View guitar: the camera comes in on the body, on the left, and its sheet takes the right -->
