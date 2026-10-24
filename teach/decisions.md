@@ -39,6 +39,6 @@ Running table for 009 Guitars (KVELD). Started with the V6 session. For earlier 
 | 10-23 | On a turn the beads stay put and go dark, the name and button fade until the camera lands | Claude (found in recorded frames) | Not reviewed yet | Built |
 | 10-23 | Section 02 sends you back to the hero, the flow feels wrong. Is a section missing? | Sam | Open | Answered in words, nothing built |
 | 10-23 | Which missing sections: sound, the workshop, how to order. Sam started with the workshop | Claude (list), Sam (picked) | Sam | Workshop in a demo round |
-| 10-23 | Workshop options: On the Bench, Twelve Weeks, Where the Weeks Go | Claude | Waiting for Sam's pick | Built behind ?shop= |
-| 10-23 | The tour's flat last shot leads into the guitar lying on a bench | Claude | Waiting | In option 01 |
+| 10-23 | Workshop options: On the Bench, Twelve Weeks, Where the Weeks Go | Claude | Sam picked On the Bench | Built, the other two under alt/workshop-options |
+| 10-23 | The tour's flat last shot leads into the guitar lying on a bench | Claude | Sam (picked the option) | Built |
 | 10-23 | Workshop copy: two makers, Halden, one guitar to a bench, "that is what the price pays for" | Claude | Waiting | Invented, like the maker |

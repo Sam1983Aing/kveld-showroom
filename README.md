@@ -38,10 +38,12 @@ To look at an older one:
 At `v1` to `v4` the repo holds the page only (`site/`). The Blender builds, tools and notes
 arrive with `v5`.
 
-Four side tags keep things that are not on that line: `alt/hero-options` (the four hero
+Five side tags keep things that are not on that line: `alt/hero-options` (the four hero
 options behind `?hero=`), `alt/scree-1961-guard` (Scree with the 1961 guard and heel),
 `alt/unpicked-options` (the options not chosen for section 02, the drawing and the footer,
-behind `?index=`, `?draft=`, `?footer=`) and `alt/dark-hero` (the darker hero Sam turned down).
+behind `?index=`, `?draft=`, `?footer=`), `alt/dark-hero` (the darker hero Sam turned down) and
+`alt/workshop-options` (the three workshop options behind `?shop=`, with the gallery's pictures
+and `tools/shop_pictures.mjs`).
 
 A new tag is for something big, a new section or a redesign. Fixes land in the version they
 belong to.
@@ -211,6 +213,25 @@ All seven share the KVELD headstocks (six in line on bolt-ons, three a side on
 set necks), markers, logo, tuners, knobs, switch tips, strap buttons and jack.
 Overlays of each model on its sheet: `media/plan-vs-<id>.png` (Floe's is
 `media/plan-vs-model.png`).
+
+## What V7 changes (from 2026-10-23, not tagged yet)
+
+- **The hero**: the arrows sit on the halo's line, left and right, as two beads of light in the
+  guitar's colour. The colour dots are gone. The name stands on the centre plinth and View guitar
+  sits on the plinth's face. All of it is placed from the 3D scene: `heroAnchors()` in
+  `showroom.js` projects the halo and the plinth to the screen, `placeStage()` and `placeArrows()`
+  in `main.js` use it. The arrows follow the pointer's parallax but not a turn's pull-back, so
+  they stay under the pointer. On a turn they go dark and the name and button fade until the
+  camera lands. The spec line that was under the name is gone.
+- **The workshop** (`site/src/workshop.js`, `#workshop` in `index.html`, between the tour and 02):
+  the guitar on a walnut bench under one lamp, building itself over five screens of scroll. Two
+  blanks are set down, a saw line (a clipping plane) runs down them, the frets drop in, the finish
+  is wiped on from the tail (a shader sweep on the body and neck materials: raw colour ahead of
+  the line, the real finish behind it, a wet edge at it), the hardware is set down and the strings
+  go on last. The words follow the guitar's own weeks and price from `specs.js`. It has its own
+  renderer, draws only while on screen and moving, copies the guitar the room has already loaded,
+  and is compiled behind the loader. Tunable light: `window.__shop.LIGHT` in the console.
+  Reduced motion shows each stage done. Measured at 1725 x 990 at 2x: 60 fps while scrolling it.
 
 ## What V6 changed (2026-10-06 to 10-23)
 

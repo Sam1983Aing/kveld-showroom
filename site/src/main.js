@@ -11,6 +11,7 @@ import { drawBlueprint, specRows } from './blueprint.js';
 import { BEATS } from './sequence.js';
 import { initDraft, DRAFT } from './draft.js';     // the drawing comes first (Ink on Paper)
 import { buildSpotlight } from './spotlight.js';
+import { createWorkshop } from './workshop.js';
 import { buildFooter } from './footer.js';         // 03 Visit (Last Light)
 import { initCursor } from './cursor.js';
 
@@ -61,9 +62,6 @@ const ui = {
   prev: $('.room__arrow--halo[data-prev]'), next: $('.room__arrow--halo[data-next]'), controls: $('.room__controls'), stage: $('.room__stage'),
 };
 let room = null, draft = null, shop = null;
-// The workshop chapter: three options behind ?shop=bench|weeks|gallery (workshop-options.js, V7 demo
-// round). Without the switch the page has no workshop and nothing below changes.
-const SHOP = new URLSearchParams(location.search).get('shop');
 try {
   room = new Showroom($('.room__gl'), { onProgress, onChange });
   room.reduced = reduced;
@@ -314,6 +312,8 @@ async function boot() {
     }
     // Compile shaders and upload all guitar GPU buffers behind the opaque loader curtain
     room.warmGPU();
+    // the workshop's bench, built and compiled behind the loader too (workshop.js). Its pin comes later.
+    shop = await createWorkshop($('#workshop'), { room, reduced }).catch((err) => { console.error(err); return null; });
     placeStage();
     measureCopy();
     placeArrows();
@@ -345,7 +345,7 @@ async function boot() {
   // run (reduced motion, no WebGL). With the ink chapter on, the drawing lives inside the pinned room.
   if (draft) $('#drawings').remove(); else buildDrawing(D);
   initWalk();
-  if (SHOP && room) shop = await import('./workshop-options.js?v=1').then((m) => m.buildWorkshop(SHOP, { room, reduced, before: $('#guitars') })).catch((err) => { console.error(err); return null; });
+  if (shop) shop.pin(); else $('#workshop').remove();     // no WebGL: no bench, and no empty screen for it
   await buildIndex();
   buildFooter($('#visit'), { reduced });
   initReveals();

@@ -77,3 +77,10 @@ Claude ran the demo-options round: "00 Now" recorded first (the tour's flat last
 The copy (stagesFor) is per guitar: the weeks come from specs.js, so Rowan's says sixteen and its carve stage talks about the carved top.
 Teachable bugs: the guitar floated 15 cm above the bench because one part (BackHardware) stores bounds 33 cm deep, fixed by measuring from the vertices. The raw wood looked finished because the lamp was too bright, so tan read as cream. Two quiet seconds after each pin (nothing moving) were found in the recordings, and fixed by setting the blanks down and letting the rods rise in.
 On camera: one 3D scene made two options, the live build and the stills for the gallery. And the models' named parts (Body, Neck, Frets, Tuners...) are what made a build-it-yourself animation possible at all.
+
+**5. "Go with 01 On the Bench."** (2026-10-23)
+The three-option state was committed and tagged `alt/workshop-options`, then the other two came out and the bench became the page's own section (`src/workshop.js`). Brought to full quality: the guitar is now a copy of the one the room already loaded (no second download), the scene compiles behind the loader, a guitar change waits for the ring to settle, reduced motion shows each stage done. Checked at Sam's window at 2x: 60 fps scrolling through, forwards and backwards give the same state, a hard flick, resizing mid-section, Rowan's sixteen weeks.
+Teachable bug: after resizing mid-section the guitar kept the old orientation. A pinned element keeps its old size until ScrollTrigger re-measures, so the layout has to run again on ScrollTrigger's refresh, not only on the window's resize.
+
+**6. "After the workshop section, what are the next sections to build?"**
+Asked while the bench was being finished. Answered in the chat (see the reply).

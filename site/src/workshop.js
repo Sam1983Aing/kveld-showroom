@@ -1,10 +1,20 @@
-// The workshop chapter (V7, 2026-10-23): three options behind ?shop=<slug>, for Sam to watch and pick.
-//   ?shop=bench    01 On the Bench: the guitar lies on a bench under a lamp and builds itself as you scroll
-//   ?shop=weeks    02 Twelve Weeks: a calendar of light, one rod per week, the stages marked over them
-//   ?shop=gallery  03 Where the Weeks Go: a sideways gallery, one picture per stage
-// Without the switch the page has no workshop. It sits between the end of the close-up tour and 02.
-// Shared here: the stages and their words (stagesFor), the section, its head and its pin. Each option
-// is a score on top: make(ctx) returns { len, progress(p), guitar(i) }, len in screens of pin.
+// The workshop: between the end of the close-up tour and 02. Picked by Sam on 2026-10-23 from three
+// options (the other two, Twelve Weeks and Where the Weeks Go, are under the tag alt/workshop-options).
+//
+// The tour ends on the guitar lying flat. Here it lies on a walnut bench under one warm lamp, seen from
+// above the same way, and builds itself as you scroll: two blanks of raw wood are set down, a saw line
+// runs down them and leaves the body and the neck, the frets drop in, the finish is wiped on from the
+// tail with a wet edge, the hardware is set down, the strings last. The camera tilts from straight above
+// to three quarters. The words follow the guitar's own weeks (specs.js), so the price makes sense.
+//
+// It has its own small renderer and draws only while the section is on screen and the scroll moves.
+// The guitar is a copy of the one the room has already loaded (no second download), with its own
+// materials so the finish sweep never touches the room's.
+//
+//   createWorkshop(section, { room, reduced })   builds the scene behind the loader. Resolves once the
+//                                                first guitar is on the bench and its shaders compiled.
+//   .pin()          the scroll pin. Called after the room's (pins are made in page order).
+//   .setGuitar(i)   follows the ring, once it has settled.
 import * as THREE from 'three';
 import { LINEUP } from './data.js';
 import { SPECS } from './specs.js';
@@ -17,6 +27,7 @@ const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const clamp01 = (x) => Math.min(Math.max(x, 0), 1);
 const smooth = (a, b, x) => { const t = clamp01((x - a) / (b - a)); return t * t * (3 - 2 * t); };
 const pad = (n) => String(n).padStart(2, '0');
+const LEN = 5;                  // screens of scroll the bench holds for
 
 /* ------------------------------------------------------------- the words ---- */
 const WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve',
@@ -96,43 +107,6 @@ function railFill(root, T, week) {
   });
 }
 
-/* ------------------------------------------------------- the section ---- */
-let cssP = null;
-const css = () => cssP ||= new Promise((ok) => {
-  const l = document.createElement('link');
-  l.rel = 'stylesheet'; l.href = new URL('../workshop-options.css', import.meta.url).href + '?v=1';
-  l.onload = l.onerror = ok; document.head.appendChild(l);
-});
-
-/** Put the workshop in front of `before` and pin it. Returns { setGuitar(i) } or null. */
-export async function buildWorkshop(slug, { room, reduced, before }) {
-  const make = OPTIONS[slug];
-  if (!make) return null;
-  await css();
-  const section = document.createElement('section');
-  section.className = `shop shop--${slug}`;
-  section.id = 'workshop';
-  section.setAttribute('aria-label', 'The workshop');
-  before.before(section);
-  const at = () => LINEUP[room?.index ?? 0];
-  const opt = await make({ section, room, reduced, info: at(), T: stagesFor(at()) });
-  ScrollTrigger.create({
-    trigger: section, start: 'top top', end: () => `+=${Math.round(opt.len * innerHeight)}`, pin: true, anticipatePin: 1,
-    onUpdate: (s) => opt.progress(s.progress),
-  });
-  opt.progress(0);
-  section.dataset.ready = '1';
-  let shown = at().id;
-  return {
-    setGuitar(i) {
-      const info = LINEUP[i];
-      if (!info || info.id === shown) return;
-      shown = info.id;
-      opt.guitar?.(info, stagesFor(info));
-    },
-  };
-}
-
 // Visual share of the pin each stage gets (the weeks are uneven, the story should not be): wood,
 // cut, frets, finish, set up, then a beat on the finished guitar. The week counter runs through each
 // stage's own weeks inside its share.
@@ -147,11 +121,7 @@ function storyAt(p, T) {
   return { k, local, week };
 }
 
-/* =================================================== 01 · On the Bench ==== */
-// The tour ends on the guitar lying flat. Here it lies on a walnut bench under one warm lamp, seen from
-// above the same way, and builds itself as you scroll: two blanks of raw wood, a saw line that runs down
-// them and leaves the body and the neck, the frets pressed in, the finish wiped on from the tail with a
-// wet edge, the hardware set down, the strings last. The camera tilts from above to three quarters.
+/* --------------------------------------------------------- the bench ---- */
 const KNOWN = new Set(['Body', 'Neck', 'SkunkStripe', 'Fretboard', 'Frets', 'Dots', 'Nut', 'Logo', 'Strings', 'Pickguard', 'BridgePickup', 'NeckPickup',
   'MiddlePickup', 'Bridge', 'Saddles', 'Tailpiece', 'Tremolo', 'Controls', 'Tuners', 'Screws', 'BackHardware', 'Binding']);
 const STAGE_OF = { Body: 'wood', Neck: 'wood', SkunkStripe: 'wood', Binding: 'wood', Fretboard: 'frets', Frets: 'frets', Dots: 'frets', Nut: 'frets', Logo: 'frets', Strings: 'strings' };
@@ -221,13 +191,22 @@ function makeFinishable(m, raw, fin) {
   m.needsUpdate = true;
 }
 
-async function bench(ctx) {
-  const { section, reduced } = ctx;
-  let T = ctx.T;
+// A copy of the guitar the room already has on its plinth, with materials of its own
+function benchCopy(src) {
+  const root = src.clone(true);
+  root.position.set(0, 0, 0); root.rotation.set(0, 0, 0); root.scale.set(1, 1, 1);
+  root.traverse((o) => { if (o.isMesh) o.material = o.material.clone(); });
+  return root;
+}
+
+export async function createWorkshop(section, { room, reduced }) {
+  const first = LINEUP[room?.index ?? 0];
+  let T = stagesFor(first);
+
   section.innerHTML = `
-    <div class="shop__frame bn">
-      <canvas class="bn__gl" aria-hidden="true"></canvas>
-      <div class="bn__shade"></div>
+    <div class="shop__frame">
+      <canvas class="shop__gl" aria-hidden="true"></canvas>
+      <div class="shop__shade"></div>
       ${headHTML(T)}
       ${stageHTML()}
       <p class="shop__week"><b>Week</b><span class="shop__wk"><span data-week>01</span></span><i data-of>/ ${T.weeks}</i></p>
@@ -237,7 +216,7 @@ async function bench(ctx) {
   words.words(T);
   const weekEl = $('[data-week]', section);
 
-  const canvas = $('.bn__gl', section);
+  const canvas = $('.shop__gl', section);
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -278,7 +257,8 @@ async function bench(ctx) {
   let portrait = false, pTarget = 0, pShown = -1, dirty = true, visible = false;
 
   async function load(info) {
-    const root = (await gltfLoader().loadAsync(info.model)).scene;
+    const it = room?.items?.find((x) => x.info.id === info.id);
+    const root = it?.ready ? benchCopy(it.guitar) : (await gltfLoader().loadAsync(info.model)).scene;
     prepareGuitar(root, renderer, { envMapIntensity: 1 });
     const lie = new THREE.Group();
     root.rotation.x = -Math.PI / 2;                  // on its back, face up, the neck toward -z
@@ -290,7 +270,11 @@ async function bench(ctx) {
     const all = new THREE.Box3().setFromObject(lie, true), c = all.getCenter(new THREE.Vector3());
     lie.position.set(-c.x, -all.min.y + 0.003, -c.z);
     const old = G;
-    if (old) { holder.remove(old.lie, ...old.blanks); old.lie.traverse((o) => o.geometry?.dispose()); }
+    if (old) {                                      // the geometry is the room's: only the copy's own things go
+      holder.remove(old.lie, ...old.blanks);
+      old.lie.traverse((o) => { if (o.isMesh) o.material.dispose(); });
+      old.blanks.forEach((b) => { b.geometry.dispose(); b.material.map?.dispose(); b.material.dispose(); });
+    }
     holder.add(lie);
     lie.updateMatrixWorld(true);
 
@@ -425,153 +409,66 @@ async function bench(ctx) {
 
   const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; dirty = true; }, { rootMargin: '10% 0px' });
   io.observe(section);
+  // reduced motion: no building in between, each stage shows done (the way the tour cuts from stop to stop)
+  const settle = (p) => { if (!reduced) return p; let k = 0; while (k < 5 && p >= BOUNDS[k + 1]) k++; return k < 5 ? BOUNDS[k + 1] - 1e-3 : 1; };
   let last = performance.now();
   gsap.ticker.add(() => {
     const now = performance.now(), dt = Math.min((now - last) / 1000, 0.05); last = now;
     if (!visible || !G) return;
-    const before = pShown;
-    pShown = pShown < 0 || reduced ? pTarget : pShown + (pTarget - pShown) * Math.min(dt * 7, 1);
-    if (Math.abs(pTarget - pShown) < 1e-4) pShown = pTarget;
+    const before = pShown, want = settle(pTarget);
+    pShown = pShown < 0 || reduced ? want : pShown + (want - pShown) * Math.min(dt * 7, 1);
+    if (Math.abs(want - pShown) < 1e-4) pShown = want;
     if (pShown === before && !dirty) return;
     dirty = false;
     frame(pShown);
     renderer.render(scene, camera);
   });
+  // While the section is pinned its size only changes once ScrollTrigger has measured the new window,
+  // so lay out again after every refresh (on a resize alone it still has the old one)
   addEventListener('resize', () => { layout(); });
-  await load(ctx.info);
+  ScrollTrigger.addEventListener('refresh', layout);
+
+  // Draw it once fully built and once in its blanks, so every shader (and the shadow pass) is compiled
+  // now, behind the loader, and the first frame on screen does not stall
+  const warm = () => { for (const p of [1, BOUNDS[1] + 0.05, 0.6]) { frame(p); renderer.render(scene, camera); } frame(0); dirty = true; };
+  await load(first);
+  warm();
+  section.dataset.ready = '1';
   window.__shop = { LIGHT, scene, camera, renderer, frame: (p) => { frame(p); renderer.render(scene, camera); }, sweep: () => fin.uSweep.value, get G() { return G; } };
 
-  return {
-    len: 5,
-    progress(p) { pTarget = p; dirty = true; },
-    async guitar(info, t) { T = t; words.words(T); await load(info); },
-  };
-}
-
-/* ==================================================== 02 · Twelve Weeks ==== */
-// A calendar of light: one thin rod per week across the screen, the stages bracketed over their weeks.
-// Scrolling fills the rods one by one in the guitar's colour. The weeks where the wood rests and the
-// lacquer hardens fill dotted and dimmer, so you can see that most of the time is waiting. The week
-// number stands huge and faint behind the rods.
-const WAITING = (T, w) => { const [wood, , , finish] = T.stages; return w <= wood.to || (w > finish.from + 1 && w <= finish.to); };
-async function weeks(ctx) {
-  const { section, reduced } = ctx;
-  let T = ctx.T;
-  const paint = () => {
-    section.innerHTML = `
-      <div class="shop__frame wk" style="--n: ${T.weeks}">
-        <i class="wk__pool"></i>
-        <p class="wk__big" aria-hidden="true"><span data-week>01</span></p>
-        ${headHTML(T)}
-        ${stageHTML()}
-        <ol class="wk__spans">${T.stages.map((s) => `<li style="grid-column: ${s.from + 1} / ${s.to + 1}"><span>${s.label}</span></li>`).join('')}</ol>
-        <ol class="wk__rods">${Array.from({ length: T.weeks }, (_, k) => `<li class="${WAITING(T, k + 1) ? 'is-wait' : ''}"><i><b></b></i><span>${pad(k + 1)}</span></li>`).join('')}</ol>
-        <p class="wk__key"><span><i></i>At the bench</span><span><i class="is-wait"></i>Waiting</span></p>
-      </div>`;
-  };
-  paint();
-  let words = stageSwapper(section, reduced); words.words(T);
-  let rods = [], spans = [], weekEl = null, pool = null, last = -1;
-  const grab = () => { rods = $$('.wk__rods li', section); spans = $$('.wk__spans li', section); weekEl = $('[data-week]', section); pool = $('.wk__pool', section); last = -1; };
-  grab();
-  // the rods rise into place, left to right, as the section comes up the screen
-  const enter = () => {
-    const r = section.getBoundingClientRect(), t = clamp01(1 - r.top / innerHeight);
-    rods.forEach((li, k) => { const e = smooth(0.25 + k * 0.5 / rods.length, 0.55 + k * 0.45 / rods.length, t); li.style.transform = `translate3d(0, ${((1 - e) * 40).toFixed(1)}px, 0)`; li.style.opacity = e.toFixed(3); });
-  };
-  if (!reduced) { gsap.ticker.add(enter); }
-  function progress(p) {
-    const S = storyAt(p, T);
-    rods.forEach((li, k) => {
-      const f = clamp01(S.week - k);
-      li.firstElementChild.firstElementChild.style.transform = `scaleY(${f.toFixed(4)})`;
-      li.classList.toggle('is-now', S.week > k && S.week <= k + 1);
-      li.classList.toggle('is-done', f >= 1);
-    });
-    spans.forEach((li, k) => li.classList.toggle('is-on', k === S.k));
-    const wk = Math.max(1, Math.ceil(S.week - 1e-6));
-    if (wk !== last) {
-      last = wk;
-      weekEl.textContent = pad(wk);
-      if (!reduced) gsap.fromTo(weekEl, { yPercent: 18, opacity: 0.4 }, { yPercent: 0, opacity: 1, duration: 0.6, ease: EASE, overwrite: true });
-    }
-    pool.style.opacity = (0.35 + 0.65 * smooth(0, 1, S.week / T.weeks)).toFixed(3);
-    words.show(S.k);
+  // Another guitar in the room: new words now, the new guitar on the bench once the ring has settled
+  // (copying and compiling while it turns would cost the turn a frame or two)
+  let swapT = 0, onBench = first.id;
+  function retitle(info) {
+    T = stagesFor(info);
+    $('[data-shop-h2]', section).innerHTML = T.h2;
+    $('[data-shop-lede]', section).innerHTML = T.lede;
+    $('[data-of]', section).textContent = `/ ${T.weeks}`;
+    $('[data-rail]', section).outerHTML = railHTML(T);
+    words.words(T);
+    dirty = true;
   }
   return {
-    len: 4,
-    progress,
-    guitar(info, t) { T = t; paint(); words = stageSwapper(section, reduced); words.words(T); grab(); progress(0); },
-  };
-}
-
-/* ============================================== 03 · Where the Weeks Go ==== */
-// A sideways gallery: after the head, one picture per stage, taken in the bench scene at that moment of
-// the build (tools/shop_pictures.mjs). Big outlined stage numbers, the blocks set high and low in turn,
-// each picture drifting inside its frame. A ruler of weeks draws itself along the bottom.
-async function gallery(ctx) {
-  const { section, reduced } = ctx;
-  let T = ctx.T, info = ctx.info;
-  const pic = (id, key) => `assets/shop/${id}-${key}.jpg`;
-  section.innerHTML = `
-    <div class="shop__frame gl">
-      <div class="gl__track" data-track>
-        <div class="gl__intro">${headHTML(T)}</div>
-        ${T.stages.map((s, k) => `
-        <figure class="gl__card${k % 2 ? ' is-low' : ''}">
-          <div class="gl__pic"><img src="${pic(info.id, s.key)}" alt="" decoding="async" data-key="${s.key}"></div>
-          <span class="gl__no" aria-hidden="true">${s.n}</span>
-          <figcaption>
-            <p class="shop__when"><b data-g-label>${s.label}</b><i data-g-when>${s.when}</i></p>
-            <h3 class="gl__title" data-g-title>${s.title}</h3>
-            <p class="shop__text" data-g-text>${s.text}</p>
-          </figcaption>
-        </figure>`).join('')}
-        <div class="gl__end" aria-hidden="true"></div>
-      </div>
-      <p class="gl__week">Week <span data-week>01</span> <i data-of>/ ${T.weeks}</i></p>
-      <div class="gl__ruler"><i class="gl__line"><b></b></i><ol>${Array.from({ length: T.weeks }, (_, k) => `<li style="left: ${((k + 0.5) / T.weeks) * 100}%"></li>`).join('')}</ol></div>
-    </div>`;
-  const track = $('[data-track]', section), cards = $$('.gl__card', section), imgs = $$('.gl__pic img', section);
-  const weekEl = $('[data-week]', section), line = $('.gl__line b', section), ticks = $$('.gl__ruler li', section);
-  await Promise.all(imgs.map((im) => im.decode().catch(() => {})));
-  let dist = 0, centres = [];
-  const measure = () => {
-    dist = Math.max(track.scrollWidth - section.clientWidth, 1);
-    centres = cards.map((c) => c.offsetLeft + c.offsetWidth / 2);
-  };
-  measure();
-  addEventListener('resize', measure);
-  let lastWk = -1;
-  function progress(p) {
-    const x = p * dist;
-    track.style.transform = `translate3d(${(-x).toFixed(1)}px, 0, 0)`;
-    // each picture drifts inside its frame, against the track
-    imgs.forEach((im, k) => { const off = (centres[k] - x - section.clientWidth / 2) / section.clientWidth; im.style.transform = `translate3d(${(-off * 12).toFixed(2)}%, 0, 0) scale(1.18)`; });
-    // the stage at the centre of the screen, and how far through its weeks
-    const mid = x + section.clientWidth / 2;
-    let f = (mid - centres[0]) / (centres[1] - centres[0]);
-    f = Math.min(Math.max(f, -0.5), T.stages.length - 0.5);
-    const k = Math.min(Math.max(Math.round(f), 0), T.stages.length - 1), s = T.stages[k];
-    const week = p >= 0.985 ? T.weeks : Math.max(0, s.from + (s.to - s.from) * clamp01(f - k + 0.5));
-    cards.forEach((c, j) => c.classList.toggle('is-on', j === k && f > -0.45));
-    line.style.transform = `scaleX(${(week / T.weeks).toFixed(4)})`;
-    ticks.forEach((t, j) => t.classList.toggle('is-done', week > j));
-    const wk = Math.max(1, Math.ceil(week - 1e-6));
-    if (wk !== lastWk) { lastWk = wk; weekEl.textContent = pad(wk); }
-  }
-  return {
-    get len() { return dist / innerHeight * 1.05; },
-    progress,
-    guitar(inf, t) {
-      info = inf; T = t;
-      // words for the new guitar; pictures exist per guitar once tools/shop_pictures.mjs has run for it
-      cards.forEach((c, k) => { const st = T.stages[k]; $('[data-g-label]', c).textContent = st.label; $('[data-g-when]', c).textContent = st.when; $('[data-g-title]', c).innerHTML = st.title; $('[data-g-text]', c).textContent = st.text; });
-      imgs.forEach((im) => { im.src = pic(info.id, im.dataset.key); });
-      $('[data-shop-h2]', section).innerHTML = T.h2; $('[data-shop-lede]', section).innerHTML = T.lede;
-      $('[data-of]', section).textContent = `/ ${T.weeks}`;
+    pin() {
+      ScrollTrigger.create({
+        trigger: section, start: 'top top', end: () => `+=${Math.round(LEN * innerHeight)}`, pin: true, anticipatePin: 1,
+        onUpdate: (st) => { pTarget = st.progress; dirty = true; },
+      });
+    },
+    setGuitar(i) {
+      const info = LINEUP[i];
+      if (!info) return;
+      clearTimeout(swapT);
+      swapT = setTimeout(async () => {
+        if (info.id === onBench) return;
+        onBench = info.id;
+        retitle(info);
+        await load(info);
+        // compiled off the main thread, in both states (the blanks only show early on)
+        for (const p of [1, BOUNDS[1] + 0.05]) { frame(p); await renderer.compileAsync(scene, camera).catch(() => {}); }
+        dirty = true;
+      }, 600);
     },
   };
 }
 
-const OPTIONS = { bench, weeks, gallery };

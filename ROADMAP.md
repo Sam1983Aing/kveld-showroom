@@ -503,5 +503,11 @@ reads as a copy. Full brief, sources and specs: `BRIEF-session-5.md`.
     `initWalk`). The section goes between the end of the tour and 02. Gallery pictures in
     `site/assets/shop/<id>-<stage>.jpg`, made by `tools/shop_pictures.mjs <guitar index>` from the bench
     scene. Reels: `demo/v7/shop-options-desktop.mp4` and `-phone.mp4`, clips by `demo/v7/record-shop.sh`.
-    Waiting for Sam's pick. After he picks: remove the other two and the switch, and make the winner the
-    page's own section.
+    Sam picked On the Bench. The three-option state is the commit tagged `alt/workshop-options`. The
+    bench is now the page's own section: `src/workshop.js`, styles in `styles.css`, `#workshop` in
+    `index.html`, built behind the loader (`createWorkshop` in boot) and pinned after the room
+    (`shop.pin()`). It copies the room's loaded guitar instead of loading it again, swaps guitar 600 ms
+    after the ring settles, lays out again after every ScrollTrigger refresh (a pinned section keeps
+    its old size until then), and in reduced motion shows each stage done. Checked at 1725 x 990 at
+    2x: 60 fps scrolling through, the same state scrolling back, a flick, resizing mid-section to a
+    phone and back, Rowan's words. Cache tag `?v=48`. Final reel `demo/v7/shop-final-*.mp4`.
