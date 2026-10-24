@@ -1,0 +1,15 @@
+{
+  "section": "Loader",
+  "out": "loader-options",
+  "cardSeconds": 3.0,
+  "theme": { "bg": "#0b0a09", "fg": "#ece6da", "accent": "#9fe3f0",
+    "display": { "family": "Archivo", "src": "../../site/vendor/fonts/archivo-var.woff2", "weight": 700 },
+    "body": { "family": "Archivo", "src": "../../site/vendor/fonts/archivo-var.woff2" },
+    "mono": { "family": "IBM Plex Mono", "src": "../../site/vendor/fonts/ibm-plex-mono-400.woff2" } },
+  "options": [
+    { "n": "00", "name": "Now", "line": "KVELD, a thin bar and a counter on black, then a fade into the room.", "desktop": "clips/loader-now-d.mp4", "phone": "clips/loader-now-p.mp4" },
+    { "n": "01", "name": "Tuning Up", "line": "Six strings across the dark, plucked and lit one by one as the page loads. Then all six are strummed and the room comes up through them.", "desktop": "clips/loader-strings-d.mp4", "phone": "clips/loader-strings-p.mp4" },
+    { "n": "02", "name": "First Line", "line": "Floe's outline drawn from its plan in one line, its measurements ticking in. Then the line flares and lets go.", "desktop": "clips/loader-ink-d.mp4", "phone": "clips/loader-ink-p.mp4" },
+    { "n": "03", "name": "Halo", "line": "The hero's arch of light draws itself round. Then it opens and the room appears through it.", "desktop": "clips/loader-halo-d.mp4", "phone": "clips/loader-halo-p.mp4" }
+  ]
+}

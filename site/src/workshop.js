@@ -211,7 +211,7 @@ function benchCopy(src) {
   return root;
 }
 
-export async function createWorkshop(section, { room, reduced }) {
+export async function createWorkshop(section, { room, reduced, nextFrame = async () => {} }) {
   const first = LINEUP[room?.index ?? 0];
   let T = stagesFor(first);
 
@@ -462,6 +462,7 @@ export async function createWorkshop(section, { room, reduced }) {
   // now, behind the loader, and the first frame on screen does not stall
   const warm = () => { for (const p of [1, BOUNDS[1] + 0.05, 0.6]) { frame(p); renderer.render(scene, camera); } frame(0); dirty = true; };
   await load(first);
+  await nextFrame();            // a frame for the loader between the build and the compile
   warm();
   section.dataset.ready = '1';
   window.__shop = { LIGHT, scene, camera, renderer, frame: (p) => { frame(p); renderer.render(scene, camera); }, sweep: () => fin.uSweep.value, get G() { return G; } };
