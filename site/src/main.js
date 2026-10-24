@@ -65,6 +65,8 @@ const ui = {
 let room = null, draft = null, shop = null;
 // Navigation options (V7 demo round): ?nav=halo|fret|index (nav-options.js). Without it, the old header.
 const NAV = new URLSearchParams(location.search).get('nav');
+// Font pairings (V7 demo round): ?type=faceplate|luthier|poster (type-options.js), applied before lines are measured
+const TYPE = new URLSearchParams(location.search).get('type');
 try {
   room = new Showroom($('.room__gl'), { onProgress, onChange });
   room.reduced = reduced;
@@ -296,6 +298,7 @@ function introReveal() {
 
 async function boot() {
   // SplitText measures lines, so the faces have to be in first
+  if (TYPE) await import('./type-options.js?v=1').then((m) => m.applyType(TYPE)).catch((err) => console.error(err));
   await Promise.all(FACES.map((f) => document.fonts.load(f))).catch(() => {});
   await document.fonts.ready;
   const dataP = sheet('floe');

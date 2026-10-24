@@ -1,0 +1,15 @@
+{
+  "section": "Type",
+  "out": "type-options",
+  "cardSeconds": 3.0,
+  "theme": { "bg": "#0b0a09", "fg": "#ece6da", "accent": "#9fe3f0",
+    "display": { "family": "Panchang", "src": "../../site/vendor/fonts/panchang-500.woff2" },
+    "body": { "family": "Martian Mono", "src": "../../site/vendor/fonts/martian-mono-300.woff2" },
+    "mono": { "family": "Martian Mono", "src": "../../site/vendor/fonts/martian-mono-400.woff2" } },
+  "options": [
+    { "n": "00", "name": "Now", "line": "Panchang for headlines, Martian Mono for everything else, the body copy at its lightest weight.", "desktop": "clips/type-now-d.mp4", "phone": "clips/type-now-p.mp4" },
+    { "n": "01", "name": "Faceplate", "line": "Unbounded, Instrument Sans, JetBrains Mono. The same wide engraved look, much heavier.", "desktop": "clips/type-faceplate-d.mp4", "phone": "clips/type-faceplate-p.mp4" },
+    { "n": "02", "name": "Luthier", "line": "Fraunces, Inter Tight, IBM Plex Mono. A warm crafted serif, softened, with a plain sans to read.", "desktop": "clips/type-luthier-d.mp4", "phone": "clips/type-luthier-p.mp4" },
+    { "n": "03", "name": "Poster", "line": "Bricolage Grotesque, Manrope, Space Mono. Heavy and narrow, with character, a little like a gig poster.", "desktop": "clips/type-poster-d.mp4", "phone": "clips/type-poster-p.mp4" }
+  ]
+}

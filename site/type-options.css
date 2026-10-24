@@ -1,0 +1,72 @@
+/* Font pairings behind ?type= (src/type-options.js). Loaded only with the switch. The page has two
+   families today: --serif for display (Panchang) and --sans for labels and body copy (Martian Mono,
+   body at 300, which Sam found too thin). Each pairing sets three: display, body and labels. The
+   selector lists below were generated from styles.css (every rule that uses --serif, and every body
+   copy rule set at 300). */
+
+/* display: every headline and name, one weight per pairing */
+:root[data-type] .brand,
+:root[data-type] .closeup__claim,
+:root[data-type] .closeup__figures b,
+:root[data-type] .closeup__name,
+:root[data-type] .drawing__h2,
+:root[data-type] .ft__cta,
+:root[data-type] .ftl__h2,
+:root[data-type] .loader__mark,
+:root[data-type] .order__h2,
+:root[data-type] .order__list .order__price,
+:root[data-type] .order__list th,
+:root[data-type] .order__no,
+:root[data-type] .order__title,
+:root[data-type] .room__h1,
+:root[data-type] .room__name,
+:root[data-type] .shop__h2,
+:root[data-type] .shop__title,
+:root[data-type] .shop__wk,
+:root[data-type] .specs .v,
+:root[data-type] .spot__claim,
+:root[data-type] .spot__h2,
+:root[data-type] .spot__num,
+:root[data-type] .spot__price,
+:root[data-type] .spot__t,
+:root[data-type] .visit__ghost,
+:root[data-type] .visit__h2,
+:root[data-type] .walk__title,
+:root[data-type] .draft__title,
+:root[data-type] .nv__word,
+:root[data-type] .nv__lt > span { font-weight: var(--display-w); letter-spacing: var(--display-ls, inherit); }
+
+/* body copy: a proportional sans instead of the light mono */
+:root[data-type] .closeup__v,
+:root[data-type] .drawing__text,
+:root[data-type] .ftl__info ul,
+:root[data-type] .order__lede,
+:root[data-type] .order__small,
+:root[data-type] .order__text,
+:root[data-type] .room__lede,
+:root[data-type] .shop__lede,
+:root[data-type] .shop__text,
+:root[data-type] .walk__text,
+:root[data-type] .draft__text { font-family: var(--body); font-weight: var(--body-w); letter-spacing: 0; font-size-adjust: 0.56; }   /* a proportional face looks smaller than the mono at the same size: match the x-height */
+
+/* 01 Faceplate: the same wide, engraved look, heavier */
+:root[data-type="faceplate"] {
+  --serif: 'Unbounded', 'Avenir Next', system-ui, sans-serif; --display-w: 500;
+  --body: 'Instrument Sans', system-ui, sans-serif; --body-w: 400;
+  --sans: 'JetBrains Mono', ui-monospace, monospace;
+}
+/* 02 Luthier: a warm serif with ink traps, a plain sans, a sturdy mono */
+:root[data-type="luthier"] {
+  --serif: 'Fraunces', Georgia, serif; --display-w: 560; --display-ls: -0.005em;
+  --body: 'Inter Tight', system-ui, sans-serif; --body-w: 400;
+  --sans: 'IBM Plex Mono', ui-monospace, monospace;
+}
+:root[data-type="luthier"] :is(.room__h1, .shop__h2, .order__h2, .ftl__h2, .walk__title, .shop__title, .order__title, .spot__h2, .closeup__claim, .draft__title) { font-variation-settings: 'SOFT' 60, 'WONK' 1; letter-spacing: -0.01em; }
+/* 03 Poster: a characterful grotesque with ink traps, set heavy, and a quirky mono */
+:root[data-type="poster"] {
+  --serif: 'Bricolage Grotesque', system-ui, sans-serif; --display-w: 700; --display-ls: -0.01em;
+  --body: 'Manrope', system-ui, sans-serif; --body-w: 500;
+  --sans: 'Space Mono', ui-monospace, monospace;
+}
+:root[data-type="poster"] :is(.room__h1, .shop__h2, .order__h2, .ftl__h2, .walk__title, .spot__h2, .draft__title) { font-stretch: 85%; letter-spacing: -0.025em; }
+:root[data-type] .room__h1 { white-space: normal; }
