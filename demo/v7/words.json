@@ -1,0 +1,15 @@
+{
+  "section": "Workshop words",
+  "out": "words-options",
+  "cardSeconds": 3.0,
+  "theme": { "bg": "#0b0a09", "fg": "#ece6da", "accent": "#9fe3f0",
+    "display": { "family": "Panchang", "src": "../../site/vendor/fonts/panchang-500.woff2" },
+    "body": { "family": "Martian Mono", "src": "../../site/vendor/fonts/martian-mono-300.woff2" },
+    "mono": { "family": "Martian Mono", "src": "../../site/vendor/fonts/martian-mono-400.woff2" } },
+  "options": [
+    { "n": "00", "name": "Now", "line": "A headline and a paragraph per stage on the left, the week counter on the right, the old saw line.", "desktop": "clips/words-now-d.mp4", "phone": "clips/words-now-p.mp4" },
+    { "n": "01", "name": "Work Tag", "line": "A paper tag tied by its string to what is being worked on, swinging in at each stage. New saw in all three.", "desktop": "clips/words-tag-d.mp4", "phone": "clips/words-tag-p.mp4" },
+    { "n": "02", "name": "Big Words", "line": "One huge word per stage, REST, CUT, FRET, COAT, PLAY, filling with light as the stage goes on.", "desktop": "clips/words-big-d.mp4", "phone": "clips/words-big-p.mp4" },
+    { "n": "03", "name": "The Log", "line": "The maker's diary, one entry a week, typed out as you scroll.", "desktop": "clips/words-log-d.mp4", "phone": "clips/words-log-p.mp4" }
+  ]
+}

@@ -165,6 +165,50 @@ function blankTexture(hex) {
   return t;
 }
 
+function glowTexture() {
+  const c = document.createElement('canvas'); c.width = 8; c.height = 128;
+  const g = c.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, 128);
+  gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.5, 'rgba(255,255,255,1)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, 8, 128);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+/** Sawdust in the holder's frame (the cut runs along -z). update(q, from, len, y, keep): q is the cut's
+ *  progress (past 1 the last grains are still landing), from/len where the saw starts and how far it goes
+ *  along the axis, y the top of the blanks, keep 1..0 as it is swept off the bench. */
+function makeDust(hex, width, n = 1600) {
+  const rnd = (() => { let s = 7; return () => (s = (s * 16807) % 2147483647) / 2147483647; })();
+  const g = new THREE.BufferGeometry(), pos = new Float32Array(n * 3);
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const c = document.createElement('canvas'); c.width = c.height = 32;
+  const x2 = c.getContext('2d'), gr = x2.createRadialGradient(16, 16, 0, 16, 16, 16);
+  gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.55, 'rgba(255,255,255,0.8)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  x2.fillStyle = gr; x2.fillRect(0, 0, 32, 32);
+  const col = new THREE.Color(hex).lerp(new THREE.Color('#fff4e0'), 0.35);
+  const m = new THREE.PointsMaterial({ color: col, size: 0.0065, map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false, sizeAttenuation: true });
+  const pts = new THREE.Points(g, m);
+  pts.frustumCulled = false;
+  const grains = Array.from({ length: n }, () => ({
+    t: rnd(), x: (rnd() - 0.5) * width, vx: (rnd() - 0.5) * 1.1, vy: 0.3 + rnd() * 0.8, vz: -0.15 + rnd() * 0.8, s: 0.6 + rnd() * 0.8,
+  }));
+  const G = 9.8, T = 3.2, FLOOR = 0.003;
+  pts.update = (q, from, len, y0, keep) => {
+    pts.visible = q > 0 && keep > 0;
+    if (!pts.visible) return;
+    m.opacity = keep;
+    grains.forEach((d, i) => {
+      const tau = (q - d.t) * T;
+      if (tau < 0) { pos[i * 3 + 1] = -10; return; }
+      const land = (d.vy + Math.sqrt(d.vy * d.vy + 2 * G * (y0 - FLOOR))) / G, tt = Math.min(tau, land);
+      pos[i * 3] = d.x + d.vx * tt;
+      pos[i * 3 + 1] = Math.max(FLOOR, y0 + d.vy * tt - 0.5 * G * tt * tt);
+      pos[i * 3 + 2] = -(from + len * d.t) + d.vz * tt;
+    });
+    g.attributes.position.needsUpdate = true;
+  };
+  return pts;
+}
+
 // The body and neck carry their real finish. Ahead of the sweep they show as raw wood: the stain and the
 // gloss gone, the grain kept. uSweep runs along uAxis (world), from the tail to the headstock.
 function makeFinishable(m, raw, fin) {
@@ -176,7 +220,7 @@ function makeFinishable(m, raw, fin) {
     Object.assign(sh.uniforms, fin, m.userData.raw);
     sh.vertexShader = 'varying vec3 vShopW;\n' + sh.vertexShader.replace('#include <project_vertex>',
       '#include <project_vertex>\n  vShopW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
-    sh.fragmentShader = 'uniform float uSweep, uEdge; uniform vec3 uAxis, uRaw; varying vec3 vShopW;\n' + sh.fragmentShader
+    sh.fragmentShader = 'uniform float uSweep, uEdge, uCut, uCutOn; uniform vec3 uAxis, uRaw; varying vec3 vShopW;\n' + sh.fragmentShader
       .replace('#include <map_fragment>', `#include <map_fragment>
         float shopD = dot(vShopW, uAxis) - uSweep;
         float shopFin = 1.0 - smoothstep(-0.01, 0.01, shopD);
@@ -185,7 +229,10 @@ function makeFinishable(m, raw, fin) {
       .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n  roughnessFactor = mix(0.8, roughnessFactor, shopFin);')
       .replace('#include <lights_physical_fragment>', '#include <lights_physical_fragment>\n#ifdef USE_CLEARCOAT\n  material.clearcoat *= shopFin;\n#endif')
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
-        totalEmissiveRadiance += vec3(1.0, 0.86, 0.66) * 0.55 * uEdge * exp(-pow(shopD / 0.008, 2.0));`);
+        totalEmissiveRadiance += vec3(1.0, 0.86, 0.66) * 0.55 * uEdge * exp(-pow(shopD / 0.008, 2.0));
+        // the fresh cut: warm just behind the saw, cooling over a few centimetres
+        float shopC = uCut - dot(vShopW, uAxis);
+        totalEmissiveRadiance += vec3(1.0, 0.6, 0.28) * 0.75 * uCutOn * step(0.0, shopC) * exp(-shopC / 0.035);`);
   };
   m.customProgramCacheKey = () => `shopfin${prev ? '+' : ''}`;
   m.needsUpdate = true;
@@ -213,6 +260,9 @@ export async function createWorkshop(section, { room, reduced }) {
       ${railHTML(T)}
     </div>`;
   const words = stageSwapper(section, reduced);
+  // the words options (V7 demo round): ?words=tag|big|log (workshop-words.js)
+  const WORDS = new URLSearchParams(location.search).get('words');
+  const wo = WORDS ? await import('./workshop-words.js?v=3').then((m) => m.buildWords(WORDS, section, T, first, { reduced })).catch((err) => { console.error(err); return null; }) : null;
   words.words(T);
   const weekEl = $('[data-week]', section);
 
@@ -251,7 +301,10 @@ export async function createWorkshop(section, { room, reduced }) {
 
   const holder = new THREE.Group();
   scene.add(holder);
-  const fin = { uSweep: { value: -10 }, uEdge: { value: 0 }, uAxis: { value: new THREE.Vector3(1, 0, 0) } };
+  const fin = { uSweep: { value: -10 }, uEdge: { value: 0 }, uCut: { value: -10 }, uCutOn: { value: 0 }, uAxis: { value: new THREE.Vector3(1, 0, 0) } };
+  // a small warm light that rides along the cut
+  const sawLight = new THREE.PointLight('#ffb36b', 0, 0.45, 2);
+  holder.add(sawLight);
   const cut = new THREE.Plane(new THREE.Vector3(1, 0, 0), 10);
   let G = null;                 // the guitar on the bench: parts, blanks, its length along the axis
   let portrait = false, pTarget = 0, pShown = -1, dirty = true, visible = false;
@@ -321,8 +374,22 @@ export async function createWorkshop(section, { room, reduced }) {
     saw.rotation.x = -Math.PI / 2;
     holder.add(saw);
     blanks.push(saw);
+    // a soft glow either side of the line
+    const glow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: glowTexture(), color: new THREE.Color('#ffb36b').multiplyScalar(1.4), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    glow.rotation.x = -Math.PI / 2;
+    holder.add(glow);
+    blanks.push(glow);
+    // sawdust: thrown off the line as it passes, it falls and settles on the bench, and is swept off
+    // before the frets go in. Every grain is a function of the scroll, so it runs backwards too.
+    const dust = makeDust(raw, bodyB.max.x - bodyB.min.x + 0.03);
+    holder.add(dust);
+    blanks.push(dust);
 
-    G = { info, lie, parts, blanks, saw, tail: -all.max.z + c.z, head: -all.min.z + c.z, width: bodyB.max.x - bodyB.min.x,
+    // points on the bench the words can point at, in the holder's frame
+    const top = (b) => new THREE.Vector3((b.min.x + b.max.x) / 2, b.max.y, (b.min.z + b.max.z) / 2);
+    const brB = box(['Saddles', 'Bridge']);
+    const anchors = { blank: top(bodyB).add(new THREE.Vector3(0, 0.008, 0)), neck: top(neckB).add(new THREE.Vector3(0, 0.01, 0)), bridge: brB.isEmpty() ? top(bodyB) : top(brB) };
+    G = { info, lie, parts, blanks, saw, glow, dust, anchors, tail: -all.max.z + c.z, head: -all.min.z + c.z, width: bodyB.max.x - bodyB.min.x,
       sawY: Math.max(bodyB.max.y, neckBlankB.max.y) + 0.0055 };
     // stagger the drops within each stage, in a sensible order
     const ORDER = ['Fretboard', 'Nut', 'Frets', 'Dots', 'Logo', 'Pickguard', 'NeckPickup', 'MiddlePickup', 'BridgePickup', 'Bridge', 'Tailpiece', 'Tremolo', 'Saddles', 'Controls', 'Tuners', 'Screws', 'BackHardware', 'Strings'];
@@ -332,6 +399,18 @@ export async function createWorkshop(section, { room, reduced }) {
     }
     layout();
     dirty = true;
+  }
+
+  // a point on the bench, on screen (px in the section)
+  const _a = new THREE.Vector3();
+  function anchorAt(name) {
+    if (!G) return null;
+    const y = G.sawY;
+    if (name === 'saw') _a.set(0, y, -Math.min(Math.max(G.sawNow, G.tail + 0.05), G.head - 0.05));
+    else if (name === 'sweep') _a.set(0, y - 0.004, -Math.min(Math.max(fin.uSweep.value, G.tail + 0.06), G.head - 0.06));
+    else _a.copy(G.anchors[name] || G.anchors.blank);
+    holder.localToWorld(_a).project(camera);
+    return [(_a.x * 0.5 + 0.5) * section.clientWidth, (0.5 - _a.y * 0.5) * section.clientHeight];
   }
 
   function layout() {
@@ -361,13 +440,23 @@ export async function createWorkshop(section, { room, reduced }) {
     // the saw: down the blanks from the tail to the head during the cut
     const L = G.head - G.tail;
     const sawAt = G.tail - 0.03 + (L + 0.06) * smooth(BOUNDS[1] + 0.01, BOUNDS[2] - 0.02, p);
+    G.sawNow = sawAt;
     cut.constant = -sawAt;
     const sawing = p > BOUNDS[1] && p < BOUNDS[2] - 0.02;
-    G.saw.visible = sawing;
+    G.saw.visible = G.glow.visible = sawing;
+    fin.uCut.value = sawAt;
+    fin.uCutOn.value = sawing ? 1 : smooth(BOUNDS[2] + 0.02, BOUNDS[2] - 0.02, p) * (p > BOUNDS[1] ? 1 : 0);
+    sawLight.intensity = sawing ? 0.5 : 0;
     if (sawing) {                                   // in the holder's own frame the axis is always -z
       G.saw.position.set(0, G.sawY, -sawAt);
-      G.saw.scale.set(G.width + 0.08, 0.004, 1);
+      G.saw.scale.set(G.width + 0.08, 0.0035, 1);
+      G.glow.position.set(0, G.sawY - 0.0005, -sawAt);
+      G.glow.scale.set(G.width + 0.16, 0.06, 1);
+      sawLight.position.set(0, G.sawY + 0.04, -sawAt);
     }
+    // the sawdust: q is how far through the cut, running on a little past it so the last grains land
+    const q = (p - (BOUNDS[1] + 0.01)) / (BOUNDS[2] - 0.02 - (BOUNDS[1] + 0.01));
+    G.dust.update(q, G.tail - 0.03, L + 0.06, G.sawY, 1 - smooth(BOUNDS[2] + 0.01, BOUNDS[2] + 0.06, p));
     G.blanks.slice(0, 2).forEach((b, k) => {
       b.visible = p < BOUNDS[2];
       const t = clamp01((p - 0.01 - k * 0.035) / 0.07), e = 1 - Math.pow(1 - t, 3);
@@ -402,6 +491,7 @@ export async function createWorkshop(section, { room, reduced }) {
     camera.updateProjectionMatrix();
 
     // the words
+    wo?.update(p, S, anchorAt);
     words.show(S.k);
     weekEl.textContent = pad(Math.max(1, Math.ceil(S.week - 1e-6)));
     railFill(section, T, S.week);
@@ -471,6 +561,7 @@ export async function createWorkshop(section, { room, reduced }) {
         if (info.id === onBench) return;
         onBench = info.id;
         retitle(info);
+        wo?.retitle(T, info);
         await load(info);
         // compiled off the main thread, in both states (the blanks only show early on)
         for (const p of [1, BOUNDS[1] + 0.05]) { frame(p); await renderer.compileAsync(scene, camera).catch(() => {}); }

@@ -52,3 +52,5 @@ Running table for 009 Guitars (KVELD). Started with the V6 session. For earlier 
 | 10-24 | The drawing's paper only counts while in the drawing (pointer and header) | Claude (found the bug) | Not reviewed | Fixed |
 | 10-24 | Font pairings: Faceplate, Luthier, Poster | Claude | Waiting for Sam's pick | Built behind ?type= |
 | 10-24 | The workshop rises over the end of the tour as a sheet while the guitar still moves | Sam | Sam | Built (1.4 screens of overlap, the room sinks under it) |
+| 10-24 | The saw: blade of light, warm glow, light riding the cut, fresh-cut glow, sawdust | Claude | Not reviewed yet | Built, in every version |
+| 10-24 | Workshop words options: Work Tag, Big Words, The Log | Claude | Waiting for Sam's pick | Built behind ?words= |
