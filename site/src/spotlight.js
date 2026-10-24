@@ -49,6 +49,7 @@ export async function buildSpotlight(section, { sheet, pick, current = () => 0, 
 
   section.innerHTML = `
     <div class="spot__pin">
+      <canvas class="spot__arch" aria-hidden="true"></canvas>
       <div class="spot__left">
         <p class="eyebrow">02 · Hear them</p>
         <h2 class="spot__h2">Seven voices in one room. Point at one to <em>hear</em> it.</h2>
@@ -60,7 +61,6 @@ export async function buildSpotlight(section, { sheet, pick, current = () => 0, 
       </div>
       <div class="spot__stage">
         <i class="spot__halo"></i>
-        <canvas class="spot__arch" aria-hidden="true"></canvas>
         <span class="spot__num" data-num aria-hidden="true">01</span>
         <svg class="spot__plan" viewBox="0 0 ${F0.w} ${F0.h}" aria-hidden="true"><path pathLength="1" data-plan/></svg>
         <div class="spot__imgs">${list.map(({ info, S }, i) => `<img src="assets/shots/${info.id}-hero.webp" alt="${info.name}, ${S.finish}" data-pick="${i}" decoding="async" fetchpriority="low">`).join('')}</div>
@@ -167,7 +167,9 @@ export async function buildSpotlight(section, { sheet, pick, current = () => 0, 
   const SPAN = Math.PI * 1.32, PTS = 220, wave = new Float32Array(PTS);
   let box = null, level = 0, running = false, visible = false;
   const size = () => {
-    const sr = $('.spot__stage', section).getBoundingClientRect(), ir = stage.getBoundingClientRect();
+    // the canvas covers the whole section: drawn only over the guitar's half, the arch was cut off in a
+    // straight line on wide windows, where it reaches past that half (Sam's note, 2026-10-24)
+    const sr = $('.spot__pin', section).getBoundingClientRect(), ir = stage.getBoundingClientRect();
     const dpr = Math.min(devicePixelRatio, 1.5);
     canvas.width = Math.round(sr.width * dpr); canvas.height = Math.round(sr.height * dpr);
     box = { dpr, cx: ir.left - sr.left + ir.width / 2, cy: ir.top - sr.top + ir.height * 0.6, R: ir.height * 0.35 };

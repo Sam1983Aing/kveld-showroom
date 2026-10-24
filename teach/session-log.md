@@ -139,3 +139,7 @@ On camera: a progress number should be honest. "100" that then waits three secon
 **18. "On the right side there's an issue with the tracking progress. Fix that."** (2026-10-24, with a screenshot)
 The tour's ruler placed each stop where its part sits on the guitar, so Pickups landed on Back and Controls on Bridge, with an empty gap above them and the order not matching the tour. Now the stops are evenly down the ruler in the tour's order and the light slides from one to the next while the camera travels (`walkTrack()` in main.js, from the walk's own beats). Checked at all seven stops at 1725 x 990: the light sits on the stop being shown, 0 to 1 px off.
 On camera: "true to the object" lost to "readable". A progress indicator has to read as progress first.
+
+**19. "This section (Hear them) is super nice, but there's a square dark border, the edge overlapping the circle colour, towards the middle. Fix what's underneath."** (2026-10-24, with a screenshot)
+The arch was drawn on a canvas the size of the guitar's half of the screen. On Sam's wider window the arch reached past that half and was cut off in a straight vertical line. At 1725 px it fitted by 11 px, which is why it never showed in the checks. The canvas now covers the whole section, layered between the glow and the guitar. Checked at 1875 and 1440 wide.
+On camera: check at more than one window size. A clip that misses by 11 px at one size is a straight edge at another.
