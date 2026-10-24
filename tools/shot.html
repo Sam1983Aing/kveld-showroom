@@ -8,8 +8,7 @@
 <canvas id="c"></canvas>
 <script type="module">
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { prepareGuitar, studioEnvironment } from '../site/src/guitar-look.js';
+import { prepareGuitar, studioEnvironment, gltfLoader } from '../site/src/guitar-look.js';
 
 const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: true, alpha: true, preserveDrawingBuffer: true });
 renderer.setPixelRatio(1);
@@ -21,7 +20,7 @@ scene.environment = studioEnvironment(renderer);
 const key = new THREE.SpotLight('#fff1dc', 10, 8, 0.4, 0.8, 2);
 const rimL = new THREE.SpotLight('#cfdcff', 4, 8, 0.5, 0.9, 2), rimR = new THREE.SpotLight('#ffe2c0', 3.2, 8, 0.5, 0.9, 2);
 scene.add(key, key.target, rimL, rimL.target, rimR, rimR.target);
-const loader = new GLTFLoader(), cache = new Map();
+const loader = gltfLoader(), cache = new Map();
 let current = null;
 
 /** One still. view: hero (three-quarter, perspective), front (straight on, same scale for every guitar),

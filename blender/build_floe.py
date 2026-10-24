@@ -720,7 +720,10 @@ if '--no-export' not in ARGS:
         ob.select_set(True)
     bpy.ops.export_scene.gltf(filepath=OUT_GLB, export_format='GLB', use_selection=True, export_apply=True,
                               export_yup=True, export_image_format='WEBP', export_image_quality=88,
-                              export_materials='EXPORT', export_extras=False)
+                              export_materials='EXPORT', export_extras=False,
+                              export_draco_mesh_compression_enable=True, export_draco_mesh_compression_level=6,
+                              export_draco_position_quantization=16, export_draco_normal_quantization=12,
+                              export_draco_texcoord_quantization=14)
     print('[floe] wrote', OUT_GLB, os.path.getsize(OUT_GLB) // 1024, 'KB')
 
 if '--render' in ARGS:

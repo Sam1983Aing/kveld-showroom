@@ -1128,7 +1128,10 @@ def export(rootob, groups, out_glb, blend_path):
         ob.select_set(True)
     bpy.ops.export_scene.gltf(filepath=out_glb, export_format='GLB', use_selection=True, export_apply=True,
                               export_yup=True, export_image_format='WEBP', export_image_quality=88,
-                              export_materials='EXPORT', export_extras=False)
+                              export_materials='EXPORT', export_extras=False,
+                              export_draco_mesh_compression_enable=True, export_draco_mesh_compression_level=6,
+                              export_draco_position_quantization=16, export_draco_normal_quantization=12,
+                              export_draco_texcoord_quantization=14)
     print('[kit] wrote', out_glb, os.path.getsize(out_glb) // 1024, 'KB')
 
 

@@ -1,15 +1,12 @@
 // 02 · The room, as a place to choose a guitar ("Spotlight", picked 2026-10-06).
 //
 // Seven names on the left; on the right the one in the light: its still, its
-// outline drawn behind it, a short sheet, a price and the way to it in the
-// room. The section is several screens tall and its content sticks to the
-// screen (CSS), so scrolling walks the light down the list and it works
-// without a pointer. With a mouse, pointing at a name previews it and leaving
-// the list goes back to where the scroll is.
-//
-// The hold is plain `position: sticky` and the progress is read from the
-// section's own box, not a ScrollTrigger pin: with reduced motion (no Lenis)
-// ScrollTrigger placed anything below the pinned room a whole walk too early.
+// outline drawn behind it, a short sheet, a price and the way to it in the room.
+// Pointing at a name puts that guitar in the light, and it stays there. The
+// page scrolls past the section like any other. (Until 2026-10-07 the section
+// held for 3.4 screens and scrolling stepped through the seven; Sam wanted the
+// choice to follow the pointer, not the scroll.) On a touch screen a tap on a
+// name or a dot does it, and so does a swipe across the guitar.
 //
 // Stills: assets/shots/<id>-hero.webp (tools/product_shots.mjs). The outline
 // is plotted from assets/data/<id>.json with frames.json, which says where a
@@ -36,9 +33,9 @@ function planPath(D, F) {
 
 /**
  * Build the section. `sheet(id)` resolves a guitar's drawing data, `pick(i)`
- * takes the ring to that guitar, `scrollToY(px)` scrolls the page.
+ * takes the ring to that guitar, `current()` is the guitar the room is on.
  */
-export async function buildSpotlight(section, { sheet, pick, scrollToY, reduced }) {
+export async function buildSpotlight(section, { sheet, pick, current = () => 0, reduced }) {
   const [sheets, frames] = await Promise.all([Promise.all(LINEUP.map((g) => sheet(g.id))), fetch('assets/shots/frames.json').then((r) => r.json())]);
   const list = LINEUP.map((info, i) => ({ info, S: SPECS[info.id] || {}, D: sheets[i], scale: `${+sheets[i].scale.toFixed(2)} in` }));
   const F0 = frames[LINEUP[0].id];
@@ -98,29 +95,36 @@ export async function buildSpotlight(section, { sheet, pick, scrollToY, reduced 
       .fromTo([el.num, el.swap, el.price], { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.8, ease: 'expo.out', stagger: 0.05 });
   }
 
-  // where the scroll says the light is, and where a pointer has put it for the moment
-  let scrolled = 0, pointed = -1, near = false;
-  const settle = () => show(pointed >= 0 ? pointed : scrolled);
-  settle();
-  const run = () => Math.max(section.offsetHeight - innerHeight, 1);          // how far the page scrolls while the section holds
-  gsap.ticker.add(() => {
-    if (!near) return;
-    const i = Math.min(Math.floor(Math.min(Math.max(-section.getBoundingClientRect().top / run(), 0), 1) * N), N - 1);
-    if (i !== scrolled) { scrolled = i; pointed = -1; settle(); }
-  });
-  new IntersectionObserver(([e]) => { near = e.isIntersecting; }).observe(section);
-  const arrive = new IntersectionObserver(([e]) => { if (e.isIntersecting) { section.classList.add('is-in'); arrive.disconnect(); } }, { rootMargin: '0px 0px -28% 0px' });
+  show(0);
+  // the section opens on the guitar the room was left on
+  const arrive = new IntersectionObserver(([e]) => {
+    if (!e.isIntersecting) return;
+    show(current());
+    section.classList.add('is-in');
+    arrive.disconnect();
+  }, { rootMargin: '0px 0px -28% 0px' });
   arrive.observe(section);
 
   rows.forEach((r, i) => {
     const b = r.firstElementChild;
-    b.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') { pointed = i; settle(); } });
-    b.addEventListener('focus', () => { pointed = i; settle(); });
-    b.addEventListener('click', () => pick(i));
+    let lit = false;                       // was it already in the light when the press began?
+    b.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') show(i); });
+    b.addEventListener('pointerdown', () => { lit = i === on; });
+    b.addEventListener('focus', () => show(i));
+    // a mouse has lit it by pointing, so its click goes to the room; a finger lights it first
+    // and goes on the second tap; the keyboard (no press) has lit it by focus
+    b.addEventListener('click', (e) => { if (lit || e.detail === 0) pick(i); lit = false; });
   });
-  names.addEventListener('pointerleave', () => { pointed = -1; settle(); });
-  // phones show one name at a time: the dots say where you are in the seven and jump to any of them
-  dots.forEach((d, i) => d.addEventListener('click', () => scrollToY(Math.round(section.getBoundingClientRect().top + scrollY + (i + 0.5) / N * run()))));
+  dots.forEach((d, i) => d.addEventListener('click', () => show(i)));
   $('[data-go]', section).addEventListener('click', () => pick(on));
-  $('.spot__imgs', section).addEventListener('click', () => pick(on));
+  const stage = $('.spot__imgs', section);
+  stage.addEventListener('click', () => pick(on));
+  // a swipe across the guitar goes to the next or the one before
+  let x0 = null;
+  stage.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; }, { passive: true });
+  stage.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].clientX - x0;
+    if (x0 !== null && Math.abs(dx) > 44) { show((on + (dx < 0 ? 1 : -1) + N) % N); e.preventDefault(); }
+    x0 = null;
+  });
 }

@@ -8,7 +8,7 @@
 // frame (the copy column is left out). Prints the counts and the best turn.
 // It changes nothing: copy the numbers into stops.js.
 import { createRequire } from 'module';
-const require = createRequire('/Users/sam/Projects/Claude Code/Random Demos/cupola/node_modules/');
+const require = createRequire(import.meta.url);
 const { chromium } = require('playwright-core');
 const [id, ...only] = process.argv.slice(2);
 const browser = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',

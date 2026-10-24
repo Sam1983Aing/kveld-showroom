@@ -5,11 +5,11 @@
 //
 // `at` is the scroll position in screen heights (0 is the room at rest). With
 // GUITAR the ring turns to that guitar first. Prints the walk state and any
-// console errors. Needs the site served on :8013 and playwright-core from the
-// cupola project (see the headless-webgl-checks note).
+// console errors. Needs the site served on :8013 and playwright-core in
+// tools/node_modules (see the headless-webgl-checks note).
 import { createRequire } from 'module';
 import { mkdirSync } from 'fs';
-const require = createRequire('/Users/sam/Projects/Claude Code/Random Demos/cupola/node_modules/');
+const require = createRequire(import.meta.url);
 const { chromium } = require('playwright-core');
 const OUT = decodeURIComponent(new URL('../media/checks/', import.meta.url).pathname);
 mkdirSync(OUT, { recursive: true });

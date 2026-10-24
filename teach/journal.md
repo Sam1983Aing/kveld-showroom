@@ -1,4 +1,4 @@
-# Teaching journal: 013 3D Guitars (HALDEN showroom)
+# Teaching journal: 009 Guitars (HALDEN showroom)
 
 ## 2026-09-25 · seed · Seed · The guitar is the interface
 Started from a ChatGPT brainstorm Sam shared (chatgpt.com/share/6ab71cc1-7c74-83ea-9de6-b9af4e81fd23). The core idea: one hyper-detailed Blender guitar, and scrolling moves the camera around and into it (headstock, strings, pickups, an exploded view), presented like the launch of a fictional $4,000 handmade instrument.
@@ -406,3 +406,61 @@ Sam counted the frozen copies: 34 folders, 1.2 GB, one per round of fixes. He wa
 How: the history was assembled in a scratch folder by laying each chosen folder over `site/` and committing it with the date it was made, so the live page was never touched. Then `.git` was moved into the project and every tag was exported and compared with the folder it replaces before that folder went to the Trash. All nine matched.
 Left out of the repo on purpose: the licensed plan sheets, the overlays that show their ink, and every video.
 Teaches: version numbers are for the reader. Thirty-four of them told nobody anything, and Sam could not find "the one before yesterday" among them. Five with names tell the story of the build.
+
+## 2026-10-06 · v6 · Turn · The same numbers, told four times
+Sam, looking at the page as a visitor: "When we click we view the guitar, but it feels like the same spec when we scroll, where we have the traced guitar with all the measurements. What do you think about that?" He was right. I counted: the scale length shows up in the hero line, in the View guitar sheet, on the inked plan, in the close-up headlines and in Spotlight. The four big counting figures in the sheet (scale, frets, radius, nut) are exactly what the drawing inks a few seconds later.
+The rule we took for V6: one job per section. The drawing owns the measurements. The click is the guitar in your hands (turn it, what it's made of, what's ours, what it costs). The close-ups talk about what's on screen. Spotlight compares the seven.
+Teaches: each section was built in its own round and each one was good alone. Nobody had read the page top to bottom as one visitor. Do that before polishing any single section further.
+
+## 2026-10-06 · v6 · Direction · The View guitar sheet sells instead of measuring
+Step 1 of 3. The four figures are out of the sheet. In their place: the price, the build time (both still count up) and a Book a visit button. Materials, "Ours, not the sheet's", the free turn and Walk the guitar stay.
+Two small things worth showing:
+- Book a visit has to reach the footer, which is about twenty screens below, past the drawing and the whole close-up tour. A smooth scroll would race through all of it. So the page goes dark for half a second, jumps, and comes back up on the footer.
+- A number that counts up changes width while it counts (€0, €87, €1,240) and pushes its neighbour sideways. Each number is given its final width before the count starts.
+Before: tag `v5`. Reel: demo/v6/sheet-v6-desktop.mp4 and -phone.mp4 (re-record with `sh demo/v6/record.sh before|after`).
+
+## 2026-10-07 · v6 · Turn · View guitar gets a real camera move
+Sam, with a screenshot of the sheet on Floe: "When we click View guitar the movement is so subtle and minimal. Make the transition more cinematic. The guitar at a nice angle, just focusing on the body, and the body can rotate really slow, so it doesn't make a complete turn. I just want the movement and the lighting shining on the material. The arch can still glow. The right side is too compressed." He also wanted Walk the guitar out of the sheet (it already comes after the drawing, twice is confusing) and a way to change guitar without going back to the room. Target he set: at least 8 out of 10.
+Something his screenshot told me that he did not say: his window is about 1725 px wide, and the sheet was capped at 440. A quarter of the screen for all the words. I had been checking at 1000 px, where the same sheet took 40 percent and looked fine.
+Before: demo/v6/closeup-v6-desktop.mp4 and -phone.mp4 (first clip of each).
+
+## 2026-10-07 · v6 · Technique · The body portrait
+What the click does now. The guitar lifts 8 cm off its plinth and leans 15 degrees about the middle of its body. The camera comes in until the body fills the height, and a lens shift (an off-centre projection, the same trick the close-up tour uses) slides the picture to the left without changing the perspective. The arch is moved and shrunk so that from this camera it closes round the body like an iris. It rests turned about 45 degrees and sways 7 degrees either side over 14 seconds. It never turns fully on its own, dragging still does.
+The framing is the same for all seven. That is what makes changing guitar from the sheet work: the camera stays put and the ring turns under it, so the next body slides into the same light. The seven names sit along the bottom, and the arrow keys work too.
+The sheet takes 43 percent of the width and its type grows with the window.
+Built with: `CLOSE` and `closeTo()` in site/src/showroom.js, section 3 of site/src/main.js, "close-up state" in styles.css.
+Teaches: a product page has one camera per job. The room shows seven things at once. The portrait shows one, and everything else in the frame (arch, plinth, dust) is there to point at it.
+
+## 2026-10-07 · v6 · Fix · The flare that was not the key light
+Half way through its sway each guitar's edge burned into a white blob, worst on Fjord. I blamed the key light and the bloom, in that order, and tried three bloom settings and two key positions. None of them moved it. Then I measured instead of guessing: a script turned each of the seven through 19 angles in the close-up and counted near-white pixels on the guitar. Every guitar blew out between 0.40 and 0.65 radians and was clean either side. Switching lights off one at a time found it in two runs: the two rim lights behind the guitar, mirroring off the top straight into the lens. The key light had nothing to do with it.
+Fix: the guitar rests at 0.8, past the band, and only crosses it on the way in, which reads as one flash of light across the finish. Pale and dark finishes also get their own light level up close (Floe 0.78, Scree 1.7), because one setting blew out the white one and lost the slate one in the dark.
+Teaches: when a highlight misbehaves, count it across the whole range before touching a setting. And suspect the lights behind the subject first. A rim light at a grazing angle is the brightest thing in the room.
+
+## 2026-10-07 · v6 · Direction · The body portrait stays
+Sam, after watching the before and after reel: "This is just awesome." No changes asked. The close-up, the wider sheet and the seven names in the sheet are the page.
+
+## 2026-10-07 · v6 · Turn · Section 02 follows the pointer, not the scroll
+Sam, scrolling into the list of seven: "When we scroll it switches through all the guitar models, 01 to 07. That's not exactly what I want. It should be selected as we hover on it, and not by scrolling."
+The section used to hold the page for 3.4 screens and step through the guitars. That was built so it would work without a pointer, and it did, but it also took the choice away from the person choosing. Now it is one screen. Pointing lights a guitar and it stays lit. Phones get taps on the dots and a swipe across the guitar.
+Before: demo/v6/lower-v6-desktop.mp4, first clip.
+Teaches: scroll is for telling a story in order. A list of things to pick from has no order, so driving it with the scroll makes the visitor sit through six guitars they did not ask about.
+
+## 2026-10-07 · v6 · Fix · "In the room" went to the wrong end of the room
+While testing the new section I clicked "In the room" and the page moved up one screen and stopped on the guitar lying flat. The code scrolled to `#room`. But the room is pinned for twenty screens, and a pinned element sits at the END of its pin once you are past it, so "scroll to the room" meant "scroll to the last frame of the tour". It had been like that since the section was built. Nobody caught it because the demo recordings never pressed that button from below.
+Fix: go to the top of the page, through the same half-second fade to black that Book a visit uses, with the ring already turning to the chosen guitar.
+Teaches: with a pinned section, "where is this element" has two answers. Scroll to a number you computed, not to the element.
+
+## 2026-10-07 · v6 · Direction · The footer, tidied
+Sam's notes on Last Light: no names over the picture, no note about the fictional maker, a quieter reflection in the floor, a smaller headline, "some movement" on the middle guitar ("like the particles fading into the black"), a cleaner CTA, and under the guitars the things a real company has: contact, social, hours, a way to send a text.
+What went in: Book the room alone on the right. A band of four columns under the guitars (the room, hours, need info, follow). Dust that rises through the centre light and fades out on the way up, drawn on a small 2D canvas laid over the picture, plus a slow breathing glow. The picture itself was re-rendered with the floor's mirror at 0.6 instead of 1.25.
+One thing I added without being asked: the footer now takes the colour of the guitar in its picture (Moss green). It used to take the colour of whichever guitar the room was left on, so the word "played" could be ice blue under a green light.
+How the dust stays on the guitar: the picture, the glow and the canvas share one box with the picture's own proportions, and that box is what gets zoomed. So nothing has to be measured in script.
+
+## 2026-10-08 · v6 · Fix · Five tools that borrowed a library from another project
+The capture tools (`stills`, `inspect_shots`, `product_shots`, `room_still`, `tune_turns`) drive headless Chrome with playwright-core. They never had their own copy. Each one loaded it from the Cupola project by its full path, because it was already installed there. Then Sam tidied his folders and Cupola moved out of `Random Demos`. Nothing in this project changed, and all five tools stopped working.
+Fix: the project has its own copy now, in `tools/node_modules`, with a `tools/package.json` that names the version (1.62.1). The tools find it from their own location (`createRequire(import.meta.url)`), so the project can be moved or renamed too. Checked by running `stills.mjs` against the local server: it rendered the room.
+Teaches: a full path to another project is a hidden dependency. It works until someone renames a folder, and the thing that breaks is nowhere near the thing that moved.
+
+## 2026-10-23 · v6 · Wrap · V6: the guitar up close, and a lighter page
+What changed since `v5`: the View guitar sheet sells instead of measuring, View guitar became a body portrait with the seven names to change guitar in place, section 02 follows the pointer, the footer carries the room's details and dust in its light, and a performance pass took the page from 60 MB to 10 MB and from about 25 to 60 fps on Sam's Retina screen. Sam, after seeing it: "I like, let's push it."
+Before: tag `v5`. Reels and stills: `demo/v6/`, `teach/shots/v6-*.jpg`. Still open for V7: the walk's copy and ending (see BRIEF-v7.md).

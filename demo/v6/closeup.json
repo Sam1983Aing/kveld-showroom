@@ -1,0 +1,13 @@
+{
+  "section": "View guitar",
+  "out": "closeup-v6",
+  "cardSeconds": 3.0,
+  "theme": { "bg": "#0b0a09", "fg": "#ece6da", "accent": "#9fe3f0",
+    "display": { "family": "Panchang", "src": "../../site/vendor/fonts/panchang-500.woff2" },
+    "body": { "family": "Martian Mono", "src": "../../site/vendor/fonts/martian-mono-300.woff2" },
+    "mono": { "family": "Martian Mono", "src": "../../site/vendor/fonts/martian-mono-400.woff2" } },
+  "options": [
+    { "n": "00", "name": "Before", "line": "The camera barely moves and the sheet is a narrow column. To see another guitar you go back to the room and open it again.", "desktop": "clips/closeup-before-d.mp4", "phone": "clips/closeup-before-p.mp4" },
+    { "n": "01", "name": "After", "line": "The camera comes in on the body, leaning, with the arch behind it. The sheet takes the right half, and the seven names change guitar in place.", "desktop": "clips/closeup-after-d.mp4", "phone": "clips/closeup-after-p.mp4" }
+  ]
+}

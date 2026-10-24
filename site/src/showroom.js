@@ -4,16 +4,14 @@
 // visual (position, dimming, ring light, lift) is a function of s. Stepping,
 // dragging and clicking all just move `u`.
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
 import { Reflector } from 'three/addons/objects/Reflector.js';
 import { buildStandin } from './standins.js';
-import { prepareGuitar } from './guitar-look.js';
+import { prepareGuitar, gltfLoader } from './guitar-look.js';
 import { Walk, LIFT, blendShots } from './sequence.js';
 
 const N = 7;
@@ -24,6 +22,7 @@ const FILL = 0.9;                      // how much of the frame a walk stop's su
 const _q1 = new THREE.Quaternion(), _q2 = new THREE.Quaternion();
 const _v1 = new THREE.Vector3(), _v2 = new THREE.Vector3(), _v3 = new THREE.Vector3();
 const _v4 = new THREE.Vector3(), _v5 = new THREE.Vector3(), _v6 = new THREE.Vector3();
+const _hslA = { h: 0, s: 0, l: 0 }, _hslB = { h: 0, s: 0, l: 0 };
 
 // ------------------------------------------------------------ tunables ----
 export const LOOK = {
@@ -36,6 +35,34 @@ export const LOOK = {
   stepDuration: 1.7,      // seconds per ring step
   grain: 0.035,
   dof: 0.0075,            // walk depth of field: blur per metre off focus, times 1/focus²
+};
+
+// View guitar: the close-up is a portrait of the body. The guitar lifts off its plinth and leans,
+// the camera comes in on the body, and a lens shift puts it on the left (at the top where the
+// sheet sits below it) so the sheet has the other side. It sways a few degrees so the light
+// travels across the finish, and never makes a full turn on its own. The framing is the same for
+// all seven, so changing guitar from the sheet turns the ring under a camera that stays put.
+const D2R = Math.PI / 180;
+export const CLOSE = {
+  lift: 0.08,             // metres off the plinth: the lower bout has to clear it once it leans
+  pivot: 0.22,            // metres up the guitar that the lean turns about (the middle of the body)
+  aim: 0.27,              // metres up the guitar that the camera looks at
+  // The angle it settles at and how far it sways either side, radians, and seconds per swing.
+  // Between 0.4 and 0.65 the two rim lights behind the guitar mirror off the top straight into
+  // the lens and the whole edge burns white (measured on all seven). So it rests past that, and
+  // only crosses it on the way in, as one flash of light across the finish.
+  yaw: 0.8, sway: 0.12, period: 14,
+  // light once the camera is in: the arch stays lit, the bloom comes down and only the hottest
+  // points keep it, the rims come up a little, the chrome is a touch less of a mirror
+  light: { halo: 0.9, dust: 0.55, bloom: 0.5, threshold: 0.1, radius: 0.8, chrome: 0.08, rim: 1.25 },
+  // the key and rim lights per finish, up close only: the pale one blows out under the light
+  // that suits the others, and the dark ones disappear into the room
+  gain: { floe: 0.78, scree: 1.7, moss: 1.1, heath: 1.08 },
+  // lean: degrees. view: metres of height in frame at the guitar. minWidth: metres of width the
+  // frame must keep on a narrow window. shift: where the body sits, in screen halves from the
+  // centre (x to the right, y up). halo: the arch's radius as it looks round the body, metres.
+  wide: { lean: -15, view: 0.74, minWidth: 1.12, dir: [0.04, 0.12, 1], fov: 22, shift: [-0.46, 0], halo: 0.3 },
+  tall: { lean: -8, view: 0.9, minWidth: 0.5, dir: [0, 0.1, 1], fov: 30, shift: [0, 0.3], halo: 0.26 },
 };
 
 // Slot keyframes: |s| → dimming and ring-light level. Past 3.5 a guitar is
@@ -149,7 +176,7 @@ const ConeShader = {
     }`,
 };
 
-// film grain and vignette, in display space after tone mapping
+// tone mapping + sRGB + film grain and vignette in one final pass to screen
 const GrainShader = {
   uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uGrain: { value: LOOK.grain } },
   vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
@@ -157,7 +184,10 @@ const GrainShader = {
     uniform sampler2D tDiffuse; uniform float uTime; uniform float uGrain; varying vec2 vUv;
     float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233)) + uTime * 7.0) * 43758.5453); }
     void main() {
-      vec4 c = texture2D(tDiffuse, vUv);
+      gl_FragColor = texture2D(tDiffuse, vUv);
+      #include <tonemapping_fragment>
+      #include <colorspace_fragment>
+      vec4 c = gl_FragColor;
       float v = smoothstep(1.15, 0.35, length((vUv - 0.5) * vec2(1.25, 1.0)));
       c.rgb *= mix(0.55, 1.0, v);
       c.rgb += (h(vUv * 1000.0) - 0.5) * uGrain;
@@ -176,6 +206,9 @@ export class Showroom {
     this.lights = 0;          // 0..1, the room coming on during the intro
     this.focus = 0;           // 0..1, close-up mode
     this.running = true;
+    this.allReady = false;
+    this.idleTime = 0;
+    this.settledFrames = 0;
     this.time = 0;
     this.last = performance.now();
     this.pointer = new THREE.Vector2(10, 10);
@@ -183,6 +216,7 @@ export class Showroom {
     this.drag = null;
     this.closeYaw = 0;
     this.closeDist = 0;
+    this.swayT = 0;           // seconds the close-up has been swaying
     this.parallax = new THREE.Vector2();
     this.mobile = matchMedia('(max-width: 760px)').matches;
 
@@ -204,6 +238,11 @@ export class Showroom {
     this.bind();
   }
 
+  wake() {
+    this.idleTime = 0;
+    this.settledFrames = 0;
+  }
+
   // ------------------------------------------------------------ setup ----
   initRenderer() {
     const r = this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: false, powerPreference: 'high-performance' });
@@ -218,8 +257,10 @@ export class Showroom {
     this.scene.fog = new THREE.FogExp2('#050404', 0.075);
     this.camera = new THREE.PerspectiveCamera(24, 1, 0.1, 60);
 
-    const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: this.mobile ? 2 : 4 });
+    const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 2 });
     this.composer = new EffectComposer(r, rt);
+    // writeBuffer only receives 2D full-screen passes (BokehPass), so it needs no MSAA
+    this.composer.renderTarget1.samples = 0;
     this.composer.addPass(new RenderPass(this.scene, this.camera));
     // depth of field for the walk's close shots, off the rest of the time
     this.dof = new BokehPass(this.scene, this.camera, { focus: 1, aperture: 0, maxblur: 0.008 });
@@ -235,7 +276,6 @@ export class Showroom {
     this.composer.addPass(this.dof);
     this.bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), LOOK.bloom.strength, LOOK.bloom.radius, LOOK.bloom.threshold);
     this.composer.addPass(this.bloom);
-    this.composer.addPass(new OutputPass());
     this.grain = new ShaderPass(GrainShader);
     this.composer.addPass(this.grain);
   }
@@ -248,9 +288,29 @@ export class Showroom {
 
     // floor: black glass, a planar reflection of the whole room
     const floor = this.floor = new Reflector(new THREE.PlaneGeometry(40, 40), {
-      textureWidth: 512, textureHeight: 512, clipBias: 0.002, shader: FloorShader, multisample: 4,
+      textureWidth: 512, textureHeight: 512, clipBias: 0.002, shader: FloorShader, multisample: 0,
       color: new THREE.Color('#050506'),
     });
+    const floorRender = floor.onBeforeRender.bind(floor);
+    floor.onBeforeRender = (renderer, scn, cam) => {
+      if (floor.material.uniforms.uStrength.value < 0.01) return;
+      const dustVis = this.dust.visible;
+      this.dust.visible = false;
+      const hidden = [];
+      for (const it of this.items) {
+        if (!it.group.visible) continue;
+        // Far side guitars (a > 1.75) reflect only their neon plinth ring on the dark glass
+        if ((it.slotA || 0) > 1.75) {
+          if (it.spinner.visible) { it.spinner.visible = false; hidden.push(it.spinner); }
+          continue;
+        }
+        const hideList = (it.slotA || 0) > 0.65 ? it.guitar.userData.nonMacroMeshes : it.guitar.userData.fineMeshes;
+        if (hideList) for (const m of hideList) if (m.visible) { m.visible = false; hidden.push(m); }
+      }
+      floorRender(renderer, scn, cam);
+      for (const m of hidden) m.visible = true;
+      this.dust.visible = dustVis;
+    };
     floor.rotation.x = -Math.PI / 2;
     scene.add(floor);
 
@@ -362,12 +422,20 @@ export class Showroom {
     const ringGeo = new THREE.TorusGeometry(0.323, 0.0034, 8, 180);
 
     this.setPalette(lineup.map((g) => g.colour));
-    this.loader = new GLTFLoader();
+    this.loader = gltfLoader();
     this.chrome = [];
-    // the guitar in the centre first, with the loader's progress bar; the
-    // rest stand in as maquettes and are swapped for their models as they land
-    const first = lineup[0];
-    const firstScene = first.real ? (await this.loader.loadAsync(first.model, (e) => { if (e.total) this.onProgress(e.loaded / e.total); })).scene : null;
+    // With Draco compression all seven models total 5.5 MB and decode in parallel
+    // across worker threads behind the loader screen, so none swap in mid-animation.
+    const realIdx = [0, 1, 6, 2, 5, 3, 4].filter((i) => i < lineup.length && lineup[i].real);
+    const prog = new Array(realIdx.length).fill(0);
+    const loadedScenes = await Promise.all(realIdx.map((idx, k) =>
+      this.loader.loadAsync(lineup[idx].model, (e) => {
+        if (e.total) {
+          prog[k] = e.loaded / e.total;
+          this.onProgress(prog.reduce((a, b) => a + b, 0) / realIdx.length);
+        }
+      }).then((g) => [idx, g.scene])
+    ));
 
     lineup.forEach((info, i) => {
       const dim = { value: 1 };
@@ -396,39 +464,40 @@ export class Showroom {
       group.add(hit);
 
       this.scene.add(group);
-      this.items.push({ info, group, pedestal, spinner, guitar, dim, ringMat, hit, spin: 0, spinV: 0, hoverK: 0, ready: false });
+      this.items.push({ info, group, pedestal, spinner, guitar, dim, ringMat, hit, spin: 0, spinV: 0, hoverK: 0, ready: false, cast: i === 0 });
     });
-    if (firstScene) this.swapIn(0, firstScene);
+    for (const [idx, scn] of loadedScenes) this.swapIn(idx, scn);
+    this.allReady = true;
     this.hits = this.items.map((it) => it.hit);
     this.update(0);
     this.emitChange();
-    this.loadRest(lineup);
   }
 
-  /** The other real guitars, nearest the centre first. */
-  async loadRest(lineup) {
-    const order = [1, 6, 2, 5, 3, 4].filter((i) => i < lineup.length && lineup[i].real);
-    for (const i of order) {
-      try {
-        const gltf = await this.loader.loadAsync(lineup[i].model);
-        this.swapIn(i, gltf.scene);
-      } catch (err) {
-        console.error(err);
-      }
+  /** Pre-upload all guitar geometries and compile shaders behind the loader curtain. */
+  warmGPU() {
+    for (const it of this.items) {
+      it.group.visible = true;
+      it.guitar.userData.meshes?.forEach((m) => { m.frustumCulled = false; });
     }
+    this.composer.render(0);
+    for (const it of this.items) {
+      it.guitar.userData.meshes?.forEach((m) => { m.frustumCulled = true; });
+    }
+    this.update(0);
+    this.composer.render(0);
   }
 
   /** Put a loaded model on its plinth in place of the maquette. */
   swapIn(i, root) {
     const it = this.items[i];
     prepareGuitar(root, this.renderer);
-    root.traverse((o) => { if (o.isMesh) addDim(o.material, it.dim); });
-    // mirror chrome: up close the key light's reflection in a knob blooms
-    // into a white blob, so the walk takes the polish down a touch
-    root.traverse((o) => {
-      if (o.isMesh && /^(Chrome|Nickel)$/.test(o.material.name) && !this.chrome.includes(o.material)) {
-        o.material.userData.rough = o.material.roughness;
-        this.chrome.push(o.material);
+    const cast = it.cast ?? (i === 0);
+    root.userData.shadowMeshes?.forEach((m) => { m.castShadow = cast; });
+    root.userData.meshes?.forEach((m) => {
+      addDim(m.material, it.dim);
+      if (/^(Chrome|Nickel)$/.test(m.material.name) && !this.chrome.includes(m.material)) {
+        m.material.userData.rough = m.material.roughness;
+        this.chrome.push(m.material);
       }
     });
     const old = it.guitar;
@@ -438,6 +507,7 @@ export class Showroom {
     it.guitar = root;
     it.ready = true;
     this.walk.forget(it.info.id);
+    this.wake();
   }
 
   // ------------------------------------------------------------ layout ----
@@ -470,13 +540,18 @@ export class Showroom {
       const v = new THREE.Vector3(0, TOP, 0).sub(b.pos), need = Math.atan(v.dot(up) / (v.dot(f) * (1 - 2 * clear))) * 2 * 180 / Math.PI;
       b.fov = Math.min(Math.max(b.fov, need), b.fov + (portrait ? 3 : 4.5));
     }
-    this.halo.scale.setScalar(portrait ? 0.74 : 0.94);
+    this.haloRest = portrait ? 0.74 : 0.94;
+    this.halo.scale.setScalar(this.haloRest);
+    this.sheetBelow = w <= 900 || portrait;      // the View guitar sheet sits under the guitar (styles.css, 900px)
     this.renderer.setSize(w, h, false);
     this.composer.setSize(w, h);
-    this.bloom.resolution.set(w, h);
+    this.bloom.setSize(w, h);
     const pr = this.renderer.getPixelRatio();
-    // the glass needs a sharp reflection, so its target runs near full size
-    this.floor.getRenderTarget().setSize(Math.round(w * pr * 0.9), Math.round(h * pr * 0.9));
+    // Depth-of-field depth pass and blurred floor reflection run at half resolution:
+    // the floor shader already applies a 9-tap blur, and DoF blurs out-of-focus regions.
+    this.dof.setSize(Math.round(w * pr * 0.5), Math.round(h * pr * 0.5));
+    this.floor.getRenderTarget().setSize(Math.round(w * pr * 0.45), Math.round(h * pr * 0.45));
+    this.wake();
   }
 
   /** Where the front of the stage lands on screen, so the DOM can sit under it. */
@@ -491,12 +566,14 @@ export class Showroom {
   bind() {
     const c = this.canvas;
     c.addEventListener('pointerdown', (e) => {
+      this.wake();
       if (this.walkAt > 0.02) return;      // the ring stays put while the walk runs
       this.drag = { x: e.clientX, u0: this.u, t: performance.now(), lastX: e.clientX, lastT: performance.now(), v: 0, moved: false, yaw0: this.closeYaw };
       c.setPointerCapture(e.pointerId);
       this.tween?.kill();
     });
     c.addEventListener('pointermove', (e) => {
+      this.wake();
       const r = c.getBoundingClientRect();
       this.pointer.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
       this.parallax.set(this.pointer.x, this.pointer.y);
@@ -511,6 +588,7 @@ export class Showroom {
       else this.u = d.u0 - dx / (r.width * 0.22);
     });
     const end = (e) => {
+      this.wake();
       const d = this.drag;
       if (!d) return;
       this.drag = null;
@@ -529,6 +607,7 @@ export class Showroom {
     c.addEventListener('pointercancel', end);
     c.addEventListener('pointerleave', () => { this.pointer.set(10, 10); this.parallax.set(0, 0); });
     c.addEventListener('wheel', (e) => {
+      this.wake();
       if (this.focus < 0.5) return;
       e.preventDefault();
       this.closeDist = THREE.MathUtils.clamp(this.closeDist + e.deltaY * 0.0012, -0.55, 0.45);
@@ -546,11 +625,13 @@ export class Showroom {
   get index() { return ((Math.round(this.u) % N) + N) % N; }
 
   settle(target, duration = LOOK.stepDuration * 0.7) {
+    this.wake();
     this.leaveCentre();
     this.tween = window.gsap.to(this, { u: target, duration, ease: 'expo.out', onUpdate: () => this.emitChange() });
   }
 
   step(dir) {
+    this.wake();
     const target = Math.round(this.u) + dir;
     this.leaveCentre();
     this.tween?.kill();
@@ -558,6 +639,7 @@ export class Showroom {
   }
 
   goTo(i) {
+    this.wake();
     let d = i - this.index;
     if (d > 3) d -= N;
     if (d < -3) d += N;
@@ -583,22 +665,40 @@ export class Showroom {
   }
 
   enterCloseup() {
+    this.wake();
     const it = this.items[this.index];
     this.leaveCentre();
-    this.closeYaw = 0.35; this.closeDist = 0;
-    window.gsap.to(this, { focus: 1, duration: 1.8, ease: 'expo.inOut' });
-    window.gsap.to(this, { closeYaw: 0.5, duration: 2.4, ease: 'expo.out' });
+    this.closeYaw = 0.12; this.closeDist = 0; this.swayT = 0;
+    window.gsap.to(this, { focus: 1, duration: 2.1, ease: 'expo.inOut' });
+    window.gsap.to(this, { closeYaw: CLOSE.yaw, duration: 2.8, ease: 'expo.out' });
     return it;
   }
 
   exitCloseup() {
+    this.wake();
     // the stand has been turning: unwind by the short way round
     this.closeYaw = THREE.MathUtils.euclideanModulo(this.closeYaw + Math.PI, Math.PI * 2) - Math.PI;
-    window.gsap.to(this, { focus: 0, closeYaw: 0, closeDist: 0, duration: 1.6, ease: 'expo.inOut' });
+    window.gsap.to(this, { focus: 0, closeYaw: 0, closeDist: 0, duration: 1.7, ease: 'expo.inOut' });
+  }
+
+  /** Change guitar without leaving the close-up: the ring turns under the camera, and the one
+   *  that arrives shows its front whatever way the last one had been dragged. */
+  closeTo(i) {
+    this.wake();
+    this.closeYaw = THREE.MathUtils.euclideanModulo(this.closeYaw + Math.PI, Math.PI * 2) - Math.PI;
+    window.gsap.to(this, { closeYaw: CLOSE.yaw, duration: 1.6, ease: 'expo.inOut' });
+    let d = i - this.index;
+    if (d > 3) d -= N;
+    if (d < -3) d += N;
+    this.leaveCentre();
+    this.tween?.kill();           // d can be 0: a turn that is called back before it is half way
+    this.tween = window.gsap.to(this, { u: Math.round(this.u) + d, duration: this.reduced ? 0.01 : LOOK.stepDuration * (0.8 + 0.2 * Math.abs(d)),
+      ease: 'expo.inOut', onUpdate: () => this.emitChange() });
   }
 
   // intro: the room's lights come on, centre first, then outwards
   intro() {
+    this.wake();
     const g = window.gsap;
     if (this.reduced) { this.lights = 1; return; }
     this.lights = 0;
@@ -615,7 +715,7 @@ export class Showroom {
     // the walk: the scroll position with a little weight on it, sampled for
     // the guitar in the centre (sequence.js)
     this.walkAt = this.reduced ? this.walkTo : this.walkAt + (this.walkTo - this.walkAt) * Math.min(dt * 4.5, 1);
-    if (Math.abs(this.walkTo - this.walkAt) < 1e-4) this.walkAt = this.walkTo;
+    if (Math.abs(this.walkTo - this.walkAt) < 6e-4) this.walkAt = this.walkTo;
     const front = this.items[this.index];
     const plan = front && this.walkAt > 1e-4 ? this.walk.plan(front, this.portrait) : null;
     const W = this.walkState = plan ? this.walk.sample(plan, this.walkAt) : null;
@@ -635,11 +735,20 @@ export class Showroom {
       this.canvas.style.cursor = h >= 0 && h !== this.index ? 'pointer' : '';
     }
 
+    // the close-up's framing for this window, and its slow sway
+    const C = this.sheetBelow ? CLOSE.tall : CLOSE.wide;
+    if (F > 0.6 && !this.drag && !this.reduced) this.swayT += dt;
+    const closeTurn = (this.closeYaw + CLOSE.sway * Math.sin(this.swayT * Math.PI * 2 / CLOSE.period)) * F;
+    const closeUp = smooth(0.1, 1, F);          // the guitar starts a beat after the camera
+
     // the ring
     const tmp = new THREE.Vector3();
+    let gainSum = 0, nearSum = 0;
+    const maxA = F > 0.85 || Lw > 0.6 ? 0.65 : (this.portrait ? 1.45 : 1.65) + 1.15 * this.breath;
     this.items.forEach((it, i) => {
       const s = wrap(i - this.u);
       const a = Math.abs(s);
+      it.slotA = a;
       this.pathPoint(s, tmp);
       it.group.position.copy(tmp);
       const lift = 0.045 * (1 - smooth(0, 0.7, a));
@@ -647,22 +756,37 @@ export class Showroom {
       // face a point in front of the room, so the sides angle in a little
       const face = Math.atan2(-tmp.x, 3.2 - tmp.z);
       const centre = a < 0.02 && !this.drag;
-      if (centre && F < 0.01 && !W && !this.reduced) it.spinV = Math.min(it.spinV + dt * 0.08, LOOK.spinSpeed);
-      else it.spinV = 0;
+      if (centre && F < 0.01 && !W && !this.reduced && this.idleTime < 8) it.spinV = Math.min(it.spinV + dt * 0.08, LOOK.spinSpeed);
+      else it.spinV = Math.max((it.spinV || 0) - dt * 0.06, 0);
       it.spin += it.spinV * dt;
-      if (centre && F > 0.6 && !this.reduced) this.closeYaw += dt * 0.11;   // View guitar: a slow turn on the stand
-      const yaw = face + it.spin + (a < 0.5 ? this.closeYaw * F : 0);
-      it.spinner.position.set(0, PED_TOP + HOVER, 0);
-      it.spinner.rotation.set(0, yaw, 0);
+      // View guitar: only the guitar in front lifts, leans and takes the close-up's angle. `near`
+      // hands all three over smoothly when the ring turns under the close-up.
+      const near = 1 - smooth(0.1, 0.9, a);
+      const yaw = face + it.spin + closeTurn * near;
+      const lean = C.lean * D2R * closeUp * near;
+      gainSum += near * (CLOSE.gain[it.info.id] || 1); nearSum += near;
+      it.spinner.position.set(CLOSE.pivot * Math.sin(lean), PED_TOP + HOVER + CLOSE.lift * closeUp * near + CLOSE.pivot * (1 - Math.cos(lean)), 0);
+      it.spinner.rotation.set(0, yaw, lean, 'ZYX');
 
       const hk = this.hover === i && a > 0.5 ? 1 : 0;
       it.hoverK += (hk - it.hoverK) * Math.min(dt * 6, 1);
-      const focusDim = a < 0.5 ? 1 : 1 - 0.97 * F;
+      const away = smooth(0.25, 0.75, a);
+      const focusDim = 1 - 0.97 * F * away;
       // the rest of the room goes out while the walk runs
       const walkDim = a < 0.5 ? 1 : 1 - 0.95 * Lw;
       const dim = (curve(DIM, s) + it.hoverK * 0.14) * focusDim * walkDim * (0.15 + 0.85 * smooth(0, 1, L * 1.4 - a * 0.12));
-      it.dim.value = dim;
-      const glow = curve(GLOW, s) * (0.6 + 0.4 * smooth(0, 1, L * 1.2 - a * 0.1)) * smooth(0, 1, L * 1.6 - a * 0.25) * (1 - 0.94 * F * (a > 0.5)) * walkDim;
+      const inView = dim > 0.025 && a < maxA;
+      it.dim.value = inView ? dim : 0;
+      // Only cast key shadows for silhouette parts of the guitar at or crossing the centre plinth
+      const cast = a < 0.75;
+      if (it.cast !== cast) {
+        it.cast = cast;
+        it.guitar.userData.shadowMeshes?.forEach((m) => { m.castShadow = cast; });
+      }
+      // Cull guitars that are faded to black or outside the camera frustum (keep visible 1 frame on swapIn to upload VBOs)
+      it.group.visible = inView || !!it.needsUpload;
+      it.needsUpload = false;
+      const glow = curve(GLOW, s) * (0.6 + 0.4 * smooth(0, 1, L * 1.2 - a * 0.1)) * smooth(0, 1, L * 1.6 - a * 0.25) * (1 - 0.94 * F * away) * walkDim;
       // the plinth ring stays soft under the guitar in front (the halo is its
       // light) and comes up to full as the guitar moves to the side. When the
       // guitar lifts off, its empty plinth flares once and stays lit.
@@ -707,27 +831,47 @@ export class Showroom {
       this.keyAim.copy(this.keyRest);
     }
 
-    // the close-up from View guitar
-    const close = this.mobile || cam.aspect < 0.9
-      ? { pos: new THREE.Vector3(0, 0.57, 3.5), target: new THREE.Vector3(0, 0.19, 0), fov: 40 }
-      : { pos: new THREE.Vector3(0.3, 0.67, 2.6), target: new THREE.Vector3(0.3, 0.63, 0), fov: 30 };
-    close.pos.z += this.closeDist;
-    cam.position.lerpVectors(pos, close.pos, F);
-    look.lerp(close.target, F);
-    cam.fov = fov + (close.fov - fov) * F;
+    // the close-up from View guitar: a camera on the body of the guitar in front (CLOSE)
+    const leanC = C.lean * D2R;
+    const pivotY = 0.045 + PED_TOP + HOVER + CLOSE.lift + CLOSE.pivot;      // 0.045: the centre plinth's own lift
+    const aim = _v6.set(-Math.sin(leanC), Math.cos(leanC), 0).multiplyScalar(CLOSE.aim - CLOSE.pivot);
+    aim.y += pivotY;
+    const view = Math.max(C.view, C.minWidth / cam.aspect);
+    const closeDist = view / 2 / Math.tan(C.fov * D2R / 2);
+    const closeDir = _v5.set(...C.dir).normalize();
+    const closePos = _v4.copy(aim).addScaledVector(closeDir, closeDist + this.closeDist);
+    cam.position.lerpVectors(pos, closePos, F);
+    look.lerp(aim, F);
+    cam.fov = fov + (C.fov - fov) * F;
+    roll -= 0.03 * Math.sin(Math.PI * F);                                   // the camera banks a little on its way in and out
+    // the arch closes round the body as the camera comes in, and opens again on the way out. It
+    // is placed from where the camera rests, so coming closer with the wheel does not move it.
+    {
+      const camRest = _v3.copy(aim).addScaledVector(closeDir, closeDist), HALO_Z = -0.5;
+      const far = (camRest.z - HALO_Z) / camRest.z;                         // the arch is this much further away than the body
+      const at = _v2.set(0, pivotY + 0.05, 0).sub(camRest).multiplyScalar(far).add(camRest);
+      this.halo.position.set(0, 0.5, HALO_Z).lerp(at, F);
+      this.halo.scale.setScalar(this.haloRest + (C.halo * far / 0.6 - this.haloRest) * F);
+    }
+    if (!W) this.keyAim.lerp(aim, F);
     // the near plane follows the camera in: 10 cm spends the depth buffer badly at 15 cm
     cam.near = W ? THREE.MathUtils.clamp((this.walkFocus || 1) * 0.12, 0.008, 0.1) : 0.1;
     cam.updateProjectionMatrix();
     cam.lookAt(look);
     if (roll) cam.rotateZ(roll);
-    if (shift) {
+    if (shift || F) {
       // a lens shift: the guitar moves aside for the copy without the
-      // perspective changing. Right on wide screens, up on tall ones.
+      // perspective changing. Right on wide screens, up on tall ones (the walk);
+      // left, or up, for the View guitar sheet.
       const P = cam.projectionMatrix.elements;
       if (this.portrait) P[9] -= 0.34 * shift; else P[8] -= 0.27 * shift;
+      P[8] -= C.shift[0] * F; P[9] -= C.shift[1] * F;
       cam.projectionMatrixInverse.copy(cam.projectionMatrix).invert();
     }
     this.floor.material.uniforms.uCam.value.copy(cam.position);
+    // When zoomed into the close-up sheet or lifted into the walk stops, the floor is below the frame:
+    // fading uStrength lets floor.onBeforeRender skip the entire reflection pass.
+    this.floor.material.uniforms.uStrength.value = 1.25 * (1 - smooth(0.5, 0.9, F)) * (1 - smooth(0.15, 0.45, Lw));
 
     // depth of field, only on the walk: shallow up close, gone from afar
     const dofOn = this.walkDof > 0.01;
@@ -737,39 +881,43 @@ export class Showroom {
       this.dof.uniforms.focus.value = f;
       this.dof.uniforms.aperture.value = LOOK.dof * this.walkDof / (f * f);
     }
-    this.chrome?.forEach((m) => { m.roughness = m.userData.rough + 0.07 * Lw; });
+    this.chrome?.forEach((m) => { m.roughness = m.userData.rough + 0.07 * Lw + CLOSE.light.chrome * F; });
     this.key.target.position.copy(this.keyAim);
     this.key.angle = 0.21 + 0.09 * Lw;
     this.scene.fog.density = 0.075 * (1 - 0.85 * Lw);
 
     // lights follow the intro and the close-up
     const on = smooth(0, 1, L);
-    this.key.intensity = LOOK.spot * on;
-    this.rimL.intensity = LOOK.rim * smooth(0.2, 1, L) * (1 + 0.6 * F);
-    this.rimR.intensity = LOOK.rim * 0.8 * smooth(0.25, 1, L) * (1 + 0.6 * F);
+    const gain = 1 + ((nearSum ? gainSum / nearSum : 1) - 1) * F;       // CLOSE.gain for the guitar in front
+    this.key.intensity = LOOK.spot * on * gain;
+    this.rimL.intensity = LOOK.rim * smooth(0.2, 1, L) * (1 + (CLOSE.light.rim - 1) * F) * gain;
+    this.rimR.intensity = LOOK.rim * 0.8 * smooth(0.25, 1, L) * (1 + (CLOSE.light.rim - 1) * F) * gain;
     this.top.intensity = 0.35 * on;
     this.scene.environmentIntensity = LOOK.envIntensity * (0.3 + 0.7 * on);
     const G = this.glow;
     this.cone.material.uniforms.uAlpha.value = 0.05 * G * smooth(0.1, 1, L) * (1 - 0.7 * F) * (1 - 0.6 * Lw);
-    this.halo.children.forEach((m) => m.material.color.copy(ACCENT).multiplyScalar(G * m.userData.k * smooth(0.3, 1, L) * (1 - 0.75 * F) * (1 - Lw)));
+    this.halo.children.forEach((m) => m.material.color.copy(ACCENT).multiplyScalar(G * m.userData.k * smooth(0.3, 1, L) * (1 - (1 - CLOSE.light.halo) * F) * (1 - Lw)));
     // the seams share one material, at the strength they have always had
     this.seams[0].material.color.copy(ACCENT).multiplyScalar(G * 0.067 * smooth(0.4, 1, L) * (1 - 0.6 * F));
     this.floor.material.uniforms.uPool.value.copy(ACCENT).multiplyScalar(G * 0.03 * on * (1 - 0.4 * F));
 
     // dust drifting through the cone
-    const dp = this.dust.geometry.attributes.position;
-    for (let k = 0; k < dp.count; k++) {
-      let y = dp.getY(k) + dt * 0.03 * (0.5 + (k % 7) / 7);
-      if (y > 2.6) y = 0.25;
-      dp.setY(k, y);
-      dp.setX(k, dp.getX(k) + Math.sin(t * 0.3 + k) * dt * 0.004);
+    this.dust.material.opacity = 0.55 * smooth(0.3, 1, L) * (1 - (1 - CLOSE.light.dust) * F) * (1 - 0.5 * Lw);
+    if (this.dust.visible && this.dust.material.opacity > 0.01 && Lw < 0.5) {
+      const dp = this.dust.geometry.attributes.position;
+      for (let k = 0; k < dp.count; k++) {
+        let y = dp.getY(k) + dt * 0.03 * (0.5 + (k % 7) / 7);
+        if (y > 2.6) y = 0.25;
+        dp.setY(k, y);
+        dp.setX(k, dp.getX(k) + Math.sin(t * 0.3 + k) * dt * 0.004);
+      }
+      dp.needsUpdate = true;
     }
-    dp.needsUpdate = true;
-    this.dust.material.opacity = 0.55 * smooth(0.3, 1, L) * (1 - 0.8 * F) * (1 - 0.5 * Lw);
 
     // up close the chrome and brass catch the key light hard: less bloom
-    this.bloom.strength = LOOK.bloom.strength * (1 - 0.45 * F) * (1 - 0.35 * Lw);
-    this.bloom.threshold = LOOK.bloom.threshold + 0.1 * Lw;
+    this.bloom.strength = LOOK.bloom.strength * (1 - (1 - CLOSE.light.bloom) * F) * (1 - 0.35 * Lw);
+    this.bloom.threshold = LOOK.bloom.threshold + 0.1 * Lw + CLOSE.light.threshold * F;
+    this.bloom.radius = LOOK.bloom.radius * (1 - (1 - CLOSE.light.radius) * F);
     this.grain.uniforms.uTime.value = t;
   }
 
@@ -813,8 +961,12 @@ export class Showroom {
     const a = P[((i0 % N) + N) % N], b = P[(((i0 + 1) % N) + N) % N];
     const k = f * f * (3 - 2 * f);
     // round the colour wheel rather than straight through RGB, which turned
-    // yellow-to-blue grey halfway
-    ACCENT.copy(a).lerpHSL(b, k);
+    // yellow-to-blue grey halfway. The short way round: Rowan's red to Heath's
+    // purple goes through pink, not through every colour in between.
+    a.getHSL(_hslA); b.getHSL(_hslB);
+    let dh = _hslB.h - _hslA.h;
+    if (dh > 0.5) dh -= 1; else if (dh < -0.5) dh += 1;
+    ACCENT.setHSL(((_hslA.h + dh * k) % 1 + 1) % 1, _hslA.s + (_hslB.s - _hslA.s) * k, _hslA.l + (_hslB.l - _hslA.l) * k);
     this.glow = glowGain(ACCENT);
     this.cone.material.uniforms.uColor.value.copy(ACCENT);
     this.dust.material.color.copy(ACCENT).multiplyScalar(1.6 * this.glow);
@@ -839,10 +991,24 @@ export class Showroom {
   }
 
   render() {
-    if (!this.running) return;
+    if (!this.running || document.hidden) return;
     const now = performance.now();
     const dt = Math.min((now - this.last) / 1000, 0.05);
-    this.last = now; this.time += dt;
+    this.last = now;
+    const walkSettled = Math.abs(this.walkTo - this.walkAt) < 6e-4;
+    const ringSettled = Math.abs(this.u - this.lastU) < 1e-4 && this.breath < 1e-3 && !this.drag;
+    if (walkSettled && ringSettled && this.lights > 0.99 && (this.focus < 0.01 || this.focus > 0.99)) {
+      this.idleTime += dt;
+    } else {
+      this.idleTime = 0;
+      this.settledFrames = 0;
+    }
+    // In the Drawing chapter and Close-up walk stops (walkAt > 0.35), motion is driven by scroll:
+    // once scroll settles (or after 10s of zero user interaction anywhere), rest the GPU until the next input.
+    if ((this.walkAt > 0.35 && walkSettled && ringSettled && this.focus < 0.01) || this.idleTime > 10) {
+      if (++this.settledFrames > 2) return;
+    }
+    this.time += dt;
     this.update(dt);
     this.composer.render(dt);
   }

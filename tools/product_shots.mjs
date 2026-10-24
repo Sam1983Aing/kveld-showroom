@@ -1,10 +1,10 @@
 // Transparent product stills of the seven guitars, for the index and footer sections.
 //   node tools/product_shots.mjs [ids]      -> site/assets/shots/<id>-{hero,front,body}.webp
-// Needs the project root served on :8030 (launch.json: kveld-root) and playwright-core from the
-// cupola project (see the headless-webgl-checks note).
+// Needs the project root served on :8030 (launch.json: kveld-root) and playwright-core in
+// tools/node_modules (see the headless-webgl-checks note).
 import { createRequire } from 'module';
 import { mkdirSync, writeFileSync } from 'fs';
-const require = createRequire('/Users/sam/Projects/Claude Code/Random Demos/cupola/node_modules/');
+const require = createRequire(import.meta.url);
 const { chromium } = require('playwright-core');
 const OUT = decodeURIComponent(new URL('../site/assets/shots/', import.meta.url).pathname);
 mkdirSync(OUT, { recursive: true });

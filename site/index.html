@@ -7,7 +7,7 @@
   <meta name="description" content="Seven guitars rebuilt from measured drawings. A concept showroom for KVELD.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%230b0a09%22/%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%229%22 fill=%22none%22 stroke=%22%239fe3f0%22 stroke-width=%221.5%22/%3E%3C/svg%3E">
   <link rel="preload" href="vendor/fonts/panchang-500.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=35">
+  <link rel="stylesheet" href="styles.css?v=43">
 
   <!--
     CREATIVE DIRECTION (the contract this build obeys)
@@ -34,13 +34,13 @@
   <script type="importmap">
   { "imports": {
       "three": "./vendor/three.module.js", "three/addons/": "./vendor/addons/",
-      "./src/showroom.js": "./src/showroom.js?v=35", "./src/data.js": "./src/data.js?v=35", "./src/specs.js": "./src/specs.js?v=35",
-      "./src/sequence.js": "./src/sequence.js?v=35", "./src/stops.js": "./src/stops.js?v=35", "./src/standins.js": "./src/standins.js?v=35",
-      "./src/guitar-look.js": "./src/guitar-look.js?v=35", "./src/blueprint.js": "./src/blueprint.js?v=35",
-      "./src/draft.js": "./src/draft.js?v=35", "./src/spotlight.js": "./src/spotlight.js?v=35", "./src/footer.js": "./src/footer.js?v=35", "./src/cursor.js": "./src/cursor.js?v=35"
+      "./src/showroom.js": "./src/showroom.js?v=43", "./src/data.js": "./src/data.js?v=43", "./src/specs.js": "./src/specs.js?v=43",
+      "./src/sequence.js": "./src/sequence.js?v=43", "./src/stops.js": "./src/stops.js?v=43", "./src/standins.js": "./src/standins.js?v=43",
+      "./src/guitar-look.js": "./src/guitar-look.js?v=43", "./src/blueprint.js": "./src/blueprint.js?v=43",
+      "./src/draft.js": "./src/draft.js?v=43", "./src/spotlight.js": "./src/spotlight.js?v=43", "./src/footer.js": "./src/footer.js?v=43", "./src/cursor.js": "./src/cursor.js?v=43"
   } }
   </script>
-  <script type="module" src="src/main.js?v=35"></script>
+  <script type="module" src="src/main.js?v=43"></script>
 </head>
 <body>
 
@@ -111,7 +111,7 @@
         </div>
       </div>
 
-      <!-- View guitar: the camera walks up to it and its sheet comes in on the right -->
+      <!-- View guitar: the camera comes in on the body, on the left, and its sheet takes the right -->
       <aside class="closeup" aria-hidden="true" data-closeup>
         <div class="closeup__shade" data-cu-shade></div>
         <button class="closeup__back" type="button" data-back>
@@ -122,20 +122,30 @@
           <p class="closeup__no"><span data-cu-no>01</span><i>/</i>07<b data-cu-after>After a 1950s single-cut</b></p>
           <h3 class="closeup__name"><span data-cu-name>Floe</span></h3>
           <p class="closeup__claim" data-cu-claim></p>
-          <ul class="closeup__figures" data-cu-figures></ul>
+          <div class="closeup__offer">
+            <ul class="closeup__figures" data-cu-figures></ul>
+            <button class="closeup__book" type="button" data-cu-book>
+              <span>Book a visit</span>
+              <svg viewBox="0 0 24 10" aria-hidden="true"><path d="M0 5h22M18 1l4 4-4 4" fill="none" stroke="currentColor"/></svg>
+            </button>
+          </div>
           <dl class="closeup__specs" data-specs></dl>
           <div class="closeup__ours">
             <p class="closeup__k">Ours, not the sheet's</p>
             <p class="closeup__v" data-cu-ours></p>
           </div>
-          <div class="closeup__foot">
-            <button class="closeup__walk" type="button" data-cu-walk>
-              <span>Walk the guitar</span>
-              <svg viewBox="0 0 10 24" aria-hidden="true"><path d="M5 0v22M1 18l4 4 4-4" fill="none" stroke="currentColor"/></svg>
-            </button>
-            <p class="closeup__hint">Drag to turn it. Scroll to come closer.</p>
-          </div>
         </div>
+        <!-- the seven, so another guitar can be looked at without going back to the room -->
+        <nav class="closeup__rail" aria-label="The seven guitars">
+          <button class="room__arrow" type="button" data-cu-prev aria-label="Previous guitar">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 6l-6 6 6 6" fill="none" stroke="currentColor"/></svg>
+          </button>
+          <ol class="closeup__names" data-cu-names></ol>
+          <button class="room__arrow" type="button" data-cu-next aria-label="Next guitar">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6l6 6-6 6" fill="none" stroke="currentColor"/></svg>
+          </button>
+          <p class="closeup__hint">Drag to turn it. Scroll to come closer.</p>
+        </nav>
       </aside>
     </section>
 
@@ -167,7 +177,6 @@
       <div class="visit__meta" data-reveal>
         <p>KVELD Room 01<br>59.1244° N, 11.3875° E</p>
         <p>Open by appointment<br>Thursday to Saturday</p>
-        <p class="visit__note">KVELD is a fictional maker, made for a concept study. Each of the seven is modelled from published measured drawings of a classic electric guitar, then changed: the headstock, markers and logo are original, and every body departs from its source.</p>
       </div>
     </footer>
   </main>

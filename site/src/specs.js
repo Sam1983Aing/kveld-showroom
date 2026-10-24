@@ -1,8 +1,9 @@
-// The words on each guitar's sheet (the View guitar panel). The figures on it
-// come from assets/data/<id>.json, which the build writes; these are the parts
-// a drawing can't supply: what it is made of, how it is finished, and what
-// KVELD changed from the instrument it is drawn after. Prices and build times
-// are invented, like the maker: they are there so the page can sell something.
+// The words on each guitar's sheet (the View guitar panel) and in Spotlight: what it is made
+// of, how it is finished, what KVELD changed from the instrument it is drawn after, what it
+// costs and how long it takes. The measurements are not here and not on the sheet: they come
+// from assets/data/<id>.json, which the build writes, and are shown once, on the drawing.
+// Prices and build times are invented, like the maker: they are there so the page can sell
+// something.
 export const SPECS = {
   floe: {
     price: '€2,900', weeks: 12, coils: 'single', family: 'solid', short: 'Two single coils',

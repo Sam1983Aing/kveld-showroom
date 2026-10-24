@@ -37,7 +37,6 @@ if (!reduced) {
   lenis.stop();
   window.__lenis = lenis;
 }
-const scrollTo = (target, opts = {}) => (lenis ? lenis.scrollTo(target, { duration: 1.8, ...opts }) : document.querySelector(target)?.scrollIntoView());
 
 // The header steps aside while the page is read downward and comes back on the
 // way up: fixed over the chapters it ran through their headlines and copy.
@@ -89,6 +88,7 @@ function setStageY() {
 let firstChange = true;
 function onChange(i, info) {
   setWalkGuitar(i);
+  closeupArrived(i, info);
   $$('button', ui.dots).forEach((b, k) => b.setAttribute('aria-current', k === i ? 'true' : 'false'));
   const apply = () => {
     ui.no.textContent = info.no;
@@ -110,41 +110,72 @@ $$('[data-next]').forEach((b) => b.addEventListener('click', () => room?.step(1)
 addEventListener('keydown', (e) => {
   if (!room) return;
   if (e.key === 'Escape' && inCloseup) return closeCloseup();
-  if (inCloseup || scrollY > innerHeight * 0.6) return;
+  if (inCloseup) { if (e.key === 'ArrowRight') closeupStep(1); if (e.key === 'ArrowLeft') closeupStep(-1); return; }
+  if (scrollY > innerHeight * 0.6) return;
   if (e.key === 'ArrowRight') room.step(1);
   if (e.key === 'ArrowLeft') room.step(-1);
 });
 
 /* ---------------------------------------------------------------------------
-   3) Close-up: the camera walks up to the guitar, everything else dims
+   3) Close-up (View guitar): the camera comes in on the body of the guitar in
+   front and puts it on the left, its sheet takes the right, and the seven
+   names along the bottom change guitar without going back to the room
+   (showroom.js: CLOSE, enterCloseup, closeTo)
    ------------------------------------------------------------------------ */
 let inCloseup = false;
 const roomChrome = () => $$('.room__copy, .room__title, .room__view, .room__controls, .room__scroll');
 
-// Each guitar's sheet: the figures from the file its build writes, the words from specs.js
+// Each guitar's drawing data, the file its build writes (Spotlight plots its outline from it)
 const sheets = new Map();
 const sheet = (id) => sheets.get(id) || sheets.set(id, fetch(`assets/data/${id}.json`).then((r) => r.json())).get(id);
 const cu = {
   no: $('[data-cu-no]'), after: $('[data-cu-after]'), name: $('[data-cu-name]'), claim: $('[data-cu-claim]'),
   figures: $('[data-cu-figures]'), specs: $('[data-specs]'), ours: $('[data-cu-ours]'), shade: $('[data-cu-shade]'),
+  names: $('[data-cu-names]'), rows: () => $$('.closeup__panel > *', ui.closeup), frame: () => $$('.closeup__back, .closeup__rail', ui.closeup),
 };
-async function fillCloseup(info) {
-  const D = await sheet(info.id), S = SPECS[info.id] || {};
+cu.names.innerHTML = LINEUP.map((g, i) => `<li><button type="button" data-i="${i}" style="--own: ${g.colour}"${g.real ? '' : ' disabled'}>${g.name}</button></li>`).join('');
+const markRail = (i) => $$('button', cu.names).forEach((b, k) => b.setAttribute('aria-current', String(k === i)));
+
+// The sheet says what the scroll cannot: what it is made of, what KVELD changed, what it costs
+// and how long it takes. The measurements stay on the drawing (draft.js), told once.
+const euros = (n) => `€${Math.round(n).toLocaleString('en-US')}`;
+function fillCloseup(info) {
+  const S = SPECS[info.id] || {};
   cu.no.textContent = info.no;
   cu.after.textContent = S.after ? `After ${S.after}` : info.pattern;
   cu.name.textContent = info.name;
   cu.claim.innerHTML = S.claim || '';
-  const places = (v) => (Number.isInteger(v) ? 0 : 2);
-  cu.figures.innerHTML = [[D.scale, 'in', 'Scale'], [D.frets, '', 'Frets'], [D.radius, 'in', 'Radius'], [D.nut_width, 'in', 'Nut']]
-    .map(([v, unit, k]) => `<li><b data-v="${v}" data-p="${places(v)}">${v.toFixed(places(v))}</b>${unit ? `<i>${unit}</i>` : '<i></i>'}<span>${k}</span></li>`).join('');
+  const price = +String(S.price || '').replace(/\D/g, '');
+  cu.figures.innerHTML = [[price, euros(price), '', 'From', 'price'], [S.weeks, S.weeks, 'weeks', 'To order', '']]
+    .filter(([v]) => v).map(([v, text, unit, k, as]) => `<li><b data-v="${v}" data-as="${as}">${text}</b>${unit ? `<i>${unit}</i>` : ''}<span>${k}</span></li>`).join('');
+  // each number keeps its final width while it counts, so its neighbours stand still
+  $$('b', cu.figures).forEach((b) => { b.style.minWidth = `${(b.offsetWidth / parseFloat(getComputedStyle(b).fontSize)).toFixed(3)}em`; });
   cu.specs.innerHTML = [['Body', S.body], ['Neck', S.neck], ['Pickups', S.pickups], ['Bridge', S.bridge], ['Finish', S.finish]]
     .filter(([, v]) => v).map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
   cu.ours.textContent = S.ours || '';
 }
-async function openCloseup() {
+// The sheet's words arrive: the name comes up out of its mask, the rest follows row by row and
+// the price and the weeks count up to their numbers.
+let cuCounts = [];
+function revealSheet(delay = 0) {
+  cuCounts.forEach((t) => t.kill());
+  cuCounts = [];
+  if (reduced) { gsap.set(cu.rows(), { y: 0, opacity: 1 }); gsap.set(cu.name, { yPercent: 0 }); return; }
+  gsap.fromTo(cu.rows(), { y: 22, opacity: 0 }, { y: 0, opacity: 1, duration: REVEAL, ease: EASE, stagger: 0.07, delay, overwrite: true });
+  gsap.fromTo(cu.name, { yPercent: 112 }, { yPercent: 0, duration: 1.5, ease: EASE, delay: delay + 0.1, overwrite: true });
+  gsap.fromTo($$('dt, dd', cu.specs), { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.9, ease: EASE, stagger: 0.035, delay: delay + 0.4 });
+  $$('b', cu.figures).forEach((b, i) => {
+    const to = +b.dataset.v, show = b.dataset.as === 'price' ? euros : (v) => String(Math.round(v)), n = { v: 0 };
+    b.textContent = show(0);
+    cuCounts.push(gsap.to(n, { v: to, duration: 1.5, ease: 'expo.out', delay: delay + 0.25 + i * 0.08, onUpdate: () => { b.textContent = show(n.v); } }));
+  });
+}
+function openCloseup() {
   if (!room || inCloseup) return;
   inCloseup = true;
-  await fillCloseup(LINEUP[room.index]);
+  cuTo = -1;
+  fillCloseup(LINEUP[room.index]);
+  markRail(room.index);
   lenis?.scrollTo(0, { immediate: true, force: true });
   lenis?.stop();
   roomEl.classList.add('is-closeup');
@@ -152,25 +183,20 @@ async function openCloseup() {
   gsap.to(roomChrome(), { autoAlpha: 0, duration: 0.6, ease: 'expo.in', stagger: 0.02 });
   gsap.set(ui.closeup, { visibility: 'visible' });
   ui.closeup.setAttribute('aria-hidden', 'false');
-  if (reduced) { gsap.set(cu.shade, { opacity: 1 }); gsap.set($$('.closeup__back, .closeup__panel > *', ui.closeup), { y: 0, opacity: 1 }); return; }
-  // the room goes out behind the sheet, the name comes up out of its mask, the
-  // rest follows row by row and the four figures count up to their numbers
-  gsap.to(cu.shade, { opacity: 1, duration: 1.6, ease: 'expo.inOut', delay: 0.3 });
-  gsap.fromTo($$('.closeup__back, .closeup__panel > *', ui.closeup), { y: 22, opacity: 0 },
-    { y: 0, opacity: 1, duration: REVEAL, ease: EASE, stagger: 0.07, delay: 0.85 });
-  gsap.fromTo(cu.name, { yPercent: 112 }, { yPercent: 0, duration: 1.5, ease: EASE, delay: 0.95 });
-  gsap.fromTo($$('dt, dd', cu.specs), { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.9, ease: EASE, stagger: 0.035, delay: 1.25 });
-  $$('b', cu.figures).forEach((b, i) => {
-    const to = +b.dataset.v, p = +b.dataset.p, n = { v: 0 };
-    gsap.to(n, { v: to, duration: 1.5, ease: 'expo.out', delay: 1.1 + i * 0.08, onUpdate: () => { b.textContent = n.v.toFixed(p); } });
-  });
+  if (reduced) { gsap.set(cu.shade, { opacity: 1 }); gsap.set(cu.frame(), { y: 0, opacity: 1 }); revealSheet(); return; }
+  // the room goes out behind the sheet while the camera is still on its way in, and the words
+  // land as it settles
+  gsap.to(cu.shade, { opacity: 1, duration: 1.8, ease: 'expo.inOut', delay: 0.3 });
+  gsap.fromTo(cu.frame(), { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: REVEAL, ease: EASE, stagger: 0.5, delay: 1.0, overwrite: true });
+  revealSheet(1.05);
 }
 function closeCloseup() {
   if (!inCloseup) return;
   inCloseup = false;
+  cuTo = -1;
   room.exitCloseup();
   gsap.to(cu.shade, { opacity: 0, duration: 0.9, ease: 'expo.inOut' });
-  gsap.to($$('.closeup__back, .closeup__panel > *', ui.closeup), { y: -12, opacity: 0, duration: 0.45, ease: 'expo.in',
+  gsap.to([...cu.frame(), ...cu.rows()], { y: -12, opacity: 0, duration: 0.45, ease: 'expo.in', overwrite: true,
     onComplete: () => { gsap.set(ui.closeup, { visibility: 'hidden' }); ui.closeup.setAttribute('aria-hidden', 'true'); } });
   gsap.to(roomChrome(), { autoAlpha: 1, duration: REVEAL, ease: EASE, stagger: 0.04, delay: 0.8 });
   roomEl.classList.remove('is-closeup');
@@ -178,8 +204,48 @@ function closeCloseup() {
 }
 ui.view.addEventListener('click', openCloseup);
 $('[data-back]').addEventListener('click', closeCloseup);
-// from the sheet straight into the walk's first stop
-$('[data-cu-walk]').addEventListener('click', () => { closeCloseup(); setTimeout(toFirstStop, 700); });
+
+// Another guitar, from inside the sheet. The words step out at once, the ring turns under the
+// camera, and the new words come in when the room says that guitar has reached the front.
+let cuTo = -1;
+const N7 = LINEUP.length;
+function closeupShow(i) {
+  i = ((i % N7) + N7) % N7;
+  if (!inCloseup || !LINEUP[i].real || i === (cuTo >= 0 ? cuTo : room.index)) return;
+  cuTo = i;
+  markRail(i);
+  if (!reduced) gsap.to(cu.rows(), { y: -12, opacity: 0, duration: 0.4, ease: 'expo.in', stagger: 0.025, overwrite: true });
+  room.closeTo(i);
+  if (room.index === i) closeupArrived(i, LINEUP[i]);      // called back before the ring was half way: nothing will arrive
+}
+const closeupStep = (d) => closeupShow((cuTo >= 0 ? cuTo : room.index) + d);
+function closeupArrived(i, info) {
+  if (!inCloseup || i !== cuTo) return;
+  cuTo = -1;
+  fillCloseup(info);
+  revealSheet(0.25);
+}
+cu.names.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) closeupShow(+b.dataset.i); });
+$('[data-cu-prev]').addEventListener('click', () => closeupStep(-1));
+$('[data-cu-next]').addEventListener('click', () => closeupStep(1));
+
+// Going far up or down the page (Book a visit to the footer, In the room from section 02): the
+// room is pinned for some twenty screens, so scrolling there would race through the drawing and
+// the walk. The page goes dark, jumps and comes back up.
+const veil = Object.assign(document.createElement('div'), { className: 'veil' });
+document.body.appendChild(veil);
+function jump(to, first) {
+  const go = () => {
+    first?.();
+    if (lenis) lenis.scrollTo(to, { immediate: true, force: true });
+    else if (typeof to === 'number') window.scrollTo({ top: to }); else $(to).scrollIntoView();
+    gsap.delayedCall(0.1, () => { if (room) room.walkAt = room.walkTo; });      // the walk is where the scroll now is, not on its way there
+  };
+  if (reduced) return go();
+  gsap.timeline().to(veil, { autoAlpha: 1, duration: 0.55, ease: 'expo.inOut' }).add(go).to(veil, { autoAlpha: 0, duration: 1.2, ease: 'expo.out' }, '+=0.2');
+}
+const toVisit = () => jump('#visit', closeCloseup);
+$('[data-cu-book]').addEventListener('click', toVisit);
 
 /* ---------------------------------------------------------------------------
    4) Loader: real download progress of the model, then the lights come on
@@ -209,7 +275,8 @@ async function boot() {
   await Promise.all(FACES.map((f) => document.fonts.load(f))).catch(() => {});
   await document.fonts.ready;
   const dataP = sheet('floe');
-  LINEUP.forEach((g) => sheet(g.id));        // the seven sheets are small: have them ready for the panel
+  LINEUP.forEach((g) => sheet(g.id));        // the seven sheets are small: have them ready for Spotlight
+  const D = await dataP;
   if (room) {
     try {
       await room.load(LINEUP);
@@ -217,7 +284,14 @@ async function boot() {
       console.error(err);
     }
     draft = initDraft(room);
-    if (draft) { walkFor = -1; setWalkGuitar(room.index); }   // the chapter changes the walk's length
+    if (draft) {
+      draft.data.set('floe', D);
+      draft.warm(true);
+      walkFor = -1;
+      setWalkGuitar(room.index);
+    }
+    // Compile shaders and upload all guitar GPU buffers behind the opaque loader curtain
+    room.warmGPU();
     setStageY();
     // the page accent follows the guitar in the centre, same colour as the room's light
     let accent = '';
@@ -226,7 +300,10 @@ async function boot() {
       const hex = room.accentHex;
       if (hex !== accent) { accent = hex; document.documentElement.style.setProperty('--accent', hex); }
     });
-    new IntersectionObserver(([e]) => { room.running = e.isIntersecting; }).observe(roomEl);
+    new IntersectionObserver(([e]) => {
+      room.running = e.isIntersecting;
+      if (e.isIntersecting) room.wake();
+    }, { rootMargin: '-12% 0px -12% 0px' }).observe(roomEl);
   }
   onProgress(1);
   if (reduced) room?.intro();        // a zero-length tween never calls its onStart: the lights stayed off
@@ -238,14 +315,13 @@ async function boot() {
   });
   introReveal();
 
-  const D = await dataP;
   // pins are made in page order (the room, then anything below it), so each measures from the one before
   // The cream chapter with Floe's plan is what the page falls back on where the ink chapter cannot
   // run (reduced motion, no WebGL). With the ink chapter on, the drawing lives inside the pinned room.
   if (draft) $('#drawings').remove(); else buildDrawing(D);
   initWalk();
   await buildIndex();
-  buildFooter($('#visit'));
+  buildFooter($('#visit'), { reduced });
   initReveals();
   ScrollTrigger.refresh();
 }
@@ -274,11 +350,11 @@ function buildDrawing(D) {
 /* ---------------------------------------------------------------------------
    6) The room as a place to choose (spotlight.js): picking one turns the ring
    ------------------------------------------------------------------------ */
-const pickGuitar = (i) => { scrollTo('#room', { onComplete: () => room?.goTo(i) }); if (!lenis) room?.goTo(i); };
-const buildIndex = () => buildSpotlight($('#guitars'), {
-  sheet, pick: pickGuitar, reduced,
-  scrollToY: (y) => (lenis ? lenis.scrollTo(y, { duration: 1.4 }) : window.scrollTo({ top: y })),
-}).catch((err) => console.error(err));
+// To that guitar in the room, at the top of the page. (It used to scroll to '#room', which while the
+// room is pinned is the END of its pin: the page stopped one screen up, on the last shot of the walk.)
+const pickGuitar = (i) => jump(0, () => room?.goTo(i));
+const buildIndex = () => buildSpotlight($('#guitars'), { sheet, pick: pickGuitar, current: () => room?.index ?? 0, reduced })
+  .catch((err) => console.error(err));
 
 /* ---------------------------------------------------------------------------
    7) Reveals and headline splits for the chapters below the room
@@ -334,6 +410,7 @@ function initWalk() {
       const at = self.progress * walkLen;
       // reduced motion: no camera travel, the walk cuts from stop to stop
       room.walkTo = reduced ? room.walk.snap(LINEUP[walkFor], at) : at;
+      room.wake();
     },
   });
   // Scroll in the corner goes to the drawing (or the first stop) rather than past the walk,

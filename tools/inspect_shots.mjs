@@ -6,10 +6,10 @@
 // Each shot aims at a point inside the box of the meshes whose name starts with
 // `part` (fractions: x across, y up the neck, z back to front) and looks from
 // direction d, `dist` metres away. PORT picks another served copy (a frozen
-// version). Needs the site on :8013 and playwright-core from the cupola project.
+// version). Needs the site on :8013 and playwright-core in tools/node_modules.
 import { createRequire } from 'module';
 import { mkdirSync } from 'fs';
-const require = createRequire('/Users/sam/Projects/Claude Code/Random Demos/cupola/node_modules/');
+const require = createRequire(import.meta.url);
 const { chromium } = require('playwright-core');
 const OUT = process.argv[2], G = process.argv[3], shots = JSON.parse(process.argv[4]);
 mkdirSync(OUT, { recursive: true });

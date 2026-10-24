@@ -5,10 +5,9 @@
 // Views and part framing are computed from the named nodes in the GLB, so they
 // keep working when the model is rebuilt.
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { prepareGuitar, studioEnvironment } from './guitar-look.js';
+import { prepareGuitar, studioEnvironment, gltfLoader } from './guitar-look.js';
 import { LINEUP } from './data.js';
 
 const INFO = LINEUP.find((g) => g.id === new URLSearchParams(location.search).get('g')) || LINEUP[0];
@@ -71,7 +70,7 @@ function setLight(name) {
 }
 
 // ------------------------------------------------------------- model ----
-const gltf = await new GLTFLoader().loadAsync(INFO.model);
+const gltf = await gltfLoader().loadAsync(INFO.model);
 const guitar = gltf.scene;
 prepareGuitar(guitar, renderer);
 scene.add(guitar);

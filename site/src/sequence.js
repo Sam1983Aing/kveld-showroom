@@ -25,6 +25,14 @@ const smooth = (u) => u * u * (3 - 2 * u);
 // The guitar's own frame: the GLB's root (tail at the origin, +y up the
 // neck, +z out of the top). Boxes are measured from the vertices, in that
 // frame, whatever the guitar is doing in the room at the time.
+function isIdentity(m) {
+  const e = m.elements;
+  return Math.abs(e[0] - 1) < 1e-6 && Math.abs(e[5] - 1) < 1e-6 && Math.abs(e[10] - 1) < 1e-6 &&
+    Math.abs(e[12]) < 1e-6 && Math.abs(e[13]) < 1e-6 && Math.abs(e[14]) < 1e-6 &&
+    Math.abs(e[1]) < 1e-6 && Math.abs(e[2]) < 1e-6 && Math.abs(e[4]) < 1e-6 &&
+    Math.abs(e[6]) < 1e-6 && Math.abs(e[8]) < 1e-6 && Math.abs(e[9]) < 1e-6;
+}
+
 function partBox(root, names) {
   root.updateMatrixWorld(true);
   const inv = root.matrixWorld.clone().invert();
@@ -35,6 +43,11 @@ function partBox(root, names) {
     obj.traverse((o) => {
       if (!o.isMesh) return;
       m.multiplyMatrices(inv, o.matrixWorld);
+      if (isIdentity(m)) {
+        if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
+        box.union(o.geometry.boundingBox);
+        return;
+      }
       const p = o.geometry.attributes.position;
       for (let i = 0; i < p.count; i++) box.expandByPoint(v.fromBufferAttribute(p, i).applyMatrix4(m));
     });

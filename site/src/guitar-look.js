@@ -1,6 +1,20 @@
 // Shared by the showroom and the workshop viewer: how a guitar GLB is prepared
 // for rendering, and the product-studio light that its gloss reflects.
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+
+let _draco = null;
+export function gltfLoader() {
+  if (!_draco) {
+    _draco = new DRACOLoader();
+    _draco.setDecoderPath(new URL('../vendor/draco/', import.meta.url).href);
+    _draco.preload();
+  }
+  const loader = new GLTFLoader();
+  loader.setDRACOLoader(_draco);
+  return loader;
+}
 
 // Parts that lie on another surface (inlays, logo, dark holes, the walnut
 // stripe). The model keeps them 0.1 mm clear already; the polygon offset makes
@@ -34,11 +48,22 @@ function windStrings(m) {
   m.customProgramCacheKey = () => 'wound';
 }
 
-export function prepareGuitar(root, renderer, { envMapIntensity = 1.0 } = {}) {
+const SHADOW_PARTS = /(^|\/)(Body|Neck|Pickguard|Bridge|Tailpiece|Tremolo)(_|\b)/;
+const FINE_PARTS = /(^|\/)(BackHardware|Dots|Frets|Logo|Saddles|Screws|SkunkStripe|Strings|Tuners|Nut)(_|\b)/;
+
+export function prepareGuitar(root, renderer, { envMapIntensity = 1.0, castShadow = true } = {}) {
   const aniso = renderer.capabilities.getMaxAnisotropy();
+  const meshes = [], shadowMeshes = [], fineMeshes = [], nonMacroMeshes = [];
   root.traverse((o) => {
     if (!o.isMesh) return;
-    o.castShadow = true;
+    meshes.push(o);
+    const tag = `${o.parent?.name || ''}/${o.name}`;
+    const isMacro = SHADOW_PARTS.test(tag);
+    const canShadow = castShadow && isMacro;
+    if (canShadow) shadowMeshes.push(o);
+    if (!isMacro) nonMacroMeshes.push(o);
+    if (FINE_PARTS.test(tag)) fineMeshes.push(o);
+    o.castShadow = canShadow;
     o.receiveShadow = true;
     const m = o.material;
     for (const k of ['map', 'normalMap', 'roughnessMap', 'clearcoatNormalMap']) if (m[k]) m[k].anisotropy = aniso;
@@ -50,6 +75,10 @@ export function prepareGuitar(root, renderer, { envMapIntensity = 1.0 } = {}) {
       m.polygonOffsetUnits = -4;
     }
   });
+  root.userData.meshes = meshes;
+  root.userData.shadowMeshes = shadowMeshes;
+  root.userData.fineMeshes = fineMeshes;
+  root.userData.nonMacroMeshes = nonMacroMeshes;
   return root;
 }
 

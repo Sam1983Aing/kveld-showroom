@@ -1,4 +1,4 @@
-# KVELD showroom (013 3D Guitars)
+# KVELD showroom (009 Guitars)
 
 A concept landing page for a fictional guitar maker. Seven guitars stand on low
 plinths in a curved ring over a black glass floor. The camera sits close on the
@@ -18,7 +18,7 @@ the page copy. Model names and each guitar's colour live in `site/src/data.js`.
 
 ## Versions
 
-The history is five commits on `main`, one per iteration of the page, each with a tag.
+The history is six commits on `main`, one per iteration of the page, each with a tag.
 
 | Tag | What it is |
 |---|---|
@@ -27,6 +27,7 @@ The history is five commits on `main`, one per iteration of the page, each with 
 | `v3` | The walk: scrolling lifts the guitar off its plinth and takes the camera along it, stop by stop. |
 | `v4` | Seven guitars: the other six built from their plans, then all seven corrected one by one in review. |
 | `v5` | The page around them: the drawing that becomes the guitar (Ink on Paper), the View guitar sheet, Spotlight as section 02, Last Light as the footer, the plectrum pointer. |
+| `v6` | The guitar up close, and a lighter page: View guitar as a body portrait with the seven names to change guitar in place, the sheet selling instead of measuring, section 02 following the pointer, the footer with the room's details, and the performance pass (Draco models, 60 MB to 10 MB, 60 fps on Retina). |
 
 To look at an older one:
 
@@ -210,6 +211,29 @@ All seven share the KVELD headstocks (six in line on bolt-ons, three a side on
 set necks), markers, logo, tuners, knobs, switch tips, strap buttons and jack.
 Overlays of each model on its sheet: `media/plan-vs-<id>.png` (Floe's is
 `media/plan-vs-model.png`).
+
+## What V6 changed (2026-10-06 to 10-23)
+
+- **View guitar** is a portrait of the body. Every number is in `CLOSE` at the top of
+  `site/src/showroom.js`: the guitar lifts and leans, the camera frames the body and a lens shift
+  puts it on the left (on top when the sheet sits below it, 900 px and under), the arch is
+  re-placed each frame so it closes round the body, and it sways slowly. `closeTo(i)` turns the
+  ring under the close camera, so the seven names along the bottom change guitar in place. Do not
+  rest it between 0.40 and 0.65 rad: the rim lights mirror off the top into the lens on all seven.
+  `CLOSE.gain` is a light level per finish, up close only.
+- **The sheet** shows the price, the build time and Book a visit. The measurements live on the
+  drawing only. Walk the guitar is gone from it.
+- **Section 02** is one screen and follows the pointer, not the scroll (taps and swipes on phones).
+- **The footer** (`site/src/footer.js`): the room picture re-rendered with a quieter floor
+  (`FLOOR=0.6 node tools/room_still.mjs 3`), dust rising through the centre light, and a band
+  with the room, hours, need info and follow under the guitars. Hours and links are placeholders.
+- **Far jumps** (Book a visit, In the room) go through `jump()` in `main.js`: dark, jump, back. Do
+  not scroll to `#room` from below: while it is pinned that is the end of its pin.
+- **Performance**: the models are exported with Draco from Blender (`export_draco_*` in
+  `kveld_parts.py` and `build_floe.py`) and decoded with `site/vendor/draco` through
+  `gltfLoader()` in `guitar-look.js`. All seven load behind the loader. The mirror floor renders at
+  45% and is skipped when out of frame, MSAA is 2, and the room stops drawing when nothing moves
+  (after the scroll settles in the drawing or the walk, and after 10 s with no input anywhere).
 
 ## Picks made in session 6 (nothing is waiting any more)
 

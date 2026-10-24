@@ -77,6 +77,14 @@ function toScene(hex, exposure) {
 // The model seen straight down (and straight up), one float per millimetre:
 // the height of the surface in the guitar's own frame. Lines read their
 // heights here, the sections and slices are cut from it.
+function isIdentity(m) {
+  const e = m.elements;
+  return Math.abs(e[0] - 1) < 1e-6 && Math.abs(e[5] - 1) < 1e-6 && Math.abs(e[10] - 1) < 1e-6 &&
+    Math.abs(e[12]) < 1e-6 && Math.abs(e[13]) < 1e-6 && Math.abs(e[14]) < 1e-6 &&
+    Math.abs(e[1]) < 1e-6 && Math.abs(e[2]) < 1e-6 && Math.abs(e[4]) < 1e-6 &&
+    Math.abs(e[6]) < 1e-6 && Math.abs(e[8]) < 1e-6 && Math.abs(e[9]) < 1e-6;
+}
+
 function renderMaps(renderer, root) {
   const px = 0.001, pad = 0.012;
   root.updateWorldMatrix(true, true);
@@ -89,6 +97,11 @@ function renderMaps(renderer, root) {
     p.traverse((o) => {
       if (!o.isMesh) return;
       m.multiplyMatrices(inv, o.matrixWorld);
+      if (isIdentity(m)) {
+        if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
+        b.union(o.geometry.boundingBox);
+        return;
+      }
       const pos = o.geometry.attributes.position;
       for (let i = 0; i < pos.count; i++) b.expandByPoint(v.fromBufferAttribute(pos, i).applyMatrix4(m));
     });
@@ -258,13 +271,18 @@ const REV_HEAD = /* glsl */`
   }
 `;
 const REV_CUT = /* glsl */`
-  float dM = dot(vRp, uAxis.xyz) + uAxis.w * length(vRp.xy - uC.xy) + (dNoise(vRp * uNz.x) - 0.5) * uNz.y;
-  if (dM > uSweep + (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) * uNz.z) discard;
+  float dM = -1e4;
+  if (uSweep < 500.0) {
+    dM = dot(vRp, uAxis.xyz) + uAxis.w * length(vRp.xy - uC.xy) + (dNoise(vRp * uNz.x) - 0.5) * uNz.y;
+    if (dM > uSweep + (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) * uNz.z) discard;
+  }
 `;
 const REV_TAIL = /* glsl */`
-  if (uCapOn > 0.5 && !gl_FrontFacing) gl_FragColor.rgb = uCap;
-  gl_FragColor.rgb += uEdge * (1.0 - smoothstep(0.0, uEdgeW, uSweep - dM));
-  gl_FragColor.rgb = mix(gl_FragColor.rgb, uBg, uGhost);
+  if (uSweep < 500.0) {
+    if (uCapOn > 0.5 && !gl_FrontFacing) gl_FragColor.rgb = uCap;
+    gl_FragColor.rgb += uEdge * (1.0 - smoothstep(0.0, uEdgeW, uSweep - dM));
+  }
+  if (uGhost > 0.001) gl_FragColor.rgb = mix(gl_FragColor.rgb, uBg, uGhost);
 `;
 function revealUniforms() {
   return {
@@ -601,12 +619,12 @@ class Kit {
     this.group.add(dims);
 
     // a soft shadow under the guitar, from its own silhouette in the depth map
-    const M = this.M, sc = document.createElement('canvas'); sc.width = M.w; sc.height = M.h;
-    const sx = sc.getContext('2d'), img = sx.createImageData(M.w, M.h), all = M.maps.all;
-    for (let j = 0; j < M.h; j++) for (let i = 0; i < M.w; i++) { const k = ((M.h - 1 - j) * M.w + i) * 4, on = all[j * M.w + i] === all[j * M.w + i]; img.data[k + 3] = on ? 255 : 0; }
+    const M = this.M, sw = M.w >> 1, sh = M.h >> 1, sc = document.createElement('canvas'); sc.width = sw; sc.height = sh;
+    const sx = sc.getContext('2d'), img = sx.createImageData(sw, sh), all = M.maps.all;
+    for (let j = 0; j < sh; j++) for (let i = 0; i < sw; i++) { const k = ((sh - 1 - j) * sw + i) * 4, v = all[(j * 2) * M.w + (i * 2)]; img.data[k + 3] = v === v ? 255 : 0; }
     sx.putImageData(img, 0, 0);
-    const soft = document.createElement('canvas'); soft.width = M.w; soft.height = M.h;
-    const fx = soft.getContext('2d'); fx.filter = 'blur(9px)'; fx.drawImage(sc, 0, 0); fx.filter = 'blur(22px)'; fx.globalAlpha = 0.6; fx.drawImage(sc, 0, 0);
+    const soft = document.createElement('canvas'); soft.width = sw; soft.height = sh;
+    const fx = soft.getContext('2d'); fx.filter = 'blur(4.5px)'; fx.drawImage(sc, 0, 0); fx.filter = 'blur(11px)'; fx.globalAlpha = 0.6; fx.drawImage(sc, 0, 0);
     const stex = new THREE.CanvasTexture(soft); stex.colorSpace = THREE.NoColorSpace;
     const off = flat ? [0.012, -0.006] : [-0.006, -0.012];            // away from the key light, down the screen
     const x0 = M.x0 + off[0], y0 = M.y0 + off[1], x1 = x0 + M.w * M.px, y1 = y0 + M.h * M.px, z = this.z0 + 0.0002;
@@ -909,9 +927,9 @@ class Draft {
 
   /** While the room is at rest, get the guitar in front ready (depth maps, lines, the sheet's
    *  layers), so the first scroll does not wait for them. */
-  warm() {
+  warm(force = false) {
     const room = this.room, it = room.items[room.index];
-    if (!it || !it.info.real || room.lights < 0.9 || this.warmed === it.info.id || Math.abs(room.u - Math.round(room.u)) > 0.01) return;
+    if (!it || !it.info.real || (!force && (!room.allReady || room.lights < 0.9)) || this.warmed === it.info.id || Math.abs(room.u - Math.round(room.u)) > 0.01) return;
     const kit = this.kit(it);
     if (!kit) return;
     this.warmed = it.info.id;

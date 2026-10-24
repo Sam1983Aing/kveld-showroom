@@ -1,0 +1,13 @@
+{
+  "section": "Section 02 and footer",
+  "out": "lower-v6",
+  "cardSeconds": 3.0,
+  "theme": { "bg": "#0b0a09", "fg": "#ece6da", "accent": "#a6d84a",
+    "display": { "family": "Panchang", "src": "../../site/vendor/fonts/panchang-500.woff2" },
+    "body": { "family": "Martian Mono", "src": "../../site/vendor/fonts/martian-mono-300.woff2" },
+    "mono": { "family": "Martian Mono", "src": "../../site/vendor/fonts/martian-mono-400.woff2" } },
+  "options": [
+    { "n": "00", "name": "Before", "line": "Section 02 holds the page and steps through the seven as you scroll. The footer has the names and the note over the picture.", "desktop": "clips/lower-before-d.mp4", "phone": "clips/lower-before-p.mp4" },
+    { "n": "01", "name": "After", "line": "Section 02 is one screen and follows the pointer. The footer has dust in the centre light and the room's details under the guitars.", "desktop": "clips/lower-after-d.mp4", "phone": "clips/lower-after-p.mp4" }
+  ]
+}

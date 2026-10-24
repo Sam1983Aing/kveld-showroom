@@ -17,6 +17,7 @@ six are built to that standard.
 | 4 | The scroll sequence on Floe (Sam approves before 5 starts) | Built 2026-09-30, waiting for Sam's approval (session 5 went ahead on Sam's go) |
 | 5 | The six remaining guitars, free plans only (see BRIEF-session-5.md) | Built 2026-10-01 overnight, v6 to v11, waiting for Sam's review |
 | 6 | Final pass | Started 2026-10-05. All three option sets are picked (2026-10-06): Ink on Paper, Spotlight, Last Light are the real sections. Current page frozen in `versions/v33` |
+| V6 | The guitar up close, section 02 and the footer to Sam's notes, the performance pass | Done 2026-10-23, tag `v6`, pushed. Next: `BRIEF-v7.md` |
 
 ## 1 · Name, model names, font, colours
 
@@ -420,4 +421,76 @@ reads as a copy. Full brief, sources and specs: `BRIEF-session-5.md`.
   `site/vendor/fonts` and `blender/fonts` (Fontshare's licence does not let them be
   redistributed), and the `plan_outline` points inside `site/assets/data/*.json`, which are
   traced from the Electric Herald sheets.
-
+- 2026-10-06, V6 started (not tagged, not committed yet). Sam noticed the View guitar sheet repeats what
+  the scroll shows ("it feels like the same spec"). Direction he approved: one job per section, in three
+  steps. (1) The sheet: the four figures out, price, build time and Book a visit in. (2) The close-up
+  copy: stop repeating the plan's numbers, talk about what is on screen (new copy for all seven, Sam reads
+  it first). (3) The ending: upright and lit, landing on that same sheet instead of the guitar lying flat.
+  Hero, ink drawing and Spotlight stay as they are.
+  - Step 1 is built: `fillCloseup` and `toVisit` in `site/src/main.js`, `.closeup__offer` and
+    `.closeup__book` in `styles.css`, cache tag `?v=36`. Book a visit fades to black, jumps to `#visit`
+    and fades back (`.veil`). Checked headless on all seven at 1000 x 575, 1440 x 900, 390 x 844 and
+    360 x 740, and with reduced motion. Reels in `demo/v6/`. Waiting for Sam's view of the reel.
+  - Seen on the way, not touched: on phones the seven names in the footer wrap onto two lines over the
+    room picture.
+- 2026-10-07, V6, the View guitar close-up rebuilt at Sam's request (he wanted it cinematic, the sheet
+  less cramped, Walk the guitar out of it, and the seven reachable from inside it). Not committed yet.
+  - The room: `CLOSE` in `showroom.js` holds every number. The guitar in front lifts, leans about the
+    middle of its body and rests at 0.8 rad with a 0.12 rad sway. The camera frames the body and a lens
+    shift puts it on the left (at the top when the sheet sits below, 900 px and under). The arch is
+    re-placed each frame so it closes round the body. `closeTo(i)` turns the ring under the close
+    camera. `near` (per guitar) hands lean, lift, light and dimming over smoothly during that turn.
+  - Do not rest it between 0.40 and 0.65 rad: the two rim lights mirror off the top into the lens and
+    the edge burns white on all seven (measured). `CLOSE.gain` is a light level per finish, up close only.
+  - The page: section 3 of `main.js` (`revealSheet`, `closeupShow`, `closeupArrived`), the rail of seven
+    names (`.closeup__rail`, dots on phones), arrow keys, Walk the guitar gone from the sheet. The sheet
+    is `min(43vw, 780px)` wide and its type scales with the window. Cache tag `?v=37`.
+  - Also changed on the way: the colour cross-fade between two guitars now takes the short way round
+    the hue wheel (Rowan to Heath went through green and yellow). This shows in the hero too.
+  - Checked headless: all seven at 1000 x 575, 1280 x 720, 1440 x 900, 1725 x 990, 1920 x 1080 and
+    390 x 844, quick and repeated changes of guitar, Escape, Book a visit, reduced motion, and the walk
+    against this morning's stills. Reels: `demo/v6/closeup-v6-*.mp4` (`record-closeup.sh`).
+  - Sam's window when he sent his screenshot was about 1725 x 990 CSS px, not the 1000 x 575 noted
+    under session 3. Check at both.
+  - Seen, not touched: on a 2x screen at that window size the room renders 3450 x 1980 and ran at
+    about 34 frames a second in headless Chrome, hero and sheet alike (60 at 1x). The cap is
+    `Math.min(devicePixelRatio, 2)` in `initRenderer`.
+  - Still waiting on Sam: the step 2 copy list (`demo/v6/copy-step2.md`), then step 3 (the walk's ending).
+- 2026-10-07, V6, section 02 and the footer to Sam's notes (he approved the close-up first: "this is
+  just awesome"). Not committed yet. Cache tag `?v=39`.
+  - Section 02 (Spotlight) is one screen now and no longer holds the page: pointing at a name puts
+    that guitar in the light and it stays. A finger lights a name on the first tap and goes to the room
+    on the second; on phones the dots and a swipe across the guitar change it. It opens on the guitar
+    the room was left on. `spotlight.js`, `.spot` in `styles.css`.
+  - Bug found and fixed there: "In the room" scrolled to `#room`, which while the room is pinned is the
+    END of its pin, so the page stopped one screen up on the last shot of the walk. `jump(to, first)` in
+    `main.js` now takes the page to the top through a short fade to black (the same one Book a visit
+    uses), with the ring already turning to that guitar.
+  - Footer (`footer.js`): the seven names and the fictional-maker note are out, the headline is about
+    70% of its size, Book the room stands alone on the right, and under the guitars there is a band of
+    four columns (the room, hours, need info, follow) over a base line. Dust rises through the light on
+    the centre guitar (a 2D canvas over the picture, only while the footer is on screen) and the light
+    breathes. The footer takes the colour of the guitar in its picture (Moss), not the room's.
+  - The picture was re-rendered with a quieter floor: `FLOOR=0.6 node tools/room_still.mjs 3`, then
+    ffmpeg to jpg. It now also has the thick halo the hero has (the old still dated from the hairline one).
+  - Invented and to be replaced or confirmed by Sam: the hours (11:00 to 18:00), "Halden, Norway",
+    and the four contact and social links, which go nowhere. "Concept study" in the base line is the
+    only thing left on the page that says KVELD is not a real maker.
+  - Reels: `demo/v6/lower-v6-*.mp4` (`record-lower.sh`).
+- 2026-10-22, night, performance pass (done in another session, which left no note; written up here on
+  10-23 from the code and a re-measurement). Not committed yet. Cache tag `?v=43`.
+  - Models exported with Draco from Blender (`export_draco_*` in `kveld_parts.py` and `build_floe.py`),
+    decoded with `vendor/draco` through `gltfLoader()` in `guitar-look.js`. 54 MB of geometry became
+    5.5 MB. All seven load in parallel behind the loader and the GPU is warmed (`warmGPU`), so none
+    swaps in mid-animation any more.
+  - The mirror floor renders at 45% of the canvas, without MSAA, reflects the far guitars as their rings
+    only, and is skipped when the floor is out of frame (close-up, walk). Main target MSAA 4 to 2.
+    Shadows only from guitars near the centre. Guitars faded to black are hidden.
+  - The room stops drawing once the scroll settles in the drawing or the walk, and anywhere after 10 s
+    with no input (`idleTime`, `wake()`). The hero's spin stops after 8 s. Pixel ratio is still up to 2.
+  - Measured at 1725 x 990 at 2x (scratch scripts `perf.mjs` and a GPU-counter sampler): 60 fps in every
+    part of the page (was 22 to 40), page 9.9 MB (was 59.6), one 677 ms task behind the loader. GPU
+    busy in a real window: about 75% while anything moves (was about 90%), 31 to 43% when untouched
+    (the Mac idles at about 30%).
+  - Side effect to put to Sam: after 10 s untouched the View guitar's slow sway and the hero's spin
+    freeze, and Sam asked for that sway on 10-07.

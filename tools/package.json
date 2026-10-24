@@ -1,0 +1,8 @@
+{
+  "name": "kveld-tools",
+  "private": true,
+  "description": "What the capture tools in this folder need. Run `npm install` here if node_modules is missing.",
+  "dependencies": {
+    "playwright-core": "1.62.1"
+  }
+}
