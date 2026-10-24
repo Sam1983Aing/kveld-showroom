@@ -684,6 +684,12 @@ class Draft {
     room.items.forEach((it) => { if (it.ready) this.patch(it); });
 
     this.buildCopy();
+    // the words options (V7 demo round): ?ink=block|notes|name (draft-words.js)
+    const INK = new URLSearchParams(location.search).get('ink');
+    if (INK) {
+      document.documentElement.classList.add('ink-opt');
+      import('./draft-words.js?v=2').then((m) => m.buildDraftWords(INK, document.querySelector('.room'))).then((o) => { this.inkOpt = o; }).catch((err) => console.error(err));
+    }
     const gi = LINEUP.findIndex((x) => x.id === Q.get('g'));
     if (gi > 0) { room.u = room.lastU = gi; room.update(0); room.emitChange(); }
   }
@@ -823,7 +829,7 @@ class Draft {
   // ----------------------------------------------------------- frame ----
   frame() {
     const room = this.room, S = this.S, on = S.stamp === room.time;
-    if (!on) { if (this.live) this.rest(); this.warm(); return; }
+    if (!on) { if (this.live) this.rest(); this.inkOpt?.hide(); this.warm(); return; }
     this.live = true;
     const kit = S.kit, m = this.mode, dark = m === 'dark', paper = S.paper;
     const L = kit.layer(S.layout), U = this.reveal.get(kit.info.id), root = kit.root;
@@ -919,7 +925,9 @@ class Draft {
       ui.n.textContent = kit.info.no; ui.l.textContent = b.label; ui.t.innerHTML = b.title; ui.x.textContent = b.text;
     }
     this.el.classList.toggle('is-paper', paper > 0.5);
-    this.el.style.setProperty('--draft-accent', paper > 0.5 ? `#${new THREE.Color(accent).lerp(new THREE.Color('#1a1612'), 0.42).getHexString()}` : `#${accent.getHexString()}`);
+    const accentHex = paper > 0.5 ? `#${new THREE.Color(accent).lerp(new THREE.Color('#1a1612'), 0.42).getHexString()}` : `#${accent.getHexString()}`;
+    this.el.style.setProperty('--draft-accent', accentHex);
+    this.inkOpt?.frame(S, { info: kit.info, D: kit.D, mode: this.mode, paper, accent: accentHex, anchor: () => room.walkAnchor() });
     this.el.style.opacity = Math.min(S.copy * 1.6, 1);
     ui.t.style.transform = `translate3d(0, ${((1 - S.copy) * 108).toFixed(2)}%, 0)`;
     ui.x.style.opacity = clamp01((S.copy - 0.25) / 0.75);

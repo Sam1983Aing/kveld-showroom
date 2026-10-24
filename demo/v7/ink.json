@@ -1,0 +1,15 @@
+{
+  "section": "The drawing",
+  "out": "ink-options",
+  "cardSeconds": 3.0,
+  "theme": { "bg": "#0b0a09", "fg": "#ece6da", "accent": "#9fe3f0",
+    "display": { "family": "Panchang", "src": "../../site/vendor/fonts/panchang-500.woff2" },
+    "body": { "family": "Martian Mono", "src": "../../site/vendor/fonts/martian-mono-300.woff2" },
+    "mono": { "family": "Martian Mono", "src": "../../site/vendor/fonts/martian-mono-400.woff2" } },
+  "options": [
+    { "n": "00", "name": "Now", "line": "01 / 07, a headline and a line of text, then a second headline in the same place.", "desktop": "clips/ink-now-d.mp4", "phone": "clips/ink-now-p.mp4" },
+    { "n": "01", "name": "Title Block", "line": "A draughtsman's title block with the name inked in. The headline inks itself, then gets struck out for the next.", "desktop": "clips/ink-block-d.mp4", "phone": "clips/ink-block-p.mp4" },
+    { "n": "02", "name": "Margin Notes", "line": "Short notes written round the sheet as it draws, each with a pen line to the drawing.", "desktop": "clips/ink-notes-d.mp4", "phone": "clips/ink-notes-p.mp4" },
+    { "n": "03", "name": "Big Name", "line": "The name huge across the paper, traced in with the plan, lifting off the page with the guitar.", "desktop": "clips/ink-name-d.mp4", "phone": "clips/ink-name-p.mp4" }
+  ]
+}
