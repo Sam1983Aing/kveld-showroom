@@ -517,3 +517,15 @@ reads as a copy. Full brief, sources and specs: `BRIEF-session-5.md`.
   `demo/v7/hear-desktop.mp4` and `-phone.mp4` (with sound), `demo/v7/clips/order-d.mp4` and `-p.mp4`.
   Cache tag `?v=50`. Not tagged, not pushed. Still open: the tour's 17 lines, footer placeholders, a
   Workshop link in the header.
+- 2026-10-24, V7, a long round of Sam's asks, each committed on its own:
+  - Built to his description, no options: the ring turn is shorter with a third of the pull-back
+    (`LOOK.turn`), and the workshop rises over the end of the tour as a sheet (`.shop` margin and
+    `--rise`, `--sink`).
+  - Waiting for his picks, each behind a URL switch with reels in `demo/v7/`:
+    `?nav=halo|fret|index` (nav-options-*.mp4), `?type=faceplate|luthier|poster` (type-options-*.mp4),
+    `?words=tag|big|log` for the workshop's words (words-options-*.mp4), `?walk=callout|chapter|lens`
+    for the tour (walk-options-*.mp4), `?ink=block|notes|name` for the drawing (ink-options-*.mp4),
+    `?order=pairs|deck|ticket` (order-options-*.mp4). The new saw (sawdust, fresh-cut glow) is in for
+    everyone. After each pick: remove the other two and the switch, and bring the winner to full quality.
+  - Found on the way: the drawing's paper flag stayed on after any jump past it, so the pointer went
+    dark over dark sections. Fixed. Cache tag `?v=71`.

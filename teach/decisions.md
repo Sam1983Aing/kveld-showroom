@@ -56,3 +56,4 @@ Running table for 009 Guitars (KVELD). Started with the V6 session. For earlier 
 | 10-24 | Workshop words options: Work Tag, Big Words, The Log | Claude | Waiting for Sam's pick | Built behind ?words= |
 | 10-24 | Tour words and progress options: Callout, Chapter, Viewfinder | Claude | Waiting for Sam's pick | Built behind ?walk= |
 | 10-24 | Drawing words options: Title Block, Margin Notes, Big Name (the name instead of 03 / 07) | Sam (asked), Claude (options) | Waiting for Sam's pick | Built behind ?ink= |
+| 10-24 | How to order options: Two by Two, Card Deck, Order Slip | Sam (asked), Claude (options) | Waiting for Sam's pick | Built behind ?order= |

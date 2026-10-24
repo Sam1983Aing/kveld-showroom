@@ -56,6 +56,9 @@ export function buildOrder(section, { toVisit, reduced }) {
     </div>`;
 
   $('[data-order-book]', section).addEventListener('click', toVisit);
+  // more interactive versions (V7 demo round): ?order=pairs|deck|ticket (order-options.js)
+  const OPT = new URLSearchParams(location.search).get('order');
+  if (OPT) return import('./order-options.js?v=2').then((m) => m.enhanceOrder(OPT, section, { reduced })).catch((err) => console.error(err));
 
   // the line draws across the four steps as they pass, and each step's node lights when it gets there
   const line = $('.order__line b', section), nodes = $$('.order__node', section);

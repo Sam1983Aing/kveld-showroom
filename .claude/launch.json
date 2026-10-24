@@ -22,16 +22,6 @@
         "."
       ],
       "port": 8030
-    },
-    {
-      "name": "kveld-before",
-      "runtimeExecutable": "python3",
-      "runtimeArgs": [
-        "tools/serve.py",
-        "8015",
-        "/private/tmp/claude-501/-Users-sam-Projects-Landing-Pages-Interactive-3D-009-Guitars/e50c27a9-73b7-416b-a1da-8ebf92649271/scratchpad/before/site"
-      ],
-      "port": 8015
     }
   ]
 }

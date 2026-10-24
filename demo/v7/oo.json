@@ -1,0 +1,15 @@
+{
+  "section": "How to order",
+  "out": "order-options",
+  "cardSeconds": 3.0,
+  "theme": { "bg": "#ece6da", "fg": "#1a1612", "accent": "#4f8e99",
+    "display": { "family": "Panchang", "src": "../../site/vendor/fonts/panchang-500.woff2" },
+    "body": { "family": "Martian Mono", "src": "../../site/vendor/fonts/martian-mono-300.woff2" },
+    "mono": { "family": "Martian Mono", "src": "../../site/vendor/fonts/martian-mono-400.woff2" } },
+  "options": [
+    { "n": "00", "name": "Now", "line": "All four steps on one screen, joined by a line that draws as you scroll.", "desktop": "clips/oo-now-d.mp4", "phone": "clips/oo-now-p.mp4" },
+    { "n": "01", "name": "Two by Two", "line": "Steps 1 and 2, then the pair slides away for 3 and 4, big numbers drifting behind.", "desktop": "clips/oo-pairs-d.mp4", "phone": "clips/oo-pairs-p.mp4" },
+    { "n": "02", "name": "Card Deck", "line": "Four cards stacked on the paper. Each scroll throws the top one off to show the next.", "desktop": "clips/oo-deck-d.mp4", "phone": "clips/oo-deck-p.mp4" },
+    { "n": "03", "name": "Order Slip", "line": "A paper order slip that fills in line by line, gets signed and stamped Bench reserved.", "desktop": "clips/oo-ticket-d.mp4", "phone": "clips/oo-ticket-p.mp4" }
+  ]
+}
