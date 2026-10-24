@@ -65,3 +65,4 @@ Running table for 009 Guitars (KVELD). Started with the V6 session. For earlier 
 | 10-24 | Phone header: the fret board in the header row, not fixed to the bottom | Claude (found it collided) | Not reviewed yet | Built |
 | 10-24 | Fonts: Faceplate the best of three, Sam wants more options | Sam | Open | New round |
 | 10-24 | Fonts round two: Stage, Amp Plate, Gig Poster, next to Faceplate | Claude | Waiting for Sam's pick | Built behind ?type= |
+| 10-24 | Type: Amp Plate (Archivo wide and heavy, Archivo, IBM Plex Mono), hosted locally | Claude (options) | Sam | Built |

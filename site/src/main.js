@@ -22,7 +22,7 @@ const { gsap, ScrollTrigger, SplitText, Lenis } = window;
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
 const EASE = 'expo.out';
-const FACES = ['400 32px Panchang', '500 32px Panchang', '300 16px "Martian Mono"', '400 16px "Martian Mono"'];
+const FACES = ['700 32px Archivo', '400 16px Archivo', '400 16px "IBM Plex Mono"', '500 16px "IBM Plex Mono"'];
 const REVEAL = 1.3;
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $ = (s, r = document) => r.querySelector(s);
@@ -55,8 +55,6 @@ const ui = {
   prev: $('.room__arrow--halo[data-prev]'), next: $('.room__arrow--halo[data-next]'), controls: $('.room__controls'), stage: $('.room__stage'),
 };
 let room = null, draft = null, shop = null;
-// Font pairings (V7 demo round): ?type=faceplate|luthier|poster (type-options.js), applied before lines are measured
-const TYPE = new URLSearchParams(location.search).get('type');
 try {
   room = new Showroom($('.room__gl'), { onProgress, onChange });
   room.reduced = reduced;
@@ -288,7 +286,6 @@ function introReveal() {
 
 async function boot() {
   // SplitText measures lines, so the faces have to be in first
-  if (TYPE) await import('./type-options.js?v=4').then((m) => m.applyType(TYPE)).catch((err) => console.error(err));
   await Promise.all(FACES.map((f) => document.fonts.load(f))).catch(() => {});
   await document.fonts.ready;
   const dataP = sheet('floe');

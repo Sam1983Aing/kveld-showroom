@@ -6,8 +6,8 @@
   <title>KVELD Showroom</title>
   <meta name="description" content="Seven guitars rebuilt from measured drawings. A concept showroom for KVELD.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%230b0a09%22/%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%229%22 fill=%22none%22 stroke=%22%239fe3f0%22 stroke-width=%221.5%22/%3E%3C/svg%3E">
-  <link rel="preload" href="vendor/fonts/panchang-500.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=76">
+  <link rel="preload" href="vendor/fonts/archivo-var.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css?v=77">
 
   <!--
     CREATIVE DIRECTION (the contract this build obeys)
@@ -17,8 +17,9 @@
     Mood         nocturnal, quiet, weighted, crafted
     Palette      ink #0B0A09, bone #ECE6DA, and one colour per guitar (data.js)
                  that lights the room and the page accent while it is in front
-    Type         Panchang (display, also the headstock logo) + Martian Mono
-                 (labels). Both local in vendor/fonts, no network needed
+    Type         Archivo, expanded and 700, for display, Archivo for reading,
+                 IBM Plex Mono for labels (Amp Plate, V7). All local in vendor/fonts.
+                 The headstock logo in the models is still Panchang (baked in Blender)
     Motion       expo family only: expo.out for reveals, expo.inOut for the ring.
                  Lenis duration 1.4 (heavy, drifting)
   -->
@@ -34,13 +35,13 @@
   <script type="importmap">
   { "imports": {
       "three": "./vendor/three.module.js", "three/addons/": "./vendor/addons/",
-      "./src/showroom.js": "./src/showroom.js?v=76", "./src/data.js": "./src/data.js?v=76", "./src/specs.js": "./src/specs.js?v=76",
-      "./src/sequence.js": "./src/sequence.js?v=76", "./src/stops.js": "./src/stops.js?v=76", "./src/standins.js": "./src/standins.js?v=76",
-      "./src/guitar-look.js": "./src/guitar-look.js?v=76", "./src/blueprint.js": "./src/blueprint.js?v=76",
-      "./src/draft.js": "./src/draft.js?v=76", "./src/spotlight.js": "./src/spotlight.js?v=76", "./src/workshop.js": "./src/workshop.js?v=76", "./src/voices.js": "./src/voices.js?v=76", "./src/order.js": "./src/order.js?v=76", "./src/nav.js": "./src/nav.js?v=76", "./src/walk-callout.js": "./src/walk-callout.js?v=76", "./src/draft-name.js": "./src/draft-name.js?v=76", "./src/workshop-words.js": "./src/workshop-words.js?v=76", "./src/footer.js": "./src/footer.js?v=76", "./src/cursor.js": "./src/cursor.js?v=76"
+      "./src/showroom.js": "./src/showroom.js?v=77", "./src/data.js": "./src/data.js?v=77", "./src/specs.js": "./src/specs.js?v=77",
+      "./src/sequence.js": "./src/sequence.js?v=77", "./src/stops.js": "./src/stops.js?v=77", "./src/standins.js": "./src/standins.js?v=77",
+      "./src/guitar-look.js": "./src/guitar-look.js?v=77", "./src/blueprint.js": "./src/blueprint.js?v=77",
+      "./src/draft.js": "./src/draft.js?v=77", "./src/spotlight.js": "./src/spotlight.js?v=77", "./src/workshop.js": "./src/workshop.js?v=77", "./src/voices.js": "./src/voices.js?v=77", "./src/order.js": "./src/order.js?v=77", "./src/nav.js": "./src/nav.js?v=77", "./src/walk-callout.js": "./src/walk-callout.js?v=77", "./src/draft-name.js": "./src/draft-name.js?v=77", "./src/workshop-words.js": "./src/workshop-words.js?v=77", "./src/footer.js": "./src/footer.js?v=77", "./src/cursor.js": "./src/cursor.js?v=77"
   } }
   </script>
-  <script type="module" src="src/main.js?v=76"></script>
+  <script type="module" src="src/main.js?v=77"></script>
 </head>
 <body>
 

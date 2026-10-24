@@ -549,7 +549,7 @@ class Kit {
       let dx = q[0] - p[0], dy = q[1] - p[1]; const l = Math.hypot(dx, dy); dx /= l; dy /= l;
       if (dx < -1e-6 || (Math.abs(dx) < 1e-6 && dy > 0)) { dx = -dx; dy = -dy; }           // never upside down
       c.save(); c.translate(p[0] + dy * gap * s, p[1] - dx * gap * s); c.rotate(Math.atan2(dy, dx));
-      c.font = `400 ${(size * s).toFixed(1)}px "Martian Mono", ui-monospace, monospace`; c.letterSpacing = `${(size * s * 0.14).toFixed(1)}px`;
+      c.font = `400 ${(size * s).toFixed(1)}px "IBM Plex Mono", ui-monospace, monospace`; c.letterSpacing = `${(size * s * 0.14).toFixed(1)}px`;
       c.fillStyle = col; c.textAlign = align; c.textBaseline = 'alphabetic'; c.fillText(str.toUpperCase(), 0, 0); c.restore();
     };
     const tick = (x, y) => line([x - 0.14, y - 0.14], [x + 0.14, y + 0.14]);
@@ -565,7 +565,7 @@ class Kit {
       const a = P(x, y), b = P(tx, ty), dir = end ? -1 : 1;
       c.strokeStyle = INKC; c.lineWidth = lw * 0.8; c.setLineDash([]); c.globalAlpha = 0.55;
       c.beginPath(); c.moveTo(...a); c.lineTo(...b); c.lineTo(b[0] + dir * 0.55 * s, b[1]); c.stroke(); c.globalAlpha = 1;
-      c.font = `400 ${(ls * s).toFixed(1)}px "Martian Mono", ui-monospace, monospace`; c.letterSpacing = `${(ls * s * 0.14).toFixed(1)}px`;
+      c.font = `400 ${(ls * s).toFixed(1)}px "IBM Plex Mono", ui-monospace, monospace`; c.letterSpacing = `${(ls * s * 0.14).toFixed(1)}px`;
       c.fillStyle = INKC; c.textAlign = end ? 'right' : 'left'; c.textBaseline = 'middle'; c.fillText(str.toUpperCase(), b[0] + dir * 0.75 * s, b[1]);
     };
     const neckEnd = Math.max(...D.body_outline.map((p) => p[0]));
