@@ -534,3 +534,7 @@ reads as a copy. Full brief, sources and specs: `BRIEF-session-5.md`.
   (`draft-name.js`), the Order Slip (`order.js`), and Big Words with the Log, grouped by step
   (`workshop-words.js`). Fonts: round two behind `?type=faceplate|stage|amp|gig` (type2-options-*.mp4),
   waiting for his pick. Cache tag `?v=76`.
+- 2026-10-24, V7: type is Amp Plate (Archivo wide and heavy, Archivo, IBM Plex Mono, all in vendor/fonts,
+  round two tagged `alt/v7-fonts`). The loader is Halo (`loader.js`, markup in index.html, options tagged
+  `alt/v7-loaders`). Boot yields a frame between its heavy steps (`nextFrame()` in main.js), and the
+  loader counts downloads to 80% and those steps to 100. Cache tag `?v=84`.

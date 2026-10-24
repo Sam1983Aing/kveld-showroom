@@ -14,7 +14,7 @@ import { buildSpotlight } from './spotlight.js';
 import { createWorkshop } from './workshop.js';
 import { buildNav } from './nav.js';
 import { createCallout } from './walk-callout.js';
-import { makeLoader } from './loader-options.js';     // ?loader= demo round (V7)
+import { createLoader } from './loader.js';
 import { buildOrder } from './order.js';           // 03 How to order
 import { buildFooter } from './footer.js';         // 04 Visit (Last Light)
 import { initCursor } from './cursor.js';
@@ -265,16 +265,10 @@ $('[data-cu-book]').addEventListener('click', toVisit);
 /* ---------------------------------------------------------------------------
    4) Loader: real download progress of the model, then the lights come on
    ------------------------------------------------------------------------ */
-// Loader options (V7 demo round): ?loader=strings|ink|halo take over the loader (loader-options.js)
-const loaderOpt = makeLoader(new URLSearchParams(location.search).get('loader'), $('.loader'));
-if (loaderOpt) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'loader-options.css?v=1'; document.head.appendChild(l); }
-const bar = $('.loader__bar span');
-const count = $('[data-count]');
-function onProgress(p) {
-  if (loaderOpt) return loaderOpt.progress(p);
-  gsap.to(bar, { scaleX: p, duration: 0.4, ease: EASE, overwrite: true });
-  count.textContent = String(Math.round(p * 100)).padStart(3, '0');
-}
+// The loader (loader.js): the hero's arch drawing itself round
+const loader = createLoader($('.loader'));
+// the downloads are the first 80%, the page's own steps after them (boot) the rest
+function onProgress(p) { loader.progress(0.8 * p); }
 
 const nextFrame = () => new Promise((ok) => requestAnimationFrame(() => setTimeout(ok, 0)));
 
@@ -306,7 +300,7 @@ async function boot() {
     }
     // The heavy steps behind the loader are each a long task. A frame between them lets the loader
     // keep moving (they were one task of 1.7 s, and the loader froze for all of it).
-    performance.mark('kveld:models');
+    performance.mark('kveld:models'); loader.progress(0.84);
     await nextFrame();
     draft = initDraft(room);
     if (draft) {
@@ -315,15 +309,15 @@ async function boot() {
       walkFor = -1;
       setWalkGuitar(room.index);
     }
-    performance.mark('kveld:drawing');
+    performance.mark('kveld:drawing'); loader.progress(0.88);
     await nextFrame();
     // Compile shaders and upload all guitar GPU buffers behind the opaque loader curtain
     room.warmGPU();
-    performance.mark('kveld:gpu');
+    performance.mark('kveld:gpu'); loader.progress(0.94);
     await nextFrame();
     // the workshop's bench, built and compiled behind the loader too (workshop.js). Its pin comes later.
     shop = await createWorkshop($('#workshop'), { room, reduced, nextFrame }).catch((err) => { console.error(err); return null; });
-    performance.mark('kveld:bench');
+    performance.mark('kveld:bench'); loader.progress(0.98);
     placeStage();
     measureCopy();
     placeArrows();
@@ -341,14 +335,7 @@ async function boot() {
     }, { rootMargin: '-12% 0px -12% 0px' }).observe(roomEl);
   }
   onProgress(1);
-  if (reduced) room?.intro();        // a zero-length tween never calls its onStart: the lights stayed off
-  const loader = $('.loader');
-  if (loaderOpt && !reduced) loaderOpt.exit({ intro: () => room?.intro(), done: () => lenis?.start() });
-  else gsap.to(loader, {
-    autoAlpha: 0, duration: reduced ? 0 : 1.2, ease: 'expo.inOut', delay: reduced ? 0 : 0.2,
-    onStart: () => room?.intro(),
-    onComplete: () => { loader.remove(); lenis?.start(); },
-  });
+  loader.exit({ intro: () => room?.intro(), done: () => lenis?.start(), reduced });
   introReveal();
 
   // pins are made in page order (the room, then anything below it), so each measures from the one before
