@@ -20,6 +20,7 @@ import { LINEUP } from './data.js';
 import { SPECS } from './specs.js';
 import { gltfLoader, prepareGuitar, studioEnvironment } from './guitar-look.js';
 import { createStageWords } from './workshop-words.js';
+import { riseOver } from './handoff.js';
 
 const { gsap, ScrollTrigger } = window;
 const $ = (s, r = document) => r.querySelector(s);
@@ -40,17 +41,17 @@ export function stagesFor(info) {
   const label = (a, b) => (a >= b ? `Week ${b}` : `Weeks ${a} to ${b}`);
   const carved = id === 'sedge' || id === 'rowan', semi = id === 'fjord';
   const stages = [
-    { key: 'wood', label: 'The wood' },
+    { key: 'wood', label: 'Rest' },                 // the same words as the big ones (workshop-words.js)
     { key: 'carve', label: carved ? 'Carve' : semi ? 'Arch' : 'Cut' },
-    { key: 'frets', label: 'Frets' },
-    { key: 'finish', label: 'Finish' },
-    { key: 'setup', label: 'Set up' },
+    { key: 'frets', label: 'Fret' },
+    { key: 'finish', label: 'Coat' },
+    { key: 'setup', label: 'Play' },
   ].map((s, k) => ({ ...s, n: pad(k + 1), from: k ? ends[k - 1] : 0, to: ends[k], when: label(k ? ends[k - 1] + 1 : 1, ends[k]) }));
   return {
     weeks: W, price: S.price, name: info.name, stages,
-    eyebrow: 'Workshop · Halden',
+    eyebrow: '01 · The workshop, Halden',
     h2: `${info.name} takes ${WORDS[W]} <em>weeks</em>.`,
-    lede: `Two makers, one bench, no shortcuts. Here is where the ${S.price} goes.`,
+    lede: `Two makers, one bench. Here is where the ${S.price} goes.`,
   };
 }
 
@@ -91,7 +92,7 @@ const KNOWN = new Set(['Body', 'Neck', 'SkunkStripe', 'Fretboard', 'Frets', 'Dot
   'MiddlePickup', 'Bridge', 'Saddles', 'Tailpiece', 'Tremolo', 'Controls', 'Tuners', 'Screws', 'BackHardware', 'Binding']);
 const STAGE_OF = { Body: 'wood', Neck: 'wood', SkunkStripe: 'wood', Binding: 'wood', Fretboard: 'frets', Frets: 'frets', Dots: 'frets', Nut: 'frets', Logo: 'frets', Strings: 'strings' };
 // the bench's light, tunable from the console while it is being judged (window.__shop.LIGHT)
-const LIGHT = { lamp: 11, env: 0.26, rim: 0.5, exposure: 1.08 };
+const LIGHT = { lamp: 11, env: 0.26, rim: 0.3, exposure: 1.08 };
 const RAW = { floe: '#c4a27a', sedge: '#d2b48a', scree: '#9c6247', moss: '#c9a57c', fjord: '#cfb187', rowan: '#c99a72', heath: '#c9a57c' };
 
 function walnutTexture() {
@@ -248,14 +249,14 @@ export async function createWorkshop(section, { room, reduced, nextFrame = async
 
   // one warm lamp over the bench, and a cool line from behind so the edges read in the dark
   const lamp = new THREE.SpotLight('#ffdcae', 0, 0, 0.52, 0.95, 2);
-  lamp.position.set(-0.2, 1.55, 0.45);
+  lamp.position.set(-0.1, 1.62, -0.06);     // over the guitar: the pool it leaves on the walnut is under it, not below it
   lamp.castShadow = true;
   lamp.shadow.mapSize.set(2048, 2048);
   lamp.shadow.bias = -0.0003; lamp.shadow.normalBias = 0.01; lamp.shadow.radius = 5;
   lamp.shadow.camera.near = 0.6; lamp.shadow.camera.far = 3.2;
   scene.add(lamp, lamp.target);
   const rim = new THREE.DirectionalLight('#a9c6ff', 0);
-  rim.position.set(1.2, 0.7, -1.4);
+  rim.position.set(0.5, 0.7, -1.6);
   scene.add(rim);
 
   const holder = new THREE.Group();
@@ -271,7 +272,9 @@ export async function createWorkshop(section, { room, reduced, nextFrame = async
   async function load(info) {
     const it = room?.items?.find((x) => x.info.id === info.id);
     const root = it?.ready ? benchCopy(it.guitar) : (await gltfLoader().loadAsync(info.model)).scene;
+    await nextFrame();
     prepareGuitar(root, renderer, { envMapIntensity: 1 });
+    await nextFrame();
     const lie = new THREE.Group();
     root.rotation.x = -Math.PI / 2;                  // on its back, face up, the neck toward -z
     lie.add(root);
@@ -366,7 +369,7 @@ export async function createWorkshop(section, { room, reduced, nextFrame = async
     fin.uAxis.value.set(0, 0, -1).applyQuaternion(holder.quaternion);
     cut.normal.copy(fin.uAxis.value);
     // the picture sits right of the words on a wide screen
-    camera.setViewOffset(w, h, portrait ? 0 : -w * 0.13, portrait ? -h * 0.02 : 0, w, h);
+    camera.setViewOffset(w, h, portrait ? 0 : -w * 0.13, portrait ? h * 0.05 : 0, w, h);
     dirty = true;
   }
 
@@ -479,32 +482,35 @@ export async function createWorkshop(section, { room, reduced, nextFrame = async
   }
   return {
     pin() {
-      // the rise: from its top at the bottom of the screen to its top at the top, over the room's last screen
-      const roomEl = document.querySelector('#room');
+      // the rise: from its top at the bottom of the screen to its top at the top, over the room's last screen.
+      // Then the pin, a screen longer than the bench's story, so Hear them can come up over the finished guitar.
+      if (reduced) { ScrollTrigger.create({ trigger: section, start: 'top top', end: () => `+=${Math.round(LEN * innerHeight)}`, pin: true, onUpdate: (st) => { pTarget = st.progress; dirty = true; } }); return; }
+      riseOver(section, document.querySelector('#room'));
       ScrollTrigger.create({
-        trigger: section, start: 'top bottom', end: 'top top',
-        onUpdate: (st) => { section.style.setProperty('--rise', (1 - st.progress).toFixed(3)); roomEl?.style.setProperty('--sink', st.progress.toFixed(3)); },
-        onLeave: () => { section.style.setProperty('--rise', 0); roomEl?.style.setProperty('--sink', 1); },
-        onLeaveBack: () => { section.style.setProperty('--rise', 1); roomEl?.style.setProperty('--sink', 0); },
+        trigger: section, start: 'top top', end: () => `+=${Math.round((LEN + 1) * innerHeight)}`, pin: true, anticipatePin: 1,
+        onUpdate: (st) => { pTarget = Math.min(st.progress * (LEN + 1) / LEN, 1); dirty = true; },
       });
-      ScrollTrigger.create({
-        trigger: section, start: 'top top', end: () => `+=${Math.round(LEN * innerHeight)}`, pin: true, anticipatePin: 1,
-        onUpdate: (st) => { pTarget = st.progress; dirty = true; },
-      });
+    },
+    /** What is happening on the bench, for the sound (ambience.js). */
+    sound() {
+      const p = Math.max(pShown, 0), setup = G ? G.parts.filter((x) => x.stage === 'setup').length : 0;
+      return { bench: p, saw: smooth(BOUNDS[1] + 0.01, BOUNDS[2] - 0.02, p), frets: clamp01((p - BOUNDS[2]) / 0.09) * 21,
+        sweep: smooth(BOUNDS[3] + 0.01, BOUNDS[4] - 0.03, p), hardware: clamp01((p - BOUNDS[4]) / 0.12) * setup, strung: p > BOUNDS[5] ? 1 : 0 };
     },
     setGuitar(i) {
       const info = LINEUP[i];
       if (!info) return;
       clearTimeout(swapT);
+      retitle(info);
       swapT = setTimeout(async () => {
         if (info.id === onBench) return;
         onBench = info.id;
-        retitle(info);
         await load(info);
+        await nextFrame();
         // compiled off the main thread, in both states (the blanks only show early on)
         for (const p of [1, BOUNDS[1] + 0.05]) { frame(p); await renderer.compileAsync(scene, camera).catch(() => {}); }
         dirty = true;
-      }, 600);
+      }, 1500);
     },
   };
 }

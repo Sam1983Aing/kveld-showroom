@@ -34,20 +34,20 @@ function copyFor(info) {
 export function createStageWords(frame, reduced) {
   frame.insertAdjacentHTML('beforeend', `
     <div class="ww__big" aria-hidden="true">
-      <p class="ww__meta"><span data-sw-n>01</span><b data-sw-label>The wood</b><i data-sw-when>Weeks 1 to 3</i></p>
+      <p class="ww__meta"><span data-sw-n>01</span><b data-sw-when>Weeks 1 to 3</b></p>
       <p class="ww__word"><span data-sw-word></span></p>
     </div>
     <div class="ww__log" aria-live="polite">
       <p class="ww__k">From the bench <span data-sw-k>· weeks 1 to 3</span></p>
       <div class="ww__win"><ol data-sw-log></ol></div>
     </div>`);
-  const el = { n: $('[data-sw-n]', frame), label: $('[data-sw-label]', frame), when: $('[data-sw-when]', frame), word: $('[data-sw-word]', frame),
+  const el = { n: $('[data-sw-n]', frame), when: $('[data-sw-when]', frame), word: $('[data-sw-word]', frame),
     k: $('[data-sw-k]', frame), log: $('[data-sw-log]', frame), box: $('.ww__log', frame) };
   let at = -1, forId = '', C = null, entries = [];
 
   const fill = (k, T) => {
     const s = T.stages[k], c = C[k];
-    el.n.textContent = s.n; el.label.textContent = s.label; el.when.textContent = s.when;
+    el.n.textContent = s.n; el.when.textContent = s.when;
     el.k.textContent = `· ${s.when.toLowerCase()}`;
     el.word.innerHTML = [...c.word].map((ch) => `<span class="ww__ch">${ch}</span>`).join('');
     // the weeks of this stage, one log line each
