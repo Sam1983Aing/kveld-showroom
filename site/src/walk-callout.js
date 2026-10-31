@@ -53,19 +53,23 @@ function callout(box) {
       el.fill.style.transform = `scaleY(${here.toFixed(4)})`;
       el.now.style.top = `${(here * 100).toFixed(2)}%`;
       // the callout: beside the part, on the side with room, the line drawn as the copy arrives
-      const a = ctx.anchor(), c = W.stop >= 0 ? W.copy : 0;
-      el.copy.style.opacity = Math.min(c * 1.5, 1);
+      // the words only start to show once the camera is nearly there (0.3 of the way), so the side is chosen
+      // from where the part is going to rest and not from where it is on its way past
+      const a = ctx.anchor(), c0 = W.stop >= 0 ? W.copy : 0, c = clamp01((c0 - 0.3) / 0.7);
+      el.copy.style.opacity = Math.min(c * 1.6, 1);
+      el.copy.style.visibility = c > 0 ? 'visible' : 'hidden';
       $('.wo__rise', el.title)?.style.setProperty('transform', `translate3d(0, ${((1 - c) * 110).toFixed(1)}%, 0)`);
       el.text.style.opacity = clamp01((c - 0.3) / 0.7);
       if (!a) return;
       const vw = box.clientWidth, vh = box.clientHeight, phone = vw < 900;
-      if (c < 0.05) side = a[0] > vw * 0.5 ? -1 : 1;           // pick the side while the copy is away
-      const cw = el.copy.offsetWidth, chh = el.copy.offsetHeight;
-      let x = phone ? 20 : a[0] + side * Math.min(vw * 0.12, 200) - (side < 0 ? cw : 0);
-      x = Math.min(Math.max(x, 24), vw - cw - 24);
+      const cw = el.copy.offsetWidth, chh = el.copy.offsetHeight, gap = Math.min(vw * 0.12, 200), clear = vw - 190;   // clear: the left of the ruler's words
+      if (c0 < 0.3) side = a[0] + gap + cw > clear || (a[0] > vw * 0.5 && a[0] - gap - cw > 24) ? -1 : 1;
+      let x = phone ? 20 : a[0] + side * gap - (side < 0 ? cw : 0);
+      x = phone ? x : Math.min(Math.max(x, 24), clear - cw);
       const y = phone ? vh - chh - 110 : Math.min(Math.max(a[1] - chh * 0.5 - vh * 0.08, 90), vh - chh - 120);
       el.copy.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
-      const ex = side > 0 || phone ? x - 14 : x + cw + 14, ey = y + 18;
+      // on a phone the words are under the part: the line comes straight down to their top edge
+      const ex = phone ? Math.min(Math.max(a[0], x + 16), x + cw - 16) : side > 0 ? x - 14 : x + cw + 14, ey = phone ? y : y + 18;
       const draw = clamp01(c * 1.4);
       el.ring.setAttribute('cx', a[0]); el.ring.setAttribute('cy', a[1]); el.dot.setAttribute('cx', a[0]); el.dot.setAttribute('cy', a[1]);
       el.ring.style.opacity = el.dot.style.opacity = draw;

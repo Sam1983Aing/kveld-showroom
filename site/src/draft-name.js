@@ -69,9 +69,9 @@ export function createDraftName(roomEl) {
         const kk = clamp01(S.draw * (n + 1.5) - i);
         c.style.clipPath = `inset(${((1 - kk) * 100).toFixed(1)}% 0 0 0)`;
         c.style.setProperty('--ink', (sm(0.75, 1, kk) * sm(0.2, 0.7, S.draw)).toFixed(3));
-        const lift = clamp01(S.rise * (n + 2) - (n - i));
+        const lift = clamp01(S.rise * (n + 2) * 2.2 - (n - i));     // gone well before the plan's title block swings under it
         c.parentElement.style.transform = `translate3d(0, ${(-lift * 46).toFixed(1)}px, 0) rotate(${(-lift * 6).toFixed(2)}deg)`;
-        c.parentElement.style.opacity = (1 - lift * 0.9).toFixed(3);
+        c.parentElement.style.opacity = (1 - sm(0.1, 0.8, lift)).toFixed(3);
       });
       inkTo(t, S.copy);
       x.style.opacity = clamp01((S.copy - 0.45) / 0.55).toFixed(3);
