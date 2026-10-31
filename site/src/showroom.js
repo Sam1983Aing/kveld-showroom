@@ -110,7 +110,7 @@ const FloorShader = {
   name: 'FloorShader',
   uniforms: {
     color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null },
-    uCam: { value: new THREE.Vector3() }, uStrength: { value: 1.25 }, uBlur: { value: 0.0007 },
+    uCam: { value: new THREE.Vector3() }, uStrength: { value: 1.25 }, uBlur: { value: 0.0011 },
     uPool: { value: new THREE.Color('#2a1d10') }, uPoolR: { value: 0.6 }, uFres0: { value: 0.45 },
   },
   vertexShader: /* glsl */`
@@ -924,7 +924,7 @@ export class Showroom {
       this.dof.uniforms.focus.value = f;
       this.dof.uniforms.aperture.value = LOOK.dof * this.walkDof / (f * f);
     }
-    this.chrome?.forEach((m) => { m.roughness = m.userData.rough + 0.07 * Lw + CLOSE.light.chrome * F; });
+    this.chrome?.forEach((m) => { m.roughness = m.userData.rough + 0.2 * Lw + CLOSE.light.chrome * F; });
     this.key.target.position.copy(this.keyAim);
     this.key.angle = 0.21 + 0.09 * Lw;
     this.scene.fog.density = 0.075 * (1 - 0.85 * Lw);
@@ -1029,7 +1029,12 @@ export class Showroom {
     }
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    const mat = new THREE.PointsMaterial({ color: ACCENT.clone().multiplyScalar(1.6), size: 0.006, transparent: true, opacity: 0,
+    // round and soft: without a sprite each mote is a square, and up close on the tour a mote near the lens was a plain pale square
+    const sprite = document.createElement('canvas'); sprite.width = sprite.height = 32;
+    const sg = sprite.getContext('2d'), sr = sg.createRadialGradient(16, 16, 0, 16, 16, 16);
+    sr.addColorStop(0, 'rgba(255,255,255,1)'); sr.addColorStop(0.45, 'rgba(255,255,255,0.75)'); sr.addColorStop(1, 'rgba(255,255,255,0)');
+    sg.fillStyle = sr; sg.fillRect(0, 0, 32, 32);
+    const mat = new THREE.PointsMaterial({ color: ACCENT.clone().multiplyScalar(1.6), size: 0.0085, map: new THREE.CanvasTexture(sprite), transparent: true, opacity: 0,
       blending: THREE.AdditiveBlending, depthWrite: false });
     return new THREE.Points(geo, mat);
   }

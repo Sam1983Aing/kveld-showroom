@@ -191,7 +191,7 @@ function makeFinishable(m, raw, fin) {
         float shopD = dot(vShopW, uAxis) - uSweep;
         float shopFin = 1.0 - smoothstep(-0.01, 0.01, shopD);
         float shopLum = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
-        diffuseColor.rgb = mix(uRaw * (0.8 + 0.4 * smoothstep(0.0, 0.8, shopLum)), diffuseColor.rgb, shopFin);`)
+        diffuseColor.rgb = mix(uRaw * (0.6 + 0.66 * smoothstep(0.08, 0.85, shopLum)), diffuseColor.rgb, shopFin);`)
       .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n  roughnessFactor = mix(0.8, roughnessFactor, shopFin);')
       .replace('#include <lights_physical_fragment>', '#include <lights_physical_fragment>\n#ifdef USE_CLEARCOAT\n  material.clearcoat *= shopFin;\n#endif')
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
@@ -367,7 +367,7 @@ export async function createWorkshop(section, { room, reduced, nextFrame = async
     holder.add(dust);
     blanks.push(dust);
 
-    G = { info, lie, parts, blanks, saw, glow, dust, tail: -all.max.z + c.z, head: -all.min.z + c.z, width: bodyB.max.x - bodyB.min.x,
+    G = { info, lie, parts, blanks, saw, glow, dust, tail: -all.max.z + c.z, head: -all.min.z + c.z, width: bodyB.max.x - bodyB.min.x, neckWidth: neckBlankB.max.x - neckBlankB.min.x + 0.012, bodyEnd: -bodyB.min.z,
       sawY: Math.max(bodyB.max.y, neckBlankB.max.y) + 0.0055 };
     // stagger the drops within each stage, in a sensible order
     const ORDER = ['Fretboard', 'Nut', 'Frets', 'Dots', 'Logo', 'Pickguard', 'NeckPickup', 'MiddlePickup', 'BridgePickup', 'Bridge', 'Tailpiece', 'Tremolo', 'Saddles', 'Controls', 'Tuners', 'Screws', 'BackHardware', 'Strings'];
@@ -389,7 +389,7 @@ export async function createWorkshop(section, { room, reduced, nextFrame = async
     fin.uAxis.value.set(0, 0, -1).applyQuaternion(holder.quaternion);
     cut.normal.copy(fin.uAxis.value);
     // the picture sits right of the words on a wide screen
-    camera.setViewOffset(w, h, portrait ? 0 : -w * 0.13, portrait ? h * 0.05 : 0, w, h);
+    camera.setViewOffset(w, h, portrait ? 0 : -w * 0.13, portrait ? h * 0.09 : 0, w, h);
     dirty = true;
   }
 
@@ -398,7 +398,7 @@ export async function createWorkshop(section, { room, reduced, nextFrame = async
     if (!G) return;
     const S = storyAt(p, T);
     // lamp: comes on as the section settles, a little brighter when it is finished
-    const on = smooth(0, 0.05, p);
+    const on = 0.42 + 0.58 * smooth(0, 0.05, p);       // already on as it comes up: you see the bench arrive
     lamp.intensity = LIGHT.lamp * on * (1 + 0.25 * smooth(0.9, 1, p));
     rim.intensity = LIGHT.rim * on;
     scene.environmentIntensity = LIGHT.env * (0.15 + 0.85 * on);
@@ -414,9 +414,11 @@ export async function createWorkshop(section, { room, reduced, nextFrame = async
     sawLight.intensity = sawing ? 0.5 : 0;
     if (sawing) {                                   // in the holder's own frame the axis is always -z
       G.saw.position.set(0, G.sawY, -sawAt);
-      G.saw.scale.set(G.width + 0.08, 0.0035, 1);
+      // only as wide as the wood under it: the body's width over the body, the neck blank's over the neck
+      const atNeck = smooth(G.bodyEnd - 0.02, G.bodyEnd + 0.02, sawAt), wide = G.width + (G.neckWidth - G.width) * atNeck;
+      G.saw.scale.set(wide + 0.05, 0.0035, 1);
       G.glow.position.set(0, G.sawY - 0.0005, -sawAt);
-      G.glow.scale.set(G.width + 0.16, 0.06, 1);
+      G.glow.scale.set(wide + 0.1, 0.06, 1);
       sawLight.position.set(0, G.sawY + 0.04, -sawAt);
     }
     // the sawdust: q is how far through the cut, running on a little past it so the last grains land
@@ -445,7 +447,7 @@ export async function createWorkshop(section, { room, reduced, nextFrame = async
     }
     // camera: from straight above (the tour's last shot) to three quarters, slowly, as it fills out
     const tilt = smooth(0.3, 0.97, p);
-    const span = portrait ? (L + 0.05) / 0.56 : (L + 0.1) / 0.5;
+    const span = portrait ? (L + 0.05) / 0.5 : (L + 0.1) / 0.5;
     const dist = span / 2 / Math.tan((camera.fov * Math.PI) / 360) / (portrait ? 1 : camera.aspect) * 0.98;
     const above = V(0, dist, 0.001), side = portrait ? V(0.22, 0.95, 0.9).normalize().multiplyScalar(dist * 0.9) : V(-0.32, 0.7, 0.95).normalize().multiplyScalar(dist * 0.74);
     camera.position.copy(above).lerp(side, tilt).setLength(dist * (1 - 0.24 * tilt));

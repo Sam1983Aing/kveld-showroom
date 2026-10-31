@@ -16,6 +16,7 @@ import { riseOver } from './handoff.js';
 
 const { gsap, ScrollTrigger } = window;
 const NS = 'http://www.w3.org/2000/svg';
+const IN = 0.0254;
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const ARROW = '<svg viewBox="0 0 24 10" aria-hidden="true"><path d="M0 5h22M18 1l4 4-4 4" fill="none" stroke="currentColor"/></svg>';
@@ -33,23 +34,29 @@ const STEPS = [
 ];
 
 /** A guitar's plan on the slip, in the drawing chapter's ink, as the groups the scroll draws one by one. */
-function plotPlan(svg, D, flat) {
+function plotPlan(svg, D, flat, F, id) {
   svg.textContent = '';
   const tail = Math.min(...D.body_outline.map((p) => p[0])), tip = D.nut[0] + D.headstock_length, half = D.body.width / 2;
   // upright on the slip with the head at the top. Lying down on a phone, across the top of it
-  const X = (x, y) => (flat ? x : -y), Y = (x, y) => (flat ? -y : -x);
+  // a head that leans back is shorter seen from the front, as in the still it has to line up with
+  const nut = D.nut[0], fold = Math.min((F.top - (nut - tail) * IN) / ((tip - nut) * IN), 1), up = (x) => (x > nut ? nut + (x - nut) * fold : x);
+  const X = (x, y) => (flat ? up(x) : -y), Y = (x, y) => (flat ? -y : -up(x));
   const span = tip - tail, pad = 2.1;
   svg.setAttribute('viewBox', flat ? `${tail - pad} ${-half - 1.6} ${span + pad * 2} ${half * 2 + 3.2}` : `${-half - pad} ${-tip - 0.8} ${half * 2 + pad * 2} ${span + 2.6}`);
   const f = (v) => (+v).toFixed(2);
   const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; };
   const line = (pts, close = true) => 'M' + pts.map(([x, y]) => `${f(X(x, y))} ${f(Y(x, y))}`).join('L') + (close ? 'Z' : '');
   const G = {};
-  // the finish: the guitar's colour wiped on from the tail, under the ink
+  // the finish: the guitar itself (its front still) comes through from the tail, under the ink, the way the
+  // drawing chapter's plan turns into the guitar. It lines up with the plan through frames.json.
   const clipId = `slip-clip-${Math.random().toString(36).slice(2, 7)}`;
   const defs = el('defs', {}, svg), clip = el('clipPath', { id: clipId }, defs);
   G.wipe = el('rect', { x: f(flat ? tail - 1 : -half - 1), y: f(flat ? -half - 1 : -tail + 1), width: f(flat ? 0 : half * 2 + 2), height: f(flat ? half * 2 + 2 : 0) }, clip);
   G.span = span + 2; G.flat = flat; G.tail = tail; G.half = half;
-  G.fill = el('path', { d: line(D.body_outline) + line(D.neck), class: 'pl-fill', 'clip-path': `url(#${clipId})` }, svg);
+  const k = F.ppm * IN, top = (F.base + F.h / F.ppm) / IN + tail;
+  const wrap = el('g', { 'clip-path': `url(#${clipId})` }, svg);
+  G.img = el('image', { href: `assets/shots/${id}-front.webp`, width: F.w, height: F.h, class: 'pl-img',
+    transform: flat ? `matrix(0 ${1 / k} ${-1 / k} 0 ${top} ${-F.w / (2 * k)})` : `matrix(${1 / k} 0 0 ${1 / k} ${-F.w / (2 * k)} ${-top})` }, wrap);
   const strokes = (cls) => { const g = el('g', { class: cls }, svg); g.items = []; return g; };
   const add = (g, tag, attrs) => { const e = el(tag, { ...attrs, pathLength: 1 }, g); g.items.push(e); return e; };
   G.parts = strokes('pl-2');
@@ -179,7 +186,12 @@ export function buildOrder(section, { toVisit, sheet, current = () => 0, reduced
       const k = sm(0.44, 0.6, p);
       if (P.flat) P.wipe.setAttribute('width', (P.span * k).toFixed(2));
       else { P.wipe.setAttribute('y', (-P.tail + 1 - P.span * k).toFixed(2)); P.wipe.setAttribute('height', (P.span * k).toFixed(2)); }
-      drawn(P.strings, sm(0.62, 0.76, p), 3);
+      // once it is all there the working lines lift off and it is just the guitar on the sheet, with its shadow
+      drawn(P.strings, sm(0.62, 0.72, p), 3);
+      const clean = sm(0.72, 0.84, p);
+      for (const g of [P.parts, P.frets, P.strings]) g.style.opacity = (1 - clean).toFixed(3);
+      P.ink.style.opacity = (1 - 0.7 * clean).toFixed(3);
+      planSvg.style.setProperty('--lift', (clean * 1.2).toFixed(3));
     }
     state.sig = sm(0.8, 0.9, p);
     sig.style.strokeDashoffset = (L * (1 - state.sig)).toFixed(1);
@@ -191,6 +203,7 @@ export function buildOrder(section, { toVisit, sheet, current = () => 0, reduced
 
   // the slip is made out for one guitar: its plan, its colour, its terms
   let forI = -1;
+  const framesP = fetch('assets/shots/frames.json').then((r) => r.json());
   const flat = () => matchMedia('(max-width: 900px)').matches;
   async function makeOut(i, first) {
     if (i === forI) return;
@@ -203,7 +216,9 @@ export function buildOrder(section, { toVisit, sheet, current = () => 0, reduced
     $('[data-for]', section).textContent = g.name; $('[data-from]', section).textContent = S.price;
     const D = await sheet(g.id);
     if (i !== forI) return;
-    P = plotPlan(planSvg, D, flat());
+    const frames = await framesP;
+    if (i !== forI) return;
+    P = plotPlan(planSvg, D, flat(), frames[g.id], g.id);
     fill(state.p);
     if (!first && !reduced) gsap.fromTo(planSvg, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.9, ease: 'expo.out', overwrite: true });
   }
@@ -221,11 +236,11 @@ export function buildOrder(section, { toVisit, sheet, current = () => 0, reduced
   // it arrives on the guitar the room was left on, and slides into place as the sheet comes up
   let arrived = false;
   // and the first line is already being written as it lands, so the slip is never an empty form on screen
-  const OPENING = 0.14;
+  const OPENING = 0.2;
   riseOver(section, $('#guitars'), { onRise: (p) => {
     slip.style.setProperty('--in', (1 - p).toFixed(3));
     if (!arrived && p > 0.02) { arrived = true; makeOut(current(), true); }
-    if (innerWidth > 900 && p < 1) fill(OPENING * sm(0.45, 1, p));
+    if (innerWidth > 900) { if (p < 1) fill(OPENING * sm(0.45, 1, p)); else if (state.p < OPENING) fill(OPENING); }      // (p = 1 alone: a jump here from the header)
   } });
   // wide screens: the whole view pins while the slip fills, and holds a screen for the footer to come up over.
   // Phones: the slip fills as it scrolls past
