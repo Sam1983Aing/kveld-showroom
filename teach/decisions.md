@@ -74,3 +74,15 @@ Running table for 009 Guitars (KVELD). Started with the V6 session. For earlier 
 | 10-24 | Hear them arch: the canvas covers the whole section, no straight cut | Sam (found it) | Sam | Fixed |
 | 10-24 | How to order in one view: head, the seven, Book a visit left, slip right | Sam | Sam | Built |
 | 10-24 | Each step in a guitar's colour: edge bar, highlighter, rising words, filled box, coloured tag | Sam (asked for colour), Claude (how) | Waiting for his view | Built |
+| 10-31 | QA to 9.5, scroll sound, How to order and footer details made more ours | Sam | Sam | Done, see `teach/reviews/` |
+| 10-31 | Every section rises over the last as a sheet (his workshop move, everywhere) | Sam (the move), Claude (extending it) | Waiting for his view | Built, `handoff.js` |
+| 10-31 | The slip made out for one guitar, which it draws as it fills, pointing at a row changes it, real deposit figures | Claude | Waiting for his view | Built |
+| 10-31 | Highlighter and pills out, dimension lines and the tour's ruler in. Step colours kept (Sam's note of 10-24) | Claude | Waiting for his view | Built |
+| 10-31 | Footer columns spaced by the fret rule, labels plain, colour only on hover | Claude | Waiting for his view | Built |
+| 10-31 | No real addresses exist: mailto and sms placeholders, socials say "Not yet" on click | Claude | Waiting for his view | Built, one constant in `footer.js` |
+| 10-31 | Sound: 50 Hz hum, air, far strings, pen, saw, fret taps, a string per tour stop, stamp, a last chord | Sam (the ask), Claude (the score) | By ear, his | Built, `LEVEL` in `ambience.js` |
+| 10-31 | The 17 tour lines of 10-06 applied | Sam (asked for them 10-06), Claude (wording) | Applied on the QA brief | Built |
+| 10-31 | View guitar keeps swaying, at half the frames, until 90 s untouched | Sam (the sway), Claude (the rate) | Waiting for his view | Built |
+| 10-31 | Workshop numbered 01, since 02 to 04 had no 01 | Claude | Not reviewed | Built |
+| 10-31 | Stage names one set: Rest, Cut, Fret, Coat, Play on the rail too | Blind judge (found it), Claude | Not reviewed | Built |
+

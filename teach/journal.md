@@ -471,3 +471,27 @@ Before: tag `v5`. Reels and stills: `demo/v6/`, `teach/shots/v6-*.jpg`. Still op
 - Sam asked "is any section missing?" before building. The diagnosis that mattered: the hero and 02 do the same job (pick one of seven), so 02 can only send you back up. Proposed: sound, the workshop, how to order.
 - Workshop round, three options behind `?shop=`. The strongest technique: the guitar assembled from its named GLB parts on a bench, with the finish as a shader sweep (raw colour ahead of a moving plane, the real material behind it, a wet edge at the line) and the saw as a clipping plane through two box blanks. Then the same scene rendered the gallery option's pictures, so one build gave two options.
 - Before: `teach/shots/v7-hero-before.png`, after: `v7-hero-after.png`. Reels in `demo/v7/`.
+
+
+## 2026-10-31 · V7 final · QA · The audit before the fixes
+Before touching anything: stills of every part at 1725 x 990, 1000 x 575, a phone and reduced motion, recordings forwards, backwards, a hard flick, then the type and every button read back from the DOM (`tools/type_audit.mjs`). A blind judge got only the captures. It scored lower than I did on most things and it was right more often than not. The numbers did what opinion could not: 21 label combinations, 9 of 17 controls with both states.
+Teaches: score before you fix, write it down, and let someone who did not build it look.
+
+## 2026-10-31 · V7 final · Teachable bug · Reduced motion and a 0.01 ms transition
+The common reduced-motion reset, `transition-duration: 0.01ms` on everything, also applies to a pin's spacer. ScrollTrigger sets the spacer's padding and measures in the same frame, while the padding is still "transitioning", so every section after the room was placed as if the room had no pin. The workshop landed in the middle of the tour. Fixed with `transition: none`.
+Teaches: a global reset is not neutral. A page nobody tests in a mode is broken in that mode.
+
+## 2026-10-31 · V7 final · Teachable bug · The hitch on a ring turn
+430 ms after each change of guitar. A CPU profile named it in one run: `Object3D.copy` and `toDataURL`. three's `clone()` copies userData through JSON, the guitars keep their mesh lists in userData, and Texture has a toJSON that paints to a canvas. Setting userData aside for the copy took the long task from 383 ms to none.
+Teaches: profile, do not guess. I had first rewritten the bounding boxes, which was a real saving and not the cause.
+
+## 2026-10-31 · V7 final · Technique · One move for every hand-off
+Sam's workshop rise is now `riseOver(next, prev)` in `handoff.js`: the section before holds a screen longer, the next has a negative margin of one screen, its corners flatten with `--rise`, the one under it sinks with `--sink`. Four hand-offs, one helper, one curve (the scroll).
+Before: `demo/qa/before/rec-forward.mp4`. After: `demo/qa/after/rec-forward.mp4`.
+
+## 2026-10-31 · V7 final · Technique · A slip that draws the guitar
+How to order keeps Sam's slip and takes the page's language: the plan is plotted from the same data as the drawing chapter, in steps timed to the words (trace, measures, frets and finish, strings), the tour's ruler runs down it, and the highlighter became a dimension line. Pointing at a row makes the slip out for that guitar with its real weeks and deposit.
+Teaches: "make it feel more ours" usually means reuse what the page already taught the visitor, not add a new idea.
+
+## 2026-10-31 · V7 final · Technique · Sound with no ears
+Everything is synthesized from the Hear them string model and noise, on one audio context. Pen and saw are noise loops with the texture baked in (grains for a nib, teeth for a blade), then gain and filter follow the scroll's speed, so it runs backwards too. To check it without being able to hear: take the real output off the bus with a MediaStreamDestination into a MediaRecorder while Chrome stays muted, then read peak, RMS and LUFS per section, and look at the spectrogram. Sam still has the last word: `LEVEL` at the top of `ambience.js`, or `?ambience=1.4` in the address.
