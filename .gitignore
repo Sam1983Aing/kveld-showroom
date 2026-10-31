@@ -21,3 +21,12 @@ versions/
 
 # What the capture tools need (tools/package.json says which). Not the site: the page has no build step.
 node_modules/
+
+# QA captures and rendered sound, kept on disk only
+demo/qa/*/
+demo/qa/*.png
+demo/qa/*.jpg
+demo/qa/*.wav
+demo/qa/*.mp4
+demo/qa/*.json
+demo/v7/final/
