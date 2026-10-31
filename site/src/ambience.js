@@ -119,7 +119,9 @@ function thud(ctx) {
 
 // ------------------------------------------------------------------------------ the graph ----
 /** Everything that sounds, on any audio context (the real one, or an offline one to measure it). */
-export function buildBed(ctx, destination) {
+export async function buildBed(ctx, destination) {
+  // the buffers are rendered a piece at a time, so turning the sound on never stalls a frame (it was 227 ms in one go)
+  const breathe = () => new Promise((ok) => setTimeout(ok, 0));
   const gain = (v, to) => { const g = ctx.createGain(); g.gain.value = v; if (to) g.connect(to); return g; };
   const filter = (type, f, q, to) => { const n = ctx.createBiquadFilter(); n.type = type; n.frequency.value = f; n.Q.value = q; if (to) n.connect(to); return n; };
 
@@ -135,7 +137,9 @@ export function buildBed(ctx, destination) {
   const bus = gain(1, dry); bus.connect(send);
 
   // the room: air, low and wide. Slow noise, so it never reads as hiss
+  await breathe();
   const air = ctx.createBufferSource(); air.buffer = noiseLoop(ctx, 11, 3); air.loop = true;
+  await breathe();
   const airG = gain(0), airHp = filter('highpass', 60, 0.5), airLp = filter('lowpass', 900, 0.4, airG);
   air.connect(airHp); airHp.connect(airLp); airG.connect(master);
   // the amp across the room: 50 Hz and its family (Norway's mains), and a thread of valve hiss
@@ -143,11 +147,17 @@ export function buildBed(ctx, destination) {
   const oscs = [[50, 1], [100, 0.7], [150, 0.34], [200, 0.16], [250, 0.09], [350, 0.04]].map(([f, a]) => { const o = ctx.createOscillator(); o.frequency.value = f; const g = gain(a, humLp); o.connect(g); return o; });
   const wob = ctx.createOscillator(); wob.frequency.value = 0.13; const wobG = gain(0.06); wob.connect(wobG); wobG.connect(humLp.gain);
   const hiss = ctx.createBufferSource(); hiss.buffer = noiseLoop(ctx, 7, 11, 0.2); hiss.loop = true;
+  await breathe();
   const hissG = gain(0, master), hissHp = filter('highpass', 3200, 0.5), hissLp = filter('lowpass', 8000, 0.5, hissG);
   hiss.connect(hissHp); hissHp.connect(hissLp);
 
   // a pen, a saw and a rag are one noise loop each, shaped by what the scroll is doing
-  const rough = noiseLoop(ctx, 5, 23, 0.1), nib = textureLoop(ctx, 4, 31, 'nib'), teeth = textureLoop(ctx, 4, 41, 'teeth');
+  const rough = noiseLoop(ctx, 5, 23, 0.1);
+  await breathe();
+  const nib = textureLoop(ctx, 4, 31, 'nib');
+  await breathe();
+  const teeth = textureLoop(ctx, 4, 41, 'teeth');
+  await breathe();
   const voice = (type, f, q, buffer = rough) => {
     const src = ctx.createBufferSource(); src.buffer = buffer; src.loop = true; src.playbackRate.value = 1;
     const flt = filter(type, f, q), g = gain(0), body = filter('highpass', 200, 0.5);
@@ -163,13 +173,13 @@ export function buildBed(ctx, destination) {
   const clips = {
     tap: [knock(ctx, 1320, 0.012, 1), knock(ctx, 1480, 0.011, 2), knock(ctx, 1210, 0.013, 3)],
     tool: [knock(ctx, 2300, 0.008, 4), knock(ctx, 820, 0.022, 6)],
-    bench: knock(ctx, 240, 0.05, 7), thud: thud(ctx),
-    strings: OPEN.map((f, k) => stringNote(ctx, f, 5.5, 0.44, 60 + k)),
-    low: stringNote(ctx, OPEN[0], 6, 0.48, 77),
-    tick: stringNote(ctx, OPEN[4] * 2, 0.5, 0.5, 79),
-    open: chord(ctx, [82.41, 123.47, 164.81, 207.65, 246.94, 329.63], 7),       // E major, open
-    last: chord(ctx, [73.42, 110, 146.83, 220, 293.66, 369.99], 8.5),            // D, for the way out
+    bench: knock(ctx, 240, 0.05, 7), thud: thud(ctx), strings: [],
   };
+  for (let k = 0; k < OPEN.length; k++) { await breathe(); clips.strings.push(stringNote(ctx, OPEN[k], 5.5, 0.44, 60 + k)); }
+  await breathe(); clips.low = stringNote(ctx, OPEN[0], 6, 0.48, 77);
+  clips.tick = stringNote(ctx, OPEN[4] * 2, 0.5, 0.5, 79);
+  await breathe(); clips.open = chord(ctx, [82.41, 123.47, 164.81, 207.65, 246.94, 329.63], 7);       // E major, open
+  await breathe(); clips.last = chord(ctx, [73.42, 110, 146.83, 220, 293.66, 369.99], 8.5);            // D, for the way out
   /** One sound, now. `to` is the bus it goes through, the room's by default. */
   const fire = (buf, g, rate = 1, pan = 0, when = 0) => {
     const s = ctx.createBufferSource(); s.buffer = buf; s.playbackRate.value = rate;
@@ -295,10 +305,12 @@ export function createAmbience(sound) {
     touch(pan) { if (sound.on && cond) cond.touch(pan); },
     get bed() { return bed; },
   };
-  sound.subscribe((on) => {
-    if (!on || bed) { if (on && bed) bed.set(bed.master.gain, level, 0.6); return; }
+  let building = false;
+  sound.subscribe(async (on) => {
+    if (!on || bed || building) { if (on && bed) bed.set(bed.master.gain, level, 0.6); return; }
+    building = true;
     const ctx = sound.ctx();
-    bed = buildBed(ctx, sound.bus());
+    bed = await buildBed(ctx, sound.bus());
     cond = createConductor(bed);
     bed.master.gain.setValueAtTime(0, ctx.currentTime);
     bed.master.gain.setTargetAtTime(level, ctx.currentTime, 0.8);       // the room comes up, it does not switch on

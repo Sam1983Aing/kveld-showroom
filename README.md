@@ -214,6 +214,24 @@ set necks), markers, logo, tuners, knobs, switch tips, strap buttons and jack.
 Overlays of each model on its sheet: `media/plan-vs-<id>.png` (Floe's is
 `media/plan-vs-model.png`).
 
+## The polish pass (2026-10-31, still V7, not tagged)
+
+Scorecards: `teach/reviews/` (rubric, before, after). Reels: `demo/v7/final/` (not in git).
+
+**One switch, one level.** Sound is off until the switch in the header (or Hear them's, which is the same one: `sound.js`). The whole scroll bed is `site/src/ambience.js`, and **`LEVEL` at the top of it is the one number to change by ear**: 0.7 is about 3 dB quieter, 1.4 about 3 dB louder. To try a level without editing: add `?ambience=1.4` to the address, or type `__ambience.level(1.4)` in the console. Per-layer gains are `GAIN` under it, and how much of the room each section has is `SCENES`.
+
+**To hear or measure it:** `node tools/record_sound.mjs demo/v7/final/page-desktop desktop full` records the page with what its own audio graph plays (Chrome stays muted), and writes an mp4, a WAV and the levels per section. Plans: `full`, `hear`, `bench`, `order`, `hover`. `python3 tools/sound_stats.py file.wav` reads any WAV.
+
+**Addresses.** KVELD has none yet. `CONTACT` at the top of `site/src/footer.js` holds the email, the text number and the social pages. A social page with no address says "Not yet" when pressed. The email and text are placeholders.
+
+**Hand-offs.** `site/src/handoff.js`: `riseOver(next, prev)`. Every section after the room comes up over the one before, which holds a screen longer and sinks under it. Reduced motion stacks them plainly.
+
+**Type.** The label sizes are tokens in `:root` of `styles.css` (`--t-tiny`, `--t-label`, `--t-action`, `--t-value`, `--t-read`, tracking `--tr`). `node tools/type_audit.mjs` reads the live page back.
+
+**Hover and focus.** "the family of controls" in `styles.css`: a pill fills with light from the side, a line brightens and its arrow moves ahead, one focus ring, `--h` for the time. `node tools/hover_check.mjs demo/qa/hover` shoots every control at rest, hovered and focused.
+
+**Tools.** Anything that starts Chrome goes through `tools/chrome.mjs` (closed on every way out, `chrome-guard.mjs`). `tools/record.mjs` is the demo recorder with that guard. `tools/audit.mjs` shoots every part at one window size. `demo/qa/record-base.sh <label>` records forwards, backwards, a flick and a phone.
+
 ## What V7 changes (from 2026-10-23, not tagged yet)
 
 - **The hero**: the arrows sit on the halo's line, left and right, as two beads of light in the
@@ -238,7 +256,7 @@ Overlays of each model on its sheet: `media/plan-vs-<id>.png` (Floe's is
   guitar ripples with the waveform. The jump to the hero is a small "See it in the room" link. The
   sound is synthesized in the browser (plucked-string models through a rig per guitar, all in
   `RIG` and `PHRASE` at the top of `voices.js`). `node tools/voices_render.mjs` writes the seven to
-  WAV in `media/checks/voices/`. `demo/v7/record-hear.mjs` records the section with its sound.
+  WAV in `media/checks/voices/`. `tools/record_sound.mjs` records the section with its sound (`demo/v7/record-hear.mjs` is the older way and no longer works, the page's debug log of phrases is gone).
 - **03 · How to order** (`site/src/order.js`, `#order`): a light chapter on the drawing's paper.
   Four steps joined by a line that draws as you scroll, the seven with weeks and prices, and Book
   a visit, which scrolls down to the footer. The footer is 04 now. The terms (deposit, delivery,
