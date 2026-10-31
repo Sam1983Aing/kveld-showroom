@@ -204,6 +204,20 @@ function makeFinishable(m, raw, fin) {
   m.needsUpdate = true;
 }
 
+// The extent of an object from its vertices, sampling big meshes: three's precise version walks all of them
+// (a million triangles, 380 ms on the main thread when the room changed guitar), and a few thousand per mesh
+// land within a fraction of a millimetre, which the blanks' few millimetres of clearance do not notice.
+function extent(obj, box = new THREE.Box3()) {
+  const v = new THREE.Vector3();
+  obj.updateWorldMatrix(true, true);
+  obj.traverse((o) => {
+    if (!o.isMesh) return;
+    const pos = o.geometry.attributes.position, step = Math.max(1, Math.floor(pos.count / 4000));
+    for (let i = 0; i < pos.count; i += step) box.expandByPoint(v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld));
+  });
+  return box;
+}
+
 // A copy of the guitar the room already has on its plinth, with materials of its own
 function benchCopy(src) {
   const root = src.clone(true);
@@ -282,7 +296,7 @@ export async function createWorkshop(section, { room, reduced, nextFrame = async
     holder.updateMatrixWorld(true);
     lie.updateMatrixWorld(true);
     // precise: from the vertices. BackHardware's stored bounds are 33 cm deep and would lift the guitar off the bench
-    const all = new THREE.Box3().setFromObject(lie, true), c = all.getCenter(new THREE.Vector3());
+    const all = extent(lie), c = all.getCenter(new THREE.Vector3());
     lie.position.set(-c.x, -all.min.y + 0.003, -c.z);
     const old = G;
     if (old) {                                      // the geometry is the room's: only the copy's own things go
@@ -317,7 +331,7 @@ export async function createWorkshop(section, { room, reduced, nextFrame = async
     }));
 
     // the two blanks the saw leaves them in: a slab round the body, a board round the neck
-    const box = (names) => { const b = new THREE.Box3(); parts.filter((p) => names.includes(p.name)).forEach((p) => b.expandByObject(p.node, true)); return b; };
+    const box = (names) => { const b = new THREE.Box3(); parts.filter((p) => names.includes(p.name)).forEach((p) => extent(p.node, b)); return b; };
     const bodyB = box(['Body']), neckB = box(['Neck']);
     const blankMat = new THREE.MeshStandardMaterial({ map: blankTexture(raw), roughness: 0.85, clippingPlanes: [cut], clipShadows: true });
     const blank = (b, grow) => {
@@ -508,7 +522,7 @@ export async function createWorkshop(section, { room, reduced, nextFrame = async
         await load(info);
         await nextFrame();
         // compiled off the main thread, in both states (the blanks only show early on)
-        for (const p of [1, BOUNDS[1] + 0.05]) { frame(p); await renderer.compileAsync(scene, camera).catch(() => {}); }
+        for (const p of [1, BOUNDS[1] + 0.05]) { frame(p); await nextFrame(); await renderer.compileAsync(scene, camera).catch(() => {}); await nextFrame(); }
         dirty = true;
       }, 1500);
     },

@@ -451,7 +451,7 @@ h1 em, h2 em, h3 em, .spot__claim em, .closeup__claim em { white-space: nowrap; 
 .ww__win { position: relative; padding-left: 16px; border-left: 1px solid color-mix(in srgb, var(--accent) 50%, transparent); }
 .ww__log ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .ww__log li { display: grid; grid-template-columns: 4.6em 1fr; gap: 12px; align-items: baseline; font: 400 var(--t-value)/1.55 var(--sans); color: rgba(237, 230, 218, 0.5); transition: color 0.6s var(--ease); }
-.ww__log li b { font-weight: 400; color: rgba(237, 230, 218, 0.38); letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.82em; }
+.ww__log li b { font-weight: 400; color: rgba(237, 230, 218, 0.38); letter-spacing: var(--tr); text-transform: uppercase; font-size: var(--t-label); }
 .ww__log li.is-on { color: var(--text); }
 .ww__log li.is-on b { color: var(--accent); }
 .ww__log li.is-on .ww__t::after { content: ''; display: inline-block; width: 0.55em; height: 1.05em; margin-left: 3px; vertical-align: -0.15em; background: var(--accent); animation: caret 1s steps(1) infinite; }
@@ -888,7 +888,9 @@ html.has-cursor, html.has-cursor * { cursor: none !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  /* transition: none, not a tiny duration: with "all" on every element, a pin's spacer changed height a frame
+     late, ScrollTrigger measured before it did, and the workshop landed in the middle of the tour */
+  *, *::before, *::after { transition: none !important; animation-duration: 0.01ms !important; }
 }
 /* reduced motion: nothing rises over anything, the sections stack */
 html.reduced .shop, html.reduced .spot, html.reduced .order, html.reduced .visit, .no-webgl .shop, .no-webgl .spot { margin-top: 0; border-radius: 0; box-shadow: none; }
