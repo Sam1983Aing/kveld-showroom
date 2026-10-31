@@ -208,7 +208,7 @@ export function buildOrder(section, { toVisit, sheet, current = () => 0, reduced
     if (!first && !reduced) gsap.fromTo(planSvg, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.9, ease: 'expo.out', overwrite: true });
   }
   rows.forEach((r, i) => {
-    r.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') makeOut(i); });
+    r.addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse') makeOut(i); });      // moving: not a list scrolling under a still pointer
     r.addEventListener('focus', () => makeOut(i));
     r.addEventListener('click', () => makeOut(i));
   });

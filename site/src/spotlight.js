@@ -122,7 +122,7 @@ export async function buildSpotlight(section, { sheet, pick, current = () => 0, 
      its own is rude. A click on a name, the guitar, Hear, or either sound button turns it on. */
   const voices = createVoices();
   const soundBtn = $('[data-sound]', section), soundLabel = $('[data-sound-label]', section);
-  let dwell = 0;
+  let dwell = 0, pointed = -1;
   // this button and the header's are one switch (sound.js), and a click on a name turns it on
   sound.subscribe((v) => {
     soundBtn.setAttribute('aria-pressed', String(v));
@@ -138,13 +138,15 @@ export async function buildSpotlight(section, { sheet, pick, current = () => 0, 
     const b = r.firstElementChild;
     // pointing lights a name, and plays it once the sound is on (after a short pause, so sweeping
     // the pointer down the list does not play all seven)
-    b.addEventListener('pointerenter', (e) => {
-      if (e.pointerType !== 'mouse') return;
+    // (pointermove, so a list scrolling under a pointer that is not moving picks nothing and plays nothing)
+    b.addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'mouse' || pointed === i) return;
+      pointed = i;
       show(i);
       clearTimeout(dwell);
       if (sound.on) dwell = setTimeout(() => { if (on === i && voices.playing !== list[i].info.id) play(i); }, 160);
     });
-    b.addEventListener('pointerleave', () => clearTimeout(dwell));
+    b.addEventListener('pointerleave', () => { clearTimeout(dwell); pointed = -1; });
     b.addEventListener('focus', () => show(i));
     b.addEventListener('click', () => play(i));
   });

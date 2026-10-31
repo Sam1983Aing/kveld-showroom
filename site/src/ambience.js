@@ -55,6 +55,32 @@ function noiseLoop(ctx, seconds, seed, tilt = 0.985) {
   }
   return b;
 }
+/** What a nib or a saw blade does to noise: a nib catches the paper's tooth in short grains, a blade's teeth
+ *  come past at a steady rate that wanders a little. Baked into a loop, so it costs nothing while it plays. */
+function textureLoop(ctx, seconds, seed, kind) {
+  const n = Math.round(seconds * SR), b = ctx.createBuffer(2, n, SR);
+  for (let c = 0; c < 2; c++) {
+    const d = b.getChannelData(c), rand = rng(seed + c * 13);
+    let env = 0, target = 0, left = 0, ph = 0, rate = 150, hp = 0;
+    for (let i = 0; i < n; i++) {
+      const w = rand();
+      hp = w - hp * 0.2;
+      if (kind === 'nib') {
+        if (left-- <= 0) { left = Math.round((0.006 + Math.abs(rand()) * 0.03) * SR); const r = Math.abs(rand()); target = r * r; }
+        env += (target - env) * 0.012;
+        d[i] = hp * env * 1.6;
+      } else {
+        if (i % 2000 === 0) rate = 130 + Math.abs(rand()) * 60;
+        ph += (2 * Math.PI * rate) / SR;
+        const tooth = Math.pow(Math.abs(Math.sin(ph)), 3);
+        d[i] = hp * (0.28 + 0.72 * tooth);
+      }
+      const fade = Math.min(i, n - i, 2000) / 2000;       // no seam where the loop meets
+      d[i] *= 0.2 + 0.8 * fade;
+    }
+  }
+  return b;
+}
 /** A soft plucked note with its room, from the Hear them string model. Quiet, dark and far away. */
 function stringNote(ctx, freq, seconds, soft, seed) {
   const n = Math.round(seconds * SR), mono = new Float32Array(n), R = { s: soft, sustain: seconds * 0.7, pick: 0.31, pickup: 0.27, soft: true };
@@ -121,14 +147,14 @@ export function buildBed(ctx, destination) {
   hiss.connect(hissHp); hissHp.connect(hissLp);
 
   // a pen, a saw and a rag are one noise loop each, shaped by what the scroll is doing
-  const rough = noiseLoop(ctx, 5, 23, 0.1);
-  const voice = (type, f, q) => {
-    const src = ctx.createBufferSource(); src.buffer = rough; src.loop = true; src.playbackRate.value = 1;
+  const rough = noiseLoop(ctx, 5, 23, 0.1), nib = textureLoop(ctx, 4, 31, 'nib'), teeth = textureLoop(ctx, 4, 41, 'teeth');
+  const voice = (type, f, q, buffer = rough) => {
+    const src = ctx.createBufferSource(); src.buffer = buffer; src.loop = true; src.playbackRate.value = 1;
     const flt = filter(type, f, q), g = gain(0), body = filter('highpass', 200, 0.5);
     src.connect(flt); flt.connect(body); body.connect(g); g.connect(bus); src.start();
     return { src, flt, g };
   };
-  const pen = voice('bandpass', 3400, 0.9), saw = voice('bandpass', 1500, 1.1), rag = voice('bandpass', 900, 0.6);
+  const pen = voice('bandpass', 3400, 0.9, nib), saw = voice('bandpass', 1500, 1.1, teeth), rag = voice('bandpass', 900, 0.6);
   // the rising air of a hand-off
   const swellSrc = ctx.createBufferSource(); swellSrc.buffer = air.buffer; swellSrc.loop = true; swellSrc.playbackRate.value = 1.4;
   const swellLp = filter('lowpass', 300, 0.8), swellG = gain(0); swellSrc.connect(swellLp); swellLp.connect(swellG); swellG.connect(bus);
@@ -240,7 +266,7 @@ export function createConductor(bed) {
 
       // the slip: the pen on the signature and the stamp coming down
       if (S.where === 'order') {
-        if (!was.stamp && S.stamp) fire(clips.thud, GAIN.tap * 1.5);
+        if (!was.stamp && S.stamp) fire(clips.thud, GAIN.tap * 1.1);
         was.stamp = S.stamp || 0;
       }
       was.sig = S.sig ?? was.sig;
