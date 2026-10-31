@@ -958,8 +958,8 @@ export class Showroom {
     }
 
     // up close the chrome and brass catch the key light hard: less bloom
-    this.bloom.strength = LOOK.bloom.strength * (1 - (1 - CLOSE.light.bloom) * F) * (1 - 0.35 * Lw);
-    this.bloom.threshold = LOOK.bloom.threshold + 0.1 * Lw + CLOSE.light.threshold * F;
+    this.bloom.strength = LOOK.bloom.strength * (1 - (1 - CLOSE.light.bloom) * F) * (1 - 0.58 * Lw);
+    this.bloom.threshold = LOOK.bloom.threshold + 0.2 * Lw + CLOSE.light.threshold * F;       // up close on the tour, chrome glints rather than flares
     this.bloom.radius = LOOK.bloom.radius * (1 - (1 - CLOSE.light.radius) * F);
     this.grain.uniforms.uTime.value = t;
   }
@@ -1037,6 +1037,9 @@ export class Showroom {
   render() {
     if (!this.running || document.hidden) return;
     const now = performance.now();
+    // View guitar left alone: it keeps its slow sway (Sam asked for it), at half the frames so the GPU can
+    // rest, until 90 s untouched
+    if (this.focus > 0.99 && this.idleTime > 10 && this.idleTime < 90 && (this.halfFrame = !this.halfFrame)) return;
     const dt = Math.min((now - this.last) / 1000, 0.05);
     this.last = now;
     const walkSettled = Math.abs(this.walkTo - this.walkAt) < 6e-4;
@@ -1049,7 +1052,7 @@ export class Showroom {
     }
     // In the Drawing chapter and Close-up walk stops (walkAt > 0.35), motion is driven by scroll:
     // once scroll settles (or after 10s of zero user interaction anywhere), rest the GPU until the next input.
-    if ((this.walkAt > 0.35 && walkSettled && ringSettled && this.focus < 0.01) || this.idleTime > 10) {
+    if ((this.walkAt > 0.35 && walkSettled && ringSettled && this.focus < 0.01) || (this.idleTime > 10 && this.focus < 0.99) || this.idleTime > 90) {
       if (++this.settledFrames > 2) return;
     }
     this.time += dt;
