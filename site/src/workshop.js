@@ -220,9 +220,15 @@ function extent(obj, box = new THREE.Box3()) {
 
 // A copy of the guitar the room already has on its plinth, with materials of its own
 function benchCopy(src) {
+  // three clones userData through JSON: the guitars carry textures and uniforms there, and each went through
+  // toDataURL (380 ms in one go). Set it aside for the copy and share it afterwards
+  const park = (o, list) => { list.push([o, o.userData]); o.userData = {}; };
+  const kept = [];
+  src.traverse((o) => park(o, kept));
   const root = src.clone(true);
   root.position.set(0, 0, 0); root.rotation.set(0, 0, 0); root.scale.set(1, 1, 1);
-  root.traverse((o) => { if (o.isMesh) o.material = o.material.clone(); });
+  root.traverse((o) => { if (o.isMesh) { const m = o.material, u = m.userData; m.userData = {}; o.material = m.clone(); m.userData = u; o.material.userData = { ...u }; } });
+  kept.forEach(([o, u]) => { o.userData = u; });
   return root;
 }
 
