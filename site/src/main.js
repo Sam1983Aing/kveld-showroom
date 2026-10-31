@@ -26,6 +26,7 @@ const EASE = 'expo.out';
 const FACES = ['700 32px Archivo', '400 16px Archivo', '400 16px "IBM Plex Mono"', '500 16px "IBM Plex Mono"'];
 const REVEAL = 1.3;
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+document.documentElement.classList.toggle('reduced', reduced);
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
@@ -300,7 +301,7 @@ async function boot() {
     }
     // The heavy steps behind the loader are each a long task. A frame between them lets the loader
     // keep moving (they were one task of 1.7 s, and the loader froze for all of it).
-    performance.mark('kveld:models'); loader.progress(0.84);
+    loader.progress(0.84);
     await nextFrame();
     draft = initDraft(room);
     if (draft) {
@@ -309,15 +310,15 @@ async function boot() {
       walkFor = -1;
       setWalkGuitar(room.index);
     }
-    performance.mark('kveld:drawing'); loader.progress(0.88);
+    loader.progress(0.88);
     await nextFrame();
     // Compile shaders and upload all guitar GPU buffers behind the opaque loader curtain
     room.warmGPU();
-    performance.mark('kveld:gpu'); loader.progress(0.94);
+    loader.progress(0.94);
     await nextFrame();
     // the workshop's bench, built and compiled behind the loader too (workshop.js). Its pin comes later.
     shop = await createWorkshop($('#workshop'), { room, reduced, nextFrame }).catch((err) => { console.error(err); return null; });
-    performance.mark('kveld:bench'); loader.progress(0.98);
+    loader.progress(0.98);
     placeStage();
     measureCopy();
     placeArrows();

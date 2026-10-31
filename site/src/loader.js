@@ -45,7 +45,7 @@ export function createLoader(el) {
         const m = `radial-gradient(circle at 50% 52%, transparent ${o.r.toFixed(0)}px, #000 ${(o.r + 60).toFixed(0)}px)`;
         el.style.webkitMaskImage = m; el.style.maskImage = m;
       } }, 0.25)
-      .to(ring, { opacity: 0, duration: 0.6, ease: 'power2.in' }, 1.0)
+      .to(ring, { opacity: 0, duration: 0.6, ease: 'expo.in' }, 1.0)
       .add(() => { el.remove(); done(); }, 1.75);
   }
 

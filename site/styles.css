@@ -763,3 +763,6 @@ html.has-cursor, html.has-cursor * { cursor: none !important; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
+/* reduced motion: nothing rises over anything, the sections stack */
+html.reduced .shop { margin-top: 0; border-radius: 0; box-shadow: none; }
+html.reduced .room__gl, html.reduced .walk { transform: none; filter: none; }

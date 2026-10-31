@@ -102,7 +102,7 @@ export async function buildSpotlight(section, { sheet, pick, current = () => 0, 
     if (first || reduced) { fill(); return; }
     // the outline redraws behind the guitar, the words step out and back in
     gsap.fromTo(el.plan, { strokeDasharray: 1, strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 2.2, ease: 'expo.out', overwrite: true });
-    gsap.timeline({ overwrite: true }).to([el.swap, el.num, el.price], { opacity: 0, y: -8, duration: 0.22, ease: 'power2.in' }).add(fill)
+    gsap.timeline({ overwrite: true }).to([el.swap, el.num, el.price], { opacity: 0, y: -8, duration: 0.22, ease: 'expo.in' }).add(fill)
       .fromTo([el.num, el.swap, el.price], { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.8, ease: 'expo.out', stagger: 0.05 });
   }
 
@@ -127,7 +127,7 @@ export async function buildSpotlight(section, { sheet, pick, current = () => 0, 
     soundLabel.textContent = v ? 'Sound on' : 'Sound off';
     if (!v) voices.stop();
   };
-  const play = (i) => { if (!soundOn) { voices.unlock(); setSound(true); } show(i); voices.play(list[i].info.id).then(() => { (window.__plays ||= []).push([list[i].info.id, Date.now()]); wake(); }); };
+  const play = (i) => { if (!soundOn) { voices.unlock(); setSound(true); } show(i); voices.play(list[i].info.id).then(wake); };
   soundBtn.addEventListener('click', () => { if (soundOn) setSound(false); else play(on); });
   $('[data-play]', section).addEventListener('click', () => play(on));
   $('[data-go]', section).addEventListener('click', () => { voices.stop(); pick(on); });
