@@ -18,6 +18,9 @@ import { createLoader } from './loader.js';
 import { buildOrder } from './order.js';           // 03 How to order
 import { buildFooter } from './footer.js';         // 04 Visit (Last Light)
 import { initCursor } from './cursor.js';
+import { sound } from './sound.js';                // the one switch
+import { createAmbience } from './ambience.js';    // the sound of the scroll
+import { handoff } from './handoff.js';
 
 const { gsap, ScrollTrigger, SplitText, Lenis } = window;
 gsap.registerPlugin(ScrollTrigger, SplitText);
@@ -345,13 +348,53 @@ async function boot() {
   if (draft) $('#drawings').remove(); else buildDrawing(D);
   initWalk();
   if (shop) shop.pin(); else $('#workshop').remove();     // no WebGL: no bench, and no empty screen for it
-  await buildIndex();
-  buildOrder($('#order'), { toVisit: () => (lenis ? lenis.scrollTo('#visit', { duration: 1.8 }) : $('#visit').scrollIntoView({ behavior: 'smooth' })), reduced });
-  buildFooter($('#visit'), { reduced });
+  spot = await buildIndex();
+  order = buildOrder($('#order'), { toVisit: () => (lenis ? lenis.scrollTo('#visit', { duration: 1.8 }) : $('#visit').scrollIntoView({ behavior: 'smooth' })), sheet: (id) => sheet(id), current: () => room?.index ?? 0, reduced });
+  foot = buildFooter($('#visit'), { reduced, toRoom: () => jump(0), prev: $('#order') });
   initReveals();
   ScrollTrigger.refresh();
   nav.start({ go: navGo, where: navWhere, paper: navPaper });
+  gsap.ticker.add(soundFrame);
 }
+
+/* ---------------------------------------------------------------------------
+   The sound of the scroll (ambience.js). Off until the switch: then, once a frame, what the page is doing.
+   ------------------------------------------------------------------------ */
+const ambience = createAmbience(sound);
+let spot = null, order = null, foot = null, soundT = 0;
+window.__sound = sound; window.__ambience = ambience;
+const paintSwitch = (on) => {
+  $$('[data-sound-switch]').forEach((b) => b.setAttribute('aria-pressed', String(on)));
+  $$('[data-sound-word]').forEach((w) => { w.textContent = on ? 'Sound on' : 'Sound off'; });
+};
+sound.subscribe(paintSwitch);
+$$('[data-sound-switch]').forEach((b) => b.addEventListener('click', () => sound.toggle()));
+function soundFrame() {
+  if (!sound.on) { soundT = 0; return; }
+  const now = performance.now(), dt = soundT ? (now - soundT) / 1000 : 0;
+  soundT = now;
+  const where = navWhere(), W = room?.walkState;
+  const S = { where, dt, rise: handoff.rise, hot: !!spot?.voices?.playing };
+  if (where === 'drawing' && draft?.S) S.draw = draft.S.draw;
+  if (where === 'closeup') S.stop = W && W.copy > 0.92 ? W.stop : -1;
+  if (where === 'workshop' && shop) Object.assign(S, shop.sound());
+  if (where === 'order' && order) { S.sig = order.state.sig; S.stamp = order.state.stamp; }
+  if (foot) S.lit = foot.state.lit;
+  ambience.update(S);
+  // the voices step aside the other way round too: How to order coming up over Hear them stops the phrase
+  if (where === 'order' && spot?.voices?.playing) spot.voices.stop(0.6);
+}
+// a small touch on a string, pointing at anything you can press. Only ever with the sound on.
+let touchEl = null, touchT = 0;
+addEventListener('pointerover', (e) => {
+  if (e.pointerType !== 'mouse' || !sound.on) return;
+  const b = e.target.closest?.('a, button');
+  if (b === touchEl) return;
+  touchEl = b;
+  if (!b || performance.now() - touchT < 110) return;
+  touchT = performance.now();
+  ambience.touch((e.clientX / innerWidth - 0.5) * 0.8);
+}, { passive: true });
 
 /* ---------------------------------------------------------------------------
    Navigation helpers for nav.js: which section is in view, and the way to each. Sections
@@ -411,7 +454,7 @@ function buildDrawing(D) {
 // room is pinned is the END of its pin: the page stopped one screen up, on the last shot of the walk.)
 const pickGuitar = (i) => jump(0, () => room?.goTo(i));
 const buildIndex = () => buildSpotlight($('#guitars'), { sheet, pick: pickGuitar, current: () => room?.index ?? 0, reduced })
-  .catch((err) => console.error(err));
+  .catch((err) => { console.error(err); return null; });
 
 /* ---------------------------------------------------------------------------
    7) Reveals and headline splits for the chapters below the room

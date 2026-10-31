@@ -46,7 +46,7 @@ export async function openKveld(browser, { w = 1725, h = 990, dpr = 1, phone = f
 export const marks = (page) => page.evaluate(() => {
   const ST = window.ScrollTrigger, vh = innerHeight;
   const pins = ST.getAll().filter((s) => s.pin);
-  const room = pins.find((s) => s.trigger.id === 'room'), shop = pins.find((s) => s.trigger.id === 'workshop'), order = pins.find((s) => s.trigger.classList.contains('order__pin'));
+  const room = pins.find((s) => s.trigger.id === 'room'), shop = pins.find((s) => s.trigger.id === 'workshop'), order = pins.find((s) => s.trigger.id === 'order');
   const top = (sel) => { const el = document.querySelector(sel); return el ? el.getBoundingClientRect().top + scrollY : null; };
   return { vh, max: document.documentElement.scrollHeight - vh, room: room && [room.start, room.end], shop: shop && [shop.start, shop.end], order: order && [order.start, order.end], hear: top('#guitars'), orderTop: top('#order'), visit: top('#visit') };
 });

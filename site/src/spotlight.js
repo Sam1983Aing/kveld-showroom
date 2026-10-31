@@ -19,8 +19,10 @@
 import { LINEUP } from './data.js';
 import { SPECS } from './specs.js';
 import { createVoices } from './voices.js';
+import { riseOver } from './handoff.js';
+import { sound } from './sound.js';
 
-const { gsap } = window;
+const { gsap, ScrollTrigger } = window;
 const IN = 0.0254;
 const N = LINEUP.length;
 const PLAY = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1.5v9l7.5-4.5z" fill="currentColor"/></svg>';
@@ -117,18 +119,18 @@ export async function buildSpotlight(section, { sheet, pick, current = () => 0, 
   arrive.observe(section);
 
   /* --- the sound. Off until a click: browsers only let sound start from one, and a page that plays on
-     its own is rude. A click on a name, the guitar, Hear or the sound button turns it on. */
+     its own is rude. A click on a name, the guitar, Hear, or either sound button turns it on. */
   const voices = createVoices();
   const soundBtn = $('[data-sound]', section), soundLabel = $('[data-sound-label]', section);
-  let soundOn = false, dwell = 0;
-  const setSound = (v) => {
-    soundOn = v;
+  let dwell = 0;
+  // this button and the header's are one switch (sound.js), and a click on a name turns it on
+  sound.subscribe((v) => {
     soundBtn.setAttribute('aria-pressed', String(v));
     soundLabel.textContent = v ? 'Sound on' : 'Sound off';
     if (!v) voices.stop();
-  };
-  const play = (i) => { if (!soundOn) { voices.unlock(); setSound(true); } show(i); voices.play(list[i].info.id).then(wake); };
-  soundBtn.addEventListener('click', () => { if (soundOn) setSound(false); else play(on); });
+  });
+  const play = (i) => { sound.set(true); show(i); voices.play(list[i].info.id).then(wake); };
+  soundBtn.addEventListener('click', () => { if (sound.on) sound.set(false); else play(on); });
   $('[data-play]', section).addEventListener('click', () => play(on));
   $('[data-go]', section).addEventListener('click', () => { voices.stop(); pick(on); });
 
@@ -140,13 +142,13 @@ export async function buildSpotlight(section, { sheet, pick, current = () => 0, 
       if (e.pointerType !== 'mouse') return;
       show(i);
       clearTimeout(dwell);
-      if (soundOn) dwell = setTimeout(() => { if (on === i && voices.playing !== list[i].info.id) play(i); }, 160);
+      if (sound.on) dwell = setTimeout(() => { if (on === i && voices.playing !== list[i].info.id) play(i); }, 160);
     });
     b.addEventListener('pointerleave', () => clearTimeout(dwell));
     b.addEventListener('focus', () => show(i));
     b.addEventListener('click', () => play(i));
   });
-  dots.forEach((d, i) => d.addEventListener('click', () => (soundOn ? play(i) : show(i))));
+  dots.forEach((d, i) => d.addEventListener('click', () => (sound.on ? play(i) : show(i))));
   const stage = $('.spot__imgs', section);
   stage.addEventListener('click', () => play(on));
   // a swipe across the guitar goes to the next or the one before
@@ -154,10 +156,10 @@ export async function buildSpotlight(section, { sheet, pick, current = () => 0, 
   stage.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; }, { passive: true });
   stage.addEventListener('touchend', (e) => {
     const dx = e.changedTouches[0].clientX - x0;
-    if (x0 !== null && Math.abs(dx) > 44) { const j = (on + (dx < 0 ? 1 : -1) + N) % N; soundOn ? play(j) : show(j); e.preventDefault(); }
+    if (x0 !== null && Math.abs(dx) > 44) { const j = (on + (dx < 0 ? 1 : -1) + N) % N; sound.on ? play(j) : show(j); e.preventDefault(); }
     x0 = null;
   });
-  // out of sight, out of hearing
+  // out of sight, out of hearing (the next section coming up over it counts: handoff.js, main.js)
   new IntersectionObserver(([e]) => { if (!e.isIntersecting) voices.stop(0.6); }, { threshold: 0.15 }).observe(section);
 
   /* --- the arch: the hero's halo behind the guitar, drawn here in 2D. At rest it is a still line of
@@ -172,7 +174,7 @@ export async function buildSpotlight(section, { sheet, pick, current = () => 0, 
     const sr = $('.spot__pin', section).getBoundingClientRect(), ir = stage.getBoundingClientRect();
     const dpr = Math.min(devicePixelRatio, 1.5);
     canvas.width = Math.round(sr.width * dpr); canvas.height = Math.round(sr.height * dpr);
-    box = { dpr, cx: ir.left - sr.left + ir.width / 2, cy: ir.top - sr.top + ir.height * 0.6, R: ir.height * 0.35 };
+    box = { dpr, cx: ir.left - sr.left + ir.width / 2, cy: ir.top - sr.top + ir.height * 0.6, R: ir.height * 0.33 };
   };
   function drawArch() {
     if (!box) size();
@@ -220,4 +222,11 @@ export async function buildSpotlight(section, { sheet, pick, current = () => 0, 
   // the colour follows the guitar: redraw the resting arch when it changes
   new MutationObserver(() => { if (visible && !running) drawArch(); }).observe(section, { attributes: true, attributeFilter: ['style'] });
   window.__voices = voices;            // for tools/voices_render.mjs and the console
+
+  // the sheet: it comes up over the bench, and holds a screen for How to order to come up over it
+  if (!reduced) {
+    riseOver(section, document.querySelector('#workshop'));
+    ScrollTrigger.create({ trigger: section, start: 'top top', end: () => `+=${Math.round(innerHeight)}`, pin: true, anticipatePin: 1 });
+  }
+  return { voices };
 }

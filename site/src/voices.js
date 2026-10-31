@@ -5,15 +5,17 @@
 // cabinet, and the room as a reverb. Rendered once per guitar on first play and kept.
 //
 //   const v = createVoices()
-//   v.play(id)      start a guitar's phrase (needs a user gesture before the first one, browser rules)
+//   v.play(id)      start a guitar's phrase (the sound has to be on: sound.js)
 //   v.stop()        fade out
 //   v.wave(out)     fills a Float32Array with what is playing now (for the halo), returns the level
 //   v.render(id)    the rendered AudioBuffer (tools use it to write the phrases to files)
 //
 // Everything that shapes a voice is in RIG and PHRASE below.
 
+import { sound } from './sound.js';
+
 const SR = 44100;
-const OPEN = [82.41, 110.0, 146.83, 196.0, 246.94, 329.63];      // E A D G B e, string 6 first
+export const OPEN = [82.41, 110.0, 146.83, 196.0, 246.94, 329.63];      // E A D G B e, string 6 first
 
 // The rig per guitar. pick, pickup: positions along the string (0 bridge, 0.5 middle). humbucker: two
 // coils side by side. s: how much each pass of the string loses its highs (0.5 dull, 0.1 bright).
@@ -79,10 +81,10 @@ const PHRASE = {
 };
 
 // a small seeded random, so a voice sounds the same every time it is rendered
-function rng(seed) { let s = seed >>> 0 || 1; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296) * 2 - 1; }
+export function rng(seed) { let s = seed >>> 0 || 1; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296) * 2 - 1; }
 
 /** One plucked string added into `out` (mono, the pickup's signal). */
-function pluck(out, at, freq, ring, vel, R, rand) {
+export function pluck(out, at, freq, ring, vel, R, rand) {
   const N = SR / freq, S = R.s;
   const L = Math.max(2, Math.floor(N - S - 0.05)), d = N - S - L;
   const C = (1 - d) / (1 + d);                                      // allpass: the fraction of a sample left
@@ -140,7 +142,7 @@ function dry(id) {
 }
 
 // the room: a stereo tail of noise that darkens as it fades
-function roomImpulse(ctx, seconds = 2.2) {
+export function roomImpulse(ctx, seconds = 2.2) {
   const n = Math.round(seconds * SR), ir = ctx.createBuffer(2, n, SR);
   for (let c = 0; c < 2; c++) {
     const d = ir.getChannelData(c), rand = rng(99 + c);
@@ -207,10 +209,10 @@ export function createVoices() {
   const buffer = (id) => cache.get(id) || cache.set(id, renderVoice(id)).get(id);
   const ensure = () => {
     if (ctx) return ctx;
-    ctx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: SR, latencyHint: 'interactive' });
+    ctx = sound.ctx();          // the one context, the one switch (sound.js)
     master = ctx.createGain(); master.gain.value = 0.8;
     analyser = ctx.createAnalyser(); analyser.fftSize = 2048; analyser.smoothingTimeConstant = 0.6;
-    master.connect(analyser); analyser.connect(ctx.destination);
+    master.connect(analyser); analyser.connect(sound.bus());
     return ctx;
   };
   const time = new Float32Array(2048);

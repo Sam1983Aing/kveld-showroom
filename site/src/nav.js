@@ -31,20 +31,21 @@ export function buildNav() {
       <i class="nv__finger" aria-hidden="true"></i>
       ${TABS.map(([k, t], i) => `<button type="button" data-nav="${k}" style="left:${x(i)}%; width:${x(i + 1) - x(i)}%"><span>${t}</span></button>`).join('')}
     </nav>
+    <button class="nv__sound" type="button" data-sound-switch aria-pressed="false" aria-label="Sound"><i class="spot__bars" aria-hidden="true"><b></b><b></b><b></b><b></b></i><span data-sound-word>Sound off</span></button>
     <button class="nv__book" type="button" data-nav="visit"><span>Book a visit</span>${ARROW}</button>`;
   document.body.prepend(head);
   const finger = $('.nv__finger', head), strs = $$('.nv__str', head), btns = $$('.nv__board button', head);
 
   // the strings shiver for a moment from where the finger lands: each one a fading wave
   let raf = 0;
-  const shiver = (cx) => {
+  const shiver = (cx, force = 1) => {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     cancelAnimationFrame(raf);
     const t0 = performance.now();
     const f = (now) => {
       const t = (now - t0) / 1000, a = Math.max(0, 1 - t / 0.9);
       strs.forEach((p, s) => {
-        const y = 3 + s * 3.6, amp = 1.3 * a * a * (1 - s * 0.08);
+        const y = 3 + s * 3.6, amp = 1.3 * force * a * a * (1 - s * 0.08);
         let d = `M0 ${y}`;
         for (let i = 1; i <= 40; i++) { const xx = i * 25, env = Math.exp(-Math.pow((xx - cx) / 260, 2)); d += `L${xx} ${(y + amp * env * Math.sin(xx * 0.09 - t * 70 + s)).toFixed(2)}`; }
         p.setAttribute('d', d);
@@ -63,6 +64,8 @@ export function buildNav() {
     if (!first) shiver(mid * 10);
     first = false;
   };
+  // pointing at a fret touches the strings there
+  btns.forEach((b, i) => b.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') shiver((x(i) + x(i + 1)) * 5, 0.45); }));
   at('room');
 
   return {

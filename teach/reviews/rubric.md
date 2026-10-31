@@ -17,6 +17,6 @@ Target from Sam: "reach close to 9.5 out of 10 for the final version". Every ite
 - type and spacing: distinct label size and tracking combinations read back from the DOM (`tools/type_audit.mjs`)
 - hover and focus: buttons and links with both states (`tools/type_audit.mjs`)
 - performance: 60 fps at 2x at 1725 x 990 in every part, no frame over 50 ms (`tools/perf.mjs`), GPU busy (`tools/gpu_busy.sh`)
-- sound: peak, RMS and loudness per section against Hear them's phrases (`tools/ambience_render.mjs`)
+- sound: peak, RMS and loudness per section against Hear them's phrases (`tools/record_sound.mjs`, `tools/sound_stats.py`)
 
 Scores are judgements. Never rounded up to reach the bar.
