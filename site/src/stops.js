@@ -25,13 +25,13 @@ export const STOPS = {
     },
     {
       id: 'nut', label: 'Nut', parts: ['Nut'], radius: 0.05, view: [0.5, -0.35, 1], roll: 6, turn: -20,
-      title: 'Bone, 1.650 in <em>across</em>.',
-      text: 'The strings cross it 0.282 in apart and open out to 0.425 at the bridge, the spacing on the original sheet.',
+      title: 'Bone, where the strings <em>begin</em>.',
+      text: 'A strip of bone at the end of the board. The strings leave it close together and open out toward the bridge, on the spacing the original sheet gives.',
     },
     {
       id: 'neck', label: 'Neck', parts: ['Frets'], aim: [0.5, 0.62, 1], radius: 0.085, view: [1, 0.34, 0.5], roll: -24, turn: -30, lens: 20,
-      title: 'Twenty-one frets, a <em>7.25</em> in radius.',
-      text: 'One piece of maple, no separate board. The radius on the drawing is rounder than most necks today and fills the hand.',
+      title: 'One piece of <em>maple</em>.',
+      text: 'No separate board: the frets go straight into the neck. It is rounder across than most necks made today, and it fills the hand.',
     },
     {
       id: 'pickups', label: 'Pickups', parts: ['NeckPickup', 'BridgePickup'], radius: 0.13, view: [0.34, 0.3, 1], roll: 4, turn: -8,
@@ -50,8 +50,8 @@ export const STOPS = {
     },
     {
       id: 'back', label: 'Back', parts: ['BackHardware'], aim: [0.5, 0.56, 0.5], radius: 0.22, view: [-0.9, -0.25, -0.6], roll: -4, turn: 205,
-      title: '1.75 in of <em>swamp ash</em>.',
-      text: 'Turned over: six ferrules where the strings come through, a four-bolt neck plate, and the eighth-inch edge radius that keeps a fifties slab feeling square.',
+      title: 'Ash, all the way <em>through</em>.',
+      text: 'Turned over: six ferrules where the strings come through, a four-bolt neck plate, and a tight edge that keeps a fifties slab feeling square.',
     },
   ],
   heath: [
@@ -62,13 +62,13 @@ export const STOPS = {
     },
     {
       id: 'nut', label: 'Nut', parts: ['Nut'], radius: 0.05, view: [0.5, -0.35, 1], roll: 6, turn: -20,
-      title: 'Bone, 1.650 in <em>across</em>.',
-      text: 'The 1962 neck: 25.5 in scale, a 7.25 in radius, the strings 0.282 in apart at the nut and 0.444 at the bridge.',
+      title: 'The neck of <em>1962</em>.',
+      text: 'Bare maple above the bone, a dark rosewood board below it. Heath takes its neck from the 1962 sheet, string spacing included.',
     },
     {
       id: 'neck', label: 'Neck', parts: ['Frets'], aim: [0.5, 0.62, 1], radius: 0.085, view: [1, 0.34, 0.5], roll: -24, turn: -18, lens: 20,
-      title: 'Twenty-one frets on <em>rosewood</em>.',
-      text: 'A slab of Indian rosewood glued flat onto a maple neck, the way the 1962 drawing has it, with KVELD\'s clay dots between the frets.',
+      title: 'Rosewood, glued <em>flat</em>.',
+      text: 'A slab board on a maple neck, as the drawing has it, with KVELD\'s clay dots between the frets.',
     },
     {
       id: 'pickups', label: 'Pickups', parts: ['NeckPickup', 'MiddlePickup', 'BridgePickup'], radius: 0.15, view: [0.34, 0.3, 1], roll: 4, turn: -8,
@@ -87,7 +87,7 @@ export const STOPS = {
     },
     {
       id: 'back', label: 'Back', parts: ['BackHardware'], aim: [0.5, 0.5, 0.5], radius: 0.26, view: [-0.9, -0.25, -0.6], roll: -4, turn: 205,
-      title: '1.75 in of <em>alder</em>, cut for comfort.',
+      title: 'Alder, cut for <em>comfort</em>.',
       text: 'Turned over: the belly cut, and through the edge the forearm contour from the front. Both leave 5/8 in at the rim, as the drawing does.',
     },
   ],
@@ -99,8 +99,8 @@ export const STOPS = {
     },
     {
       id: 'nut', label: 'Nut', parts: ['Nut'], radius: 0.05, view: [0.5, -0.35, 1], roll: 6, turn: -20,
-      title: 'Bone, 1.650 in <em>across</em>.',
-      text: 'The same Fender-pattern neck as Floe and Heath: 25.5 in scale, a 7.25 in radius, twenty-one frets.',
+      title: 'One neck, three <em>guitars</em>.',
+      text: 'Moss is built on the same neck pattern as Floe and Heath, down to the bone nut. What changes from one to the next is the body it is bolted to.',
     },
     {
       id: 'neck', label: 'Neck', parts: ['Frets'], aim: [0.5, 0.62, 1], radius: 0.085, view: [1, 0.34, 0.5], roll: -24, turn: -18, lens: 20,
@@ -125,7 +125,7 @@ export const STOPS = {
     {
       id: 'back', label: 'Back', parts: ['BackHardware'], aim: [0.5, 0.5, 0.5], radius: 0.26, view: [-0.55, -0.2, -1], roll: -4, turn: 205,
       title: 'The offset, <em>softened</em>.',
-      text: 'The treble waist filled out 7 mm and drawn up toward the bass one, both horns shortened. 1.75 in of alder in olive.',
+      text: 'The treble waist filled out 7 mm and drawn up toward the bass one, both horns shortened. Alder under an olive finish.',
     },
   ],
   scree: [
@@ -137,12 +137,12 @@ export const STOPS = {
     {
       id: 'nut', label: 'Nut', parts: ['Nut'], radius: 0.05, view: [0.5, -0.35, 1], roll: 6, turn: -20,
       title: 'Pitched back <em>13</em> degrees.',
-      text: 'The head leans back from the nut as the plans draw it, so the strings press down on 1.695 in of bone.',
+      text: 'The head leans back from the nut as the plans draw it, so the strings bear down hard on the bone.',
     },
     {
       id: 'neck', label: 'Neck', parts: ['Frets'], aim: [0.5, 0.62, 1], radius: 0.085, view: [1, 0.34, 0.5], roll: -24, turn: -18, lens: 20,
-      title: 'Twenty-two frets, <em>bound</em>.',
-      text: 'A rosewood board with cream binding, a 12 in radius and 24.75 in scale. The neck joins the body at the last fret.',
+      title: 'Bound in <em>cream</em>.',
+      text: 'A rosewood board with a cream edge from the nut to the body. The neck is glued in, not bolted, and meets the body at the last fret.',
     },
     {
       id: 'pickups', label: 'Pickups', parts: ['NeckPickup', 'BridgePickup'], radius: 0.13, view: [0.34, 0.3, 1], roll: 4, turn: -8,
@@ -162,7 +162,7 @@ export const STOPS = {
     {
       id: 'back', label: 'Back', parts: ['BackHardware'], aim: [0.5, 0.5, 0.5], radius: 0.26, view: [-0.55, -0.2, -1], roll: -4, turn: 190,
       title: 'Bevels kept, horns <em>blunted</em>.',
-      text: 'The edge bevels follow the drawn lines. The horns are rounded off and both waists filled out, so the twin horn reads as ours. 35 mm of mahogany under a slate stain.',
+      text: 'The edge bevels follow the drawn lines. The horns are rounded off and both waists filled out, so the twin horn reads as ours. The thinnest body of the seven, mahogany under a slate stain.',
     },
   ],
   fjord: [
@@ -173,8 +173,8 @@ export const STOPS = {
     },
     {
       id: 'nut', label: 'Nut', parts: ['Nut'], radius: 0.05, view: [0.5, -0.35, 1], roll: 6, turn: -60,
-      title: 'A 24.54 in <em>scale</em>.',
-      text: 'Not the 24.75 of the catalogue: measured off the frets on the drawing, the twelfth sits 12.27 in from this nut.',
+      title: 'Measured, not <em>quoted</em>.',
+      text: 'The catalogue gives this guitar a slightly longer scale than its own drawing does. We followed the frets as drawn, so the twelfth sits a touch closer to this nut.',
     },
     {
       id: 'neck', label: 'Neck', parts: ['Frets'], aim: [0.5, 0.62, 1], radius: 0.085, view: [1, 0.34, 0.5], roll: -24, turn: -18, lens: 20,
@@ -210,12 +210,12 @@ export const STOPS = {
     },
     {
       id: 'nut', label: 'Nut', parts: ['Nut'], radius: 0.05, view: [0.5, -0.35, 1], roll: 6, turn: -20,
-      title: '1.625 in, a <em>10</em> in radius.',
-      text: 'Narrower and flatter than the vintage necks: the numbers on the sheet, 25.5 in from this nut to the saddles.',
+      title: 'Narrower, and <em>flatter</em>.',
+      text: 'The narrowest nut of the seven, and a flatter board than the other bolt-on necks. Both come straight off the sheet.',
     },
     {
       id: 'neck', label: 'Neck', parts: ['Frets'], aim: [0.5, 0.62, 1], radius: 0.085, view: [1, 0.34, 0.5], roll: -24, turn: -18, lens: 20,
-      title: 'Twenty-two on <em>maple</em>.',
+      title: 'Maple on <em>maple</em>.',
       text: 'A maple board with black dots, the board ending just past the last fret where the neck drops into the body.',
     },
     {
@@ -248,12 +248,12 @@ export const STOPS = {
     {
       id: 'nut', label: 'Nut', parts: ['Nut'], radius: 0.05, view: [0.5, -0.35, 1], roll: 6, turn: -60,
       title: 'Bone over <em>mahogany</em>.',
-      text: 'A 1.695 in nut on a mahogany neck, the head leaning back 17 degrees behind it.',
+      text: 'The neck is mahogany under the cherry finish. Behind the nut the head leans back 17 degrees, faced in black.',
     },
     {
       id: 'neck', label: 'Neck', parts: ['Frets'], aim: [0.5, 0.62, 1], radius: 0.085, view: [1, 0.34, 0.5], roll: -24, turn: -18, lens: 20,
-      title: 'Bound rosewood, <em>24.75</em> in.',
-      text: 'Twenty-two frets inside cream binding, the neck pitched four degrees to clear the carved top.',
+      title: 'Tilted to clear the <em>carve</em>.',
+      text: 'Rosewood inside cream binding. The neck leans back four degrees from the body, so the strings clear the top where it rises.',
     },
     {
       id: 'pickups', label: 'Top', parts: ['NeckPickup', 'BridgePickup'], radius: 0.16, view: [0.34, 0.3, 1], roll: 4, turn: -8,
@@ -273,7 +273,7 @@ export const STOPS = {
     {
       id: 'back', label: 'Back', parts: ['BackHardware'], aim: [0.5, 0.5, 0.5], radius: 0.3, view: [-0.55, -0.2, -1], roll: -4, turn: 182,
       title: 'Cherry over <em>mahogany</em>.',
-      text: 'Under 3/16 in of maple at the rim, 1.845 in of mahogany, as the side view draws it. The cutaway horn is ours: 9 mm shorter and rounder.',
+      text: 'A maple cap over a deep slab of mahogany, as the side view draws it. The cutaway horn is ours: 9 mm shorter and rounder.',
     },
   ],
 };
