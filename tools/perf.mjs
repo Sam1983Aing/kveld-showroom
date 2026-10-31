@@ -7,12 +7,10 @@
 // Frame times are requestAnimationFrame ticks: once the room rests (nothing moving, see idleTime in
 // showroom.js) it stops drawing and the ticks say 60 whatever the cost. For heat and the fan, read the
 // GPU's own counter with tools/gpu_busy.sh while the page is open.
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const { chromium } = require('playwright-core');
+import { openChrome } from './chrome.mjs';
 const [size = '1725x990', dprArg = '2'] = process.argv.slice(2);
 const [w, h] = size.split('x').map(Number), dpr = +dprArg;
-const browser = await chromium.launch({ headless: !process.env.HEADFUL, executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', args: ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'] });
+const { browser, close } = await openChrome({ timeout: 300000, headful: !!process.env.HEADFUL });
 const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: dpr });
 const page = await ctx.newPage();
 const errs = []; page.on('pageerror', (e) => errs.push(e.message));
@@ -58,10 +56,16 @@ res['View guitar at rest'] = await frames(3000);
 res['View guitar, changing guitar'] = await frames(2400, "document.querySelector('[data-cu-next]').click()");
 await page.evaluate(() => document.querySelector('[data-back]').click()); await page.waitForTimeout(2200);
 await page.evaluate(() => { const y = document.querySelector('#guitars').getBoundingClientRect().top + scrollY; window.__lenis.scrollTo(y, { immediate: true, force: true }); }); await page.waitForTimeout(1500);
+// the bench: its second renderer, while the scroll runs through it
+const pin = (id) => page.evaluate((id) => { const s = window.ScrollTrigger.getAll().find((x) => x.pin && x.trigger.id === id); return s ? [s.start, s.end] : null; }, id);
+const bench = await pin('workshop');
+if (bench) { await page.evaluate((y) => window.__lenis.scrollTo(y, { immediate: true, force: true }), bench[0]); await page.waitForTimeout(800); res['the bench (scrolling through it)'] = await frames(5000, `window.__lenis.scrollTo(${bench[1]}, { duration: 4.6, easing: (t) => t })`); }
 res['section 02'] = await frames(2500, "document.querySelectorAll('.spot__names li button')[4].dispatchEvent(new PointerEvent('pointerenter',{pointerType:'mouse'}))");
+const slip = (await pin('order')) || await page.evaluate(() => { const s = window.ScrollTrigger.getAll().find((x) => x.pin && x.trigger.classList.contains('order__pin')); return s ? [s.start, s.end] : null; });
+if (slip) { await page.evaluate((y) => window.__lenis.scrollTo(y, { immediate: true, force: true }), slip[0]); await page.waitForTimeout(800); res['how to order (scrolling through it)'] = await frames(3500, `window.__lenis.scrollTo(${slip[1]}, { duration: 3.2, easing: (t) => t })`); }
 await page.evaluate(() => window.__lenis.scrollTo('#visit', { immediate: true, force: true })); await page.waitForTimeout(2000);
 res['footer'] = await frames(3000);
 const mem = await page.evaluate(() => performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1e6) : null);
-if (process.env.COMPACT) { const f = Object.entries(res).map(([k, v]) => `    ${k.padEnd(40)} ${String(v.fps).padStart(3)} fps   p95 ${String(v.p95).padStart(3)} ms   worst ${String(v.worst).padStart(3)} ms   frames over 50 ms: ${v.over50}`).join('\n'); console.log(`== ${process.env.HEADFUL ? 'real window' : 'headless'} ${size} @${dpr}x, canvas ${info.canvas}\n  first guitar on screen ${firstShown} ms, all seven ready ${allReady} ms, ${load.totalMB} MB in ${load.requests} requests (${load.beforeFirstGuitarMB} MB before the first guitar)\n  models done (ms): ${load.glbDone.map(([n, t]) => n.replace('.glb', '') + ' ' + t).join(', ')}\n  long tasks over 200 ms in the first 40 s: ${longs.filter(([, d]) => d > 200).map(([s, d]) => d + ' ms at ' + (s / 1000).toFixed(1) + ' s').join(', ')}\n  one frame: ${info.calls} draw calls, ${(info.triangles / 1e6).toFixed(2)} M triangles, ${info.geometries} geometries, ${info.textures} textures, ${info.programs} shader programs, JS heap ${mem} MB\n${f}\n  errors: ${errs.length ? errs.join(' | ') : 'none'}`); await browser.close(); process.exit(0); }
+if (process.env.COMPACT) { const f = Object.entries(res).map(([k, v]) => `    ${k.padEnd(40)} ${String(v.fps).padStart(3)} fps   p95 ${String(v.p95).padStart(3)} ms   worst ${String(v.worst).padStart(3)} ms   frames over 50 ms: ${v.over50}`).join('\n'); console.log(`== ${process.env.HEADFUL ? 'real window' : 'headless'} ${size} @${dpr}x, canvas ${info.canvas}\n  first guitar on screen ${firstShown} ms, all seven ready ${allReady} ms, ${load.totalMB} MB in ${load.requests} requests (${load.beforeFirstGuitarMB} MB before the first guitar)\n  models done (ms): ${load.glbDone.map(([n, t]) => n.replace('.glb', '') + ' ' + t).join(', ')}\n  long tasks over 200 ms in the first 40 s: ${longs.filter(([, d]) => d > 200).map(([s, d]) => d + ' ms at ' + (s / 1000).toFixed(1) + ' s').join(', ')}\n  one frame: ${info.calls} draw calls, ${(info.triangles / 1e6).toFixed(2)} M triangles, ${info.geometries} geometries, ${info.textures} textures, ${info.programs} shader programs, JS heap ${mem} MB\n${f}\n  errors: ${errs.length ? errs.join(' | ') : 'none'}`); close(); process.exit(0); }
 console.log(JSON.stringify({ mode: `${process.env.HEADFUL ? 'real window' : 'headless'} ${size} @${dpr}x`, firstGuitarShownMs: firstShown, allSevenReadyMs: allReady, load, longTasksFirst40s: longs, info, jsHeapMB: mem, frames: res, errors: errs.slice(0, 3) }, null, 1));
-await browser.close();
+close(); process.exit(0);
