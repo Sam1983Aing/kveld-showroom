@@ -6,6 +6,7 @@
 // (The two options that were not picked, Open Strings and The Ticket, are under the tag
 // alt/unpicked-options with ?footer=strings and ?footer=ticket.)
 import { LINEUP } from './data.js';
+import { riseOver } from './handoff.js';
 
 const { gsap, ScrollTrigger } = window;
 const $ = (s, r = document) => r.querySelector(s);
@@ -15,14 +16,19 @@ const lines = (...l) => l.map((t) => `<span class="ft__l"><span>${t}</span></spa
 // The picture: tools/room_still.mjs, taken with this guitar in front (FLOOR=0.6 for a quiet floor).
 // `dust` is the part of it the dust lives in, as fractions of the picture: the light and the guitar under it.
 const STILL = { src: 'assets/shots/room-wide.jpg', front: 'moss' };
-// KVELD is a concept: the hours are invented and the links have nowhere to go yet.
-const link = (t) => `<a href="#visit">${t}${ARROW}</a>`;
+// KVELD is a concept, so no address here reaches anyone yet. When there is one, these are the only lines to
+// change: email, text and the social pages. A page with no address yet says so when it is pressed, rather
+// than sending you to the top of the footer.
+const CONTACT = { email: 'room@kveld.example', text: 'sms:+4700000000', instagram: '', youtube: '' };
+const BOOK = `mailto:${CONTACT.email}?subject=${encodeURIComponent('An hour in the room')}`;
+const link = (t, href) => (href ? `<a href="${href}">${t}</a>` : `<a href="#" data-soon>${t}<span class="ftl__soon" aria-live="polite"></span></a>`);
 const INFO = [
-  ['The room', ['KVELD Room 01', 'Halden, Norway', '59.1244° N, 11.3875° E']],
-  ['Hours', ['Thursday to Saturday', '11:00 to 18:00', 'By appointment']],
-  ['Need info?', [link('Send us a text'), link('Email the workshop')]],
-  ['Follow', [link('Instagram'), link('YouTube')]],
+  ['The room', 'Room 01, Halden', 'Norway · 59.1244° N, 11.3875° E'],
+  ['Open', 'Thursday to Saturday', '11:00 to 18:00, by appointment'],
+  ['Write', link('Email the workshop', `mailto:${CONTACT.email}`), link('or send us a text', CONTACT.text)],
+  ['Follow', `${link('Instagram', CONTACT.instagram)}, ${link('YouTube', CONTACT.youtube)}`, 'Pictures from the bench, every Friday'],
 ];
+const UP = '<svg viewBox="0 0 10 24" aria-hidden="true"><path d="M5 24V2M1 6l4-4 4 4" fill="none" stroke="currentColor"/></svg>';
 
 function arrive(section) {
   ScrollTrigger.create({ trigger: section, start: 'top 68%', once: true, onEnter: () => section.classList.add('is-in') });
@@ -99,7 +105,7 @@ function dust(canvas, section, hex, reduced) {
 }
 
 /** Build the footer into the section (it replaces the plain markup the page ships with). */
-export function buildFooter(section, { reduced = false } = {}) {
+export function buildFooter(section, { reduced = false, toRoom, prev } = {}) {
   const front = LINEUP.find((g) => g.id === STILL.front) || LINEUP[0];
   section.classList.add('ft', 'ft-light');
   // the footer takes the colour of the guitar in its picture, whichever one the room was left on
@@ -117,17 +123,28 @@ export function buildFooter(section, { reduced = false } = {}) {
         <p class="eyebrow ft__up">04 · Visit</p>
         <h2 class="ftl__h2">${lines('Come and hear', 'them <em>played</em>.')}</h2>
       </div>
-      <a class="ft__cta ft__up" href="#room" style="--d: 2"><span>Book the room</span>${ARROW}</a>
+      <a class="ft__cta ft__up" href="${BOOK}" style="--d: 2"><span>Book the room</span>${ARROW}</a>
     </div>
-    <div class="ftl__info">${INFO.map(([k, rows], i) => `
-      <div class="ft__up" style="--d: ${3 + i}"><h3>${k}</h3><ul>${rows.map((t) => `<li>${t}</li>`).join('')}</ul></div>`).join('')}
+    <div class="ftl__info">${INFO.map(([k, line, dim], i) => `
+      <div class="ftl__col ft__up" style="--d: ${3 + i}"><h3>${k}</h3><p class="ftl__line">${line}</p><p class="ftl__dim">${dim}</p></div>`).join('')}
     </div>
-    <div class="ftl__base ft__up" style="--d: 7"><p>© 2026 KVELD · Concept study</p><a href="#room">Back to the room</a></div>`;
+    <div class="ftl__base ft__up" style="--d: 7"><p>© 2026 KVELD · Concept study</p><button type="button" data-to-room><span>Back to the room</span>${UP}</button></div>`;
+  section.querySelector('[data-to-room]').addEventListener('click', () => toRoom?.());
+  section.querySelectorAll('[data-soon]').forEach((a) => a.addEventListener('click', (e) => {
+    e.preventDefault();
+    a.lastElementChild.textContent = 'Not yet';
+    a.classList.add('is-soon');
+    clearTimeout(a._t); a._t = setTimeout(() => a.classList.remove('is-soon'), 1800);
+  }));
   const pic = $('.ftl__pic', section);
   // the room is dark and close when the footer first shows, and opens up as it fills the screen
+  const state = { lit: 0 };
   gsap.fromTo(pic, { '--zoom': 1.2, '--lit': 0.2 }, { '--zoom': 1, '--lit': 1.25, ease: 'none',
-    scrollTrigger: { trigger: section, start: 'top 90%', end: 'bottom bottom', scrub: 1 } });
+    scrollTrigger: { trigger: section, start: 'top 90%', end: 'bottom bottom', scrub: 1, onUpdate: (st) => { state.lit = st.progress; } } });
+  // it comes up over How to order like the sections before it (phones have no pin there, and just overlap)
+  if (!reduced) ScrollTrigger.matchMedia({ '(min-width: 901px)': () => { riseOver(section, prev); } });
   dust($('.ftl__dust', section), section, front.colour, reduced);
   magnet($('.ft__cta', section));
   arrive(section);
+  return { state };
 }
