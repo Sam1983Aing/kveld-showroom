@@ -352,12 +352,12 @@ export async function createWorkshop(section, { room, reduced, nextFrame = async
     const neckBlankB = neckB.clone(); neckBlankB.max.z = Math.min(neckBlankB.max.z, bodyB.min.z + 0.02);
     const blanks = [blank(bodyB, 0.03), blank(neckBlankB, 0.012)];
     // the saw line: a thin strip of light across the blanks at the cut
-    const saw = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffd9a8').multiplyScalar(2.2), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    const saw = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffd9a8').multiplyScalar(1.5), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     saw.rotation.x = -Math.PI / 2;
     holder.add(saw);
     blanks.push(saw);
     // a soft glow either side of the line
-    const glow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: glowTexture(), color: new THREE.Color('#ffb36b').multiplyScalar(1.4), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    const glow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: glowTexture(), color: new THREE.Color('#ffb36b').multiplyScalar(0.75), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     glow.rotation.x = -Math.PI / 2;
     holder.add(glow);
     blanks.push(glow);
@@ -389,7 +389,7 @@ export async function createWorkshop(section, { room, reduced, nextFrame = async
     fin.uAxis.value.set(0, 0, -1).applyQuaternion(holder.quaternion);
     cut.normal.copy(fin.uAxis.value);
     // the picture sits right of the words on a wide screen
-    camera.setViewOffset(w, h, portrait ? 0 : -w * 0.13, portrait ? h * 0.09 : 0, w, h);
+    camera.setViewOffset(w, h, portrait ? 0 : -w * 0.13, portrait ? h * 0.07 : 0, w, h);
     dirty = true;
   }
 
@@ -447,7 +447,7 @@ export async function createWorkshop(section, { room, reduced, nextFrame = async
     }
     // camera: from straight above (the tour's last shot) to three quarters, slowly, as it fills out
     const tilt = smooth(0.3, 0.97, p);
-    const span = portrait ? (L + 0.05) / 0.5 : (L + 0.1) / 0.5;
+    const span = portrait ? (L + 0.05) / 0.46 : (L + 0.1) / 0.5;
     const dist = span / 2 / Math.tan((camera.fov * Math.PI) / 360) / (portrait ? 1 : camera.aspect) * 0.98;
     const above = V(0, dist, 0.001), side = portrait ? V(0.22, 0.95, 0.9).normalize().multiplyScalar(dist * 0.9) : V(-0.32, 0.7, 0.95).normalize().multiplyScalar(dist * 0.74);
     camera.position.copy(above).lerp(side, tilt).setLength(dist * (1 - 0.24 * tilt));

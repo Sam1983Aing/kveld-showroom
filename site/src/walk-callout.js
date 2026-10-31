@@ -33,7 +33,7 @@ function callout(box) {
     <div class="wo__ruler" aria-hidden="true"><p class="wo__rk" data-rk></p><i class="wo__rline"><b data-rfill></b></i><ol data-ticks></ol><span class="wo__rnow" data-rnow></span></div>`;
   const el = { copy: $('[data-copy]', box), no: $('[data-no]', box), label: $('[data-label]', box), title: $('[data-title]', box), text: $('[data-text]', box),
     lead: $('[data-lead]', box), ring: $('.wo__ring', box), dot: $('.wo__dot', box), ticks: $('[data-ticks]', box), fill: $('[data-rfill]', box), now: $('[data-rnow]', box), rk: $('[data-rk]', box) };
-  let at = -2, side = 1, forGuitar = '';
+  let at = -2, side = 1, sideFor = -2, forGuitar = '';
   return {
     frame(W, ctx) {
       // the ruler: one tick per stop, evenly down it in the tour's order
@@ -63,7 +63,8 @@ function callout(box) {
       if (!a) return;
       const vw = box.clientWidth, vh = box.clientHeight, phone = vw < 900;
       const cw = el.copy.offsetWidth, chh = el.copy.offsetHeight, gap = Math.min(vw * 0.12, 200), clear = vw - 190;   // clear: the left of the ruler's words
-      if (c0 < 0.3) side = a[0] + gap + cw > clear || (a[0] > vw * 0.5 && a[0] - gap - cw > 24) ? -1 : 1;
+      // (and again when the stop changes under full words: reduced motion cuts from stop to stop)
+      if (c0 < 0.3 || sideFor !== W.stop) { sideFor = W.stop; side = a[0] + gap + cw > clear || (a[0] > vw * 0.5 && a[0] - gap - cw > 24) ? -1 : 1; }
       let x = phone ? 20 : a[0] + side * gap - (side < 0 ? cw : 0);
       x = phone ? x : Math.min(Math.max(x, 24), clear - cw);
       const y = phone ? vh - chh - 110 : Math.min(Math.max(a[1] - chh * 0.5 - vh * 0.08, 90), vh - chh - 120);

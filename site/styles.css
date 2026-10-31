@@ -85,8 +85,8 @@ h1 em, h2 em, h3 em, .spot__claim em, .closeup__claim em { white-space: nowrap; 
   filter: drop-shadow(0 0 6px var(--accent)) drop-shadow(0 0 22px var(--accent)); }
 .loader__tip { fill: #fff; opacity: 0; filter: drop-shadow(0 0 8px var(--accent)) drop-shadow(0 0 20px var(--accent)); }
 .loader__in { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 16px; }
-.loader__mark { margin: 0; font: expanded 700 15px var(--serif); letter-spacing: 0.5em; padding-left: 0.5em; color: var(--text); }
-.loader__count { margin: 0; font: 400 10px var(--sans); letter-spacing: 0.3em; color: var(--text); font-variant-numeric: tabular-nums; }
+.loader__mark { margin: 0; font: expanded 700 clamp(15px, 1.15vw, 20px) var(--serif); letter-spacing: 0.5em; padding-left: 0.5em; color: var(--text); }
+.loader__count { margin: 0; font: 400 var(--t-label) var(--sans); letter-spacing: 0.3em; color: var(--text); font-variant-numeric: tabular-nums; }
 
 /* ---------------------------------------------------------------- header */
 /* The Fretboard (nav.js): the headstock as the logo, the sections as frets along a neck across the top,
@@ -248,13 +248,13 @@ h1 em, h2 em, h3 em, .spot__claim em, .closeup__claim em { white-space: nowrap; 
 }
 
 .room__scroll {
-  position: absolute; right: var(--gutter); bottom: 2.6vh; text-shadow: 0 0 10px rgba(5, 4, 4, 0.95), 0 1px 2px rgba(5, 4, 4, 0.8);
+  position: absolute; right: var(--gutter); top: 42vh; writing-mode: vertical-rl; text-shadow: 0 0 10px rgba(5, 4, 4, 0.95), 0 1px 2px rgba(5, 4, 4, 0.8);   /* up the right edge, clear of the plinth's ring */
   display: flex; align-items: center; gap: 14px; text-decoration: none;
   font: 400 var(--t-label) var(--sans); letter-spacing: var(--tr); text-transform: uppercase; color: #b5ad9f;
 }
-.room__scroll i { display: block; width: 44px; height: 1px; background: var(--line); position: relative; overflow: hidden; }
+.room__scroll i { display: block; width: 1px; height: 54px; background: rgba(237, 230, 218, 0.28); position: relative; overflow: hidden; }
 .room__scroll i::after { content: ''; position: absolute; inset: 0; background: var(--accent); animation: cue 2.6s var(--ease) infinite; }
-@keyframes cue { 0% { transform: translateX(-100%); } 60%, 100% { transform: translateX(100%); } }
+@keyframes cue { 0% { transform: translateY(-100%); } 60%, 100% { transform: translateY(100%); } }
 
 /* the walk (scroll sequence) */
 .walk { position: absolute; inset: 0; pointer-events: none; visibility: hidden; }
@@ -276,16 +276,16 @@ h1 em, h2 em, h3 em, .spot__claim em, .closeup__claim em { white-space: nowrap; 
 .wo__lead path { fill: none; stroke: var(--accent); stroke-width: 1; filter: drop-shadow(0 0 4px var(--accent)); }
 .wo__ring { fill: none; stroke: var(--accent); stroke-width: 1; }
 .wo__dot { fill: var(--accent); filter: drop-shadow(0 0 6px var(--accent)); }
-.wo__ruler { position: absolute; right: var(--gutter); top: 16vh; bottom: 14vh; width: 120px; }
+.wo__ruler { position: absolute; right: var(--gutter); top: max(16vh, 112px); bottom: 14vh; width: 120px; }
 .wo::before { content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 220px; background: linear-gradient(270deg, rgba(5, 4, 4, 0.62), rgba(5, 4, 4, 0)); pointer-events: none; }
-.wo__rk { position: absolute; right: 0; top: -40px; margin: 0; font: 400 var(--t-label) var(--sans); letter-spacing: var(--tr); text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.wo__rk { position: absolute; right: 0; top: -32px; margin: 0; text-shadow: 0 0 6px rgba(5, 4, 4, 1), 0 0 12px rgba(5, 4, 4, 0.9); font: 400 var(--t-label) var(--sans); letter-spacing: var(--tr); text-transform: uppercase; color: var(--muted); white-space: nowrap; }
 .wo__rline { position: absolute; right: 0; top: 0; bottom: 0; width: 1px; background: rgba(237, 230, 218, 0.16); }
 .wo__rline b { position: absolute; inset: 0; background: var(--accent); transform: scaleY(0); transform-origin: top; box-shadow: 0 0 8px var(--accent); }
 .wo__ruler ol { list-style: none; margin: 0; padding: 0; }
 .wo__ruler li { position: absolute; right: 0; display: flex; align-items: center; gap: 10px; translate: 0 -50%; }
 .wo__ruler li::after { content: ''; width: 12px; height: 1px; background: rgba(237, 230, 218, 0.4); }
-.wo__ruler li span { font: 400 var(--t-tiny) var(--sans); letter-spacing: var(--tr); text-transform: uppercase; color: rgba(237, 230, 218, 0.42); transition: color 0.6s var(--ease); text-shadow: 0 0 6px rgba(5, 4, 4, 0.95), 0 0 14px rgba(5, 4, 4, 0.8); }   /* readable over pale wood too */
-.wo__ruler li.is-done span { color: rgba(237, 230, 218, 0.6); }
+.wo__ruler li span { font: 400 var(--t-tiny) var(--sans); letter-spacing: var(--tr); text-transform: uppercase; color: rgba(237, 230, 218, 0.72); transition: color 0.6s var(--ease); text-shadow: 0 0 5px rgba(5, 4, 4, 1), 0 0 12px rgba(5, 4, 4, 0.95), 0 1px 2px rgba(5, 4, 4, 0.9); }   /* readable over pale wood too */
+.wo__ruler li.is-done span { color: rgba(237, 230, 218, 0.82); }
 .wo__ruler li.is-on span { color: var(--text); }
 .wo__ruler li.is-on::after { width: 22px; background: var(--accent); }
 .wo__rnow { position: absolute; right: -4px; width: 9px; height: 9px; border-radius: 50%; translate: 0 -50%; background: var(--accent); box-shadow: 0 0 12px var(--accent), 0 0 30px var(--accent); }
@@ -386,7 +386,7 @@ h1 em, h2 em, h3 em, .spot__claim em, .closeup__claim em { white-space: nowrap; 
 .specs li { display: grid; grid-template-columns: 2.4rem 1fr auto; align-items: baseline; gap: 12px; padding: 18px 0; border-top: 1px solid var(--line-ink); }
 .specs .n { font: 400 var(--t-label) var(--sans); letter-spacing: var(--tr); color: var(--accent-ink); }
 .specs .k { font: 400 var(--t-label) var(--sans); letter-spacing: var(--tr); text-transform: uppercase; color: var(--muted-ink); }
-.specs .v { font: expanded 700 13px var(--serif); text-align: right; font-variant-numeric: lining-nums tabular-nums; letter-spacing: -0.01em; }
+.specs .v { font: expanded 700 var(--d-small) var(--serif); text-align: right; font-variant-numeric: lining-nums tabular-nums; letter-spacing: -0.01em; }
 
 /* the drawing chapter's words (draft-name.js): two inked headlines bottom left, the guitar's name bottom
    right in the same band, traced in with the plan and lifting off with the guitar */
@@ -433,7 +433,8 @@ h1 em, h2 em, h3 em, .spot__claim em, .closeup__claim em { white-space: nowrap; 
 .spot { z-index: 4; overflow: hidden; }
 .order { z-index: 5; }
 .visit { z-index: 6; }
-.is-under > .shop__frame, .is-under > .spot__pin, .is-under > .order__pin { transform-origin: 50% 42%; transform: scale(calc(1 - 0.05 * var(--sink, 0))); filter: brightness(calc(1 - 0.55 * var(--sink, 0))); }
+.is-under > .shop__frame, .is-under > .spot__pin, .is-under > .order__pin { transform-origin: 50% 42%; transform: scale(calc(1 - 0.05 * var(--sink, 0))); }
+.is-under > .shop__frame, .is-under > .spot__pin, .order.is-under { filter: brightness(calc(1 - 0.55 * var(--sink, 0))); }   /* the paper goes down with the slip, not only the slip */
 .shop__frame { position: absolute; inset: 0; }
 
 /* the words: the head, one stage, the week counter, the rail */
@@ -659,6 +660,7 @@ h1 em, h2 em, h3 em, .spot__claim em, .closeup__claim em { white-space: nowrap; 
 .slip__for b { font-weight: 400; color: #1a1612; }
 .slip__stamp { position: absolute; right: 0; top: 50%; margin-top: -19px; padding: 9px 14px 8px; border: 2px solid var(--ord); border-radius: 4px; color: var(--ord); background: #f8f4ec; font: expanded 700 clamp(11px, 0.8vw, 13px) var(--serif); letter-spacing: -0.01em; text-transform: uppercase; opacity: 0; }
 /* short windows: the sheet tightens so all of it fits on the one view */
+@media (max-width: 1240px) and (max-height: 680px) and (min-width: 901px) { .room__lede { display: none; } }
 @media (max-height: 680px) and (min-width: 901px) {
   .slip__meta { display: none; }
   .order__small { display: none; }
@@ -734,7 +736,7 @@ h1 em, h2 em, h3 em, .spot__claim em, .closeup__claim em { white-space: nowrap; 
 .ftl__info a.is-soon .ftl__soon { opacity: 1; }
 @media (hover: hover) { .ftl__info a:hover { color: var(--accent); background-size: 100% 1px; text-shadow: 0 0 14px color-mix(in srgb, var(--accent) 60%, transparent); } }
 .ftl__base { position: relative; margin: 0 var(--gutter); padding: 0 0 clamp(14px, 2.6vh, 28px); display: flex; align-items: baseline; justify-content: space-between; gap: 4vw;
-  font: 400 var(--t-label) var(--sans); letter-spacing: var(--tr); text-transform: uppercase; color: #8c857a; }
+  font: 400 var(--t-label) var(--sans); letter-spacing: var(--tr); text-transform: uppercase; color: #a09889; }
 .ftl__base p { margin: 0; }
 .ftl__base button { color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; display: inline-flex; align-items: center; gap: 10px; transition: color var(--h) var(--ease), gap var(--h) var(--ease); }
 .ftl__base button svg { width: 8px; height: 16px; transition: translate var(--h) var(--ease); }
@@ -867,7 +869,7 @@ html.has-cursor, html.has-cursor * { cursor: none !important; }
   .spot__imgs { top: 26vh; height: 47vh; width: 100%; }
   .spot__plan { left: 30%; top: 25vh; height: 49vh; }
   .spot__halo { left: 10%; top: 22%; width: 80%; height: 54%; }
-  .spot__num { top: 31vh; font-size: 11vh; }
+  .spot__num { top: 33vh; font-size: 8vh; opacity: 0.7; }
   .spot__sheet { left: var(--gutter); right: var(--gutter); bottom: 4vh; width: auto; }
   .spot__claim { display: none; }
   .spot__facts { margin-top: 0; }
