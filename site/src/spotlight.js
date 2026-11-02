@@ -17,7 +17,7 @@
 // is plotted from assets/data/<id>.json with frames.json, which says where a
 // front still sits in the guitar's own frame. Words and prices: specs.js.
 import { LINEUP } from './data.js';
-import { asset, json } from './base.js';
+import { asset, json, quietImages } from './base.js';
 import { SPECS } from './specs.js';
 import { createVoices } from './voices.js';
 import { riseOver } from './handoff.js';
@@ -79,6 +79,7 @@ export async function buildSpotlight(section, { sheet, pick, current = () => 0, 
       </div>
     </div>`;
 
+  quietImages(section);
   const names = $('.spot__names', section);
   const rows = $$('li', names), imgs = $$('.spot__imgs img', section), dots = $$('.spot__dots button', section);
   const el = { num: $('[data-num]', section), plan: $('[data-plan]', section), after: $('[data-after]', section), claim: $('[data-claim]', section),

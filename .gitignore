@@ -30,3 +30,5 @@ demo/qa/*.wav
 demo/qa/*.mp4
 demo/qa/*.json
 demo/v7/final/
+standalone/hosted/
+standalone/hosted.json

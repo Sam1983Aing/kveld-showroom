@@ -6,7 +6,7 @@
 // (The two options that were not picked, Open Strings and The Ticket, are under the tag
 // alt/unpicked-options with ?footer=strings and ?footer=ticket.)
 import { LINEUP } from './data.js';
-import { asset } from './base.js';
+import { asset, quietImages } from './base.js';
 import { riseOver } from './handoff.js';
 
 const { gsap, ScrollTrigger } = window;
@@ -130,6 +130,7 @@ export function buildFooter(section, { reduced = false, toRoom, prev } = {}) {
       <div class="ftl__col ft__up" style="--d: ${3 + i}"><h3>${k}</h3><p class="ftl__line">${line}</p><p class="ftl__dim">${dim}</p></div>`).join('')}
     </div>
     <div class="ftl__base ft__up" style="--d: 7"><p>© 2026 KVELD · Concept study</p><button type="button" data-to-room><span>Back to the room</span>${UP}</button></div>`;
+  quietImages(section);
   section.querySelector('[data-to-room]').addEventListener('click', () => toRoom?.());
   section.querySelectorAll('[data-soon]').forEach((a) => a.addEventListener('click', (e) => {
     e.preventDefault();

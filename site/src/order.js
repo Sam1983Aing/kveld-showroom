@@ -11,7 +11,7 @@
 // Phones: no pin, the slip fills as it scrolls past. Reduced motion: the slip is filled in.
 // The terms (deposit, delivery, the Friday pictures) are invented, like the maker. Styles: "03 · how to order".
 import { LINEUP } from './data.js';
-import { asset, json } from './base.js';
+import { asset, json, quietImages } from './base.js';
 import { SPECS } from './specs.js';
 import { riseOver } from './handoff.js';
 
@@ -58,6 +58,7 @@ function plotPlan(svg, D, flat, F, id) {
   const wrap = el('g', { 'clip-path': `url(#${clipId})` }, svg);
   G.img = el('image', { href: asset(`assets/shots/${id}-front.webp`), width: F.w, height: F.h, class: 'pl-img',
     transform: flat ? `matrix(0 ${1 / k} ${-1 / k} 0 ${top} ${-F.w / (2 * k)})` : `matrix(${1 / k} 0 0 ${1 / k} ${-F.w / (2 * k)} ${-top})` }, wrap);
+  quietImages(wrap);
   const strokes = (cls) => { const g = el('g', { class: cls }, svg); g.items = []; return g; };
   const add = (g, tag, attrs) => { const e = el(tag, { ...attrs, pathLength: 1 }, g); g.items.push(e); return e; };
   G.parts = strokes('pl-2');

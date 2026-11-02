@@ -6,3 +6,9 @@ export const asset = (path) => BASE + path;
 export const json = (path) => (window.KVELD_DATA?.[path]
   ? Promise.resolve(window.KVELD_DATA[path])
   : fetch(asset(path)).then((r) => r.json()));
+
+// a picture that doesn't arrive hides itself, so whatever sits behind it (the plan, the ink, the glow)
+// shows instead of a broken-image mark
+export const quietImages = (root) => root.querySelectorAll('img, image').forEach((im) => {
+  im.addEventListener('error', () => { im.style.display = 'none'; }, { once: true });
+});
