@@ -89,3 +89,6 @@ Running table for 009 Guitars (KVELD). Started with the V6 session. For earlier 
 | 11-01 | Jump home leaves nothing behind: card, header and pointer colours, focus ring | Sam (found it, asked for the root cause) | Sam | Fixed, `tools/jump_check.mjs` guards it |
 | 11-02 | The arch fades out instead of stopping, the particles move more | Sam | Sam | Three options built behind ?glow= |
 | 11-02 | Glow options: Long Fade, Ember Run, Corona | Claude | Waiting for Sam's pick | Built |
+| 11-02 | Hero arch: Long Fade | Claude (options) | Sam | Built for good |
+| 11-02 | Hear them's arch, the loader and the footer picture fade the same way | Claude | Not reviewed yet | Built |
+| 11-02 | Idle hero: a third of the frames, rest after 45 s, so the motes don't hold the GPU at 62% | Claude (measured) | Not reviewed yet | Built, his to change |

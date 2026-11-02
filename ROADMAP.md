@@ -543,3 +543,6 @@ reads as a copy. Full brief, sources and specs: `BRIEF-session-5.md`.
 - 2026-11-01, V7: jumps home clean (the tour card's explicit `visible`, `draft.paperNow` as the one live answer for
   the header and the pointer, focus released after a pointer click). `node tools/jump_check.mjs` checks it from nine
   parts of the page, also left idle. Cache tag `?v=105`.
+- 2026-11-02, V7: the arch is Long Fade (`halo.js`, options under `alt/v7-glow`). Hear them's arch, the loader and the
+  footer picture fade the same way. Motes stay out of the floor's mirror. Idle hero: a third of the frames, rest at 45 s,
+  measured with `tools/idle_gpu.mjs` (real window). `tools/halo_check.mjs` for stills through the page. Cache tag `?v=111`.

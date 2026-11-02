@@ -262,6 +262,8 @@ Scorecards: `teach/reviews/` (rubric, before, after). Reels: `demo/v7/final/` (n
   a visit, which scrolls down to the footer. The footer is 04 now. The terms (deposit, delivery,
   the Friday pictures) are invented like the rest.
 
+- **The arch** (`site/src/halo.js`): Long Fade, Sam's pick. It holds full strength past the arrows, then thins and goes out by the plinth, drawn in one plane so the fade is a function of the angle. Motes turn round the guitar in the vertex shader. Left alone the hero draws a third of the frames, and rests after 45 s (GPU 55%, then 21%). The Hear them arch, the loader and the footer picture (`FLOOR=0.5 node tools/room_still.mjs 3`, then ffmpeg to jpg) fade the same way. The options are under `alt/v7-glow`.
+
 ## What V6 changed (2026-10-06 to 10-23)
 
 - **View guitar** is a portrait of the body. Every number is in `CLOSE` at the top of

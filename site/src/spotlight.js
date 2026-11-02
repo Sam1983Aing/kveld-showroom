@@ -185,7 +185,6 @@ export async function buildSpotlight(section, { sheet, pick, current = () => 0, 
     g2.clearRect(0, 0, canvas.width, canvas.height);
     const colour = getComputedStyle(section).getPropertyValue('--own').trim() || '#9fe3f0';
     const hex = parseInt(colour.slice(1), 16), mix = (c) => Math.round(c + (255 - c) * 0.45);
-    const core = `rgb(${mix(hex >> 16)}, ${mix((hex >> 8) & 255)}, ${mix(hex & 255)})`;
     const live = voices.playing ? voices.wave(wave) : (wave.fill(0), 0);
     level += ((voices.playing ? live : 0) - level) * 0.25;
     const amp = R * 0.13 * level;
@@ -201,8 +200,15 @@ export async function buildSpotlight(section, { sheet, pick, current = () => 0, 
     path();
     g2.lineCap = 'round';
     const glow = 0.55 + 0.45 * Math.min(level * 1.4, 1);
-    for (const [w, a] of [[14, 0.06], [7, 0.12], [3, 0.35]]) { g2.strokeStyle = colour; g2.globalAlpha = a * glow; g2.lineWidth = w; g2.stroke(); }
-    g2.globalAlpha = 0.55 + 0.45 * glow; g2.lineWidth = 1.4; g2.strokeStyle = core; g2.stroke();
+    // like the hero's arch it holds to its widest, then goes out towards its ends: no blunt tips
+    const fade = (rgb) => {
+      const f = g2.createLinearGradient(0, cy, 0, cy + R * Math.sin(SPAN / 2 - Math.PI / 2) + R * 0.02);
+      f.addColorStop(0, `rgba(${rgb}, 1)`); f.addColorStop(0.55, `rgba(${rgb}, 0.55)`); f.addColorStop(1, `rgba(${rgb}, 0)`);
+      return f;
+    };
+    const own = fade(`${hex >> 16}, ${(hex >> 8) & 255}, ${hex & 255}`);
+    for (const [w, a] of [[14, 0.06], [7, 0.12], [3, 0.35]]) { g2.strokeStyle = own; g2.globalAlpha = a * glow; g2.lineWidth = w; g2.stroke(); }
+    g2.globalAlpha = 0.55 + 0.45 * glow; g2.lineWidth = 1.4; g2.strokeStyle = fade(`${mix(hex >> 16)}, ${mix((hex >> 8) & 255)}, ${mix(hex & 255)}`); g2.stroke();
     g2.globalAlpha = 1;
   }
   function loop() {

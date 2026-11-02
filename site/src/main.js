@@ -315,8 +315,6 @@ async function boot() {
     }
     loader.progress(0.88);
     await nextFrame();
-    // the hero's glow and particles, options behind ?glow=fade|embers|corona (V7 demo round, glow-options.js)
-    { const G = new URLSearchParams(location.search).get('glow'); if (G) await import('./glow-options.js?v=3').then((m) => m.buildGlow(G, room)).catch((err) => console.error(err)); }
     // Compile shaders and upload all guitar GPU buffers behind the opaque loader curtain
     room.warmGPU();
     loader.progress(0.94);

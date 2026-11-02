@@ -13,6 +13,7 @@ import { Reflector } from 'three/addons/objects/Reflector.js';
 import { buildStandin } from './standins.js';
 import { prepareGuitar, gltfLoader } from './guitar-look.js';
 import { Walk, LIFT, blendShots } from './sequence.js';
+import { makeArch, makeMotes } from './halo.js';
 
 const N = 7;
 const ACCENT = new THREE.Color('#e7bd7f');   // the centre guitar's colour, set every frame (applyPalette)
@@ -299,8 +300,8 @@ export class Showroom {
     const floorRender = floor.onBeforeRender.bind(floor);
     floor.onBeforeRender = (renderer, scn, cam) => {
       if (floor.material.uniforms.uStrength.value < 0.01) return;
-      const dustVis = this.dust.visible;
-      this.dust.visible = false;
+      const dustVis = this.dust.visible, motes = this.halo.children[1], motesVis = motes.visible;
+      this.dust.visible = false; motes.visible = false;       // dust and motes in the glass only read as specks on it
       const hidden = [];
       for (const it of this.items) {
         if (!it.group.visible) continue;
@@ -314,7 +315,7 @@ export class Showroom {
       }
       floorRender(renderer, scn, cam);
       for (const m of hidden) m.visible = true;
-      this.dust.visible = dustVis;
+      this.dust.visible = dustVis; motes.visible = motesVis;
     };
     floor.rotation.x = -Math.PI / 2;
     scene.add(floor);
@@ -390,15 +391,10 @@ export class Showroom {
       (this.seams ||= []).push(seam);
     }
 
-    // the halo: an open arch of light behind the centre guitar
-    const arc = Math.PI * 1.32;
+    // the halo: an arch of light behind the centre guitar that thins and goes out by the plinth, with motes
+    // turning round it (halo.js)
     this.halo = new THREE.Group();
-    for (const [rad, k] of [[0.6, 3.0], [0.635, 0.6]]) {
-      const t = new THREE.Mesh(new THREE.TorusGeometry(rad, 0.0042, 8, 320, arc), new THREE.MeshBasicMaterial({ color: ACCENT.clone().multiplyScalar(k) }));
-      t.rotation.z = Math.PI / 2 - arc / 2;
-      t.userData.k = k;
-      this.halo.add(t);
-    }
+    this.halo.add(makeArch(), makeMotes(this.mobile ? 156 : 260));
     // round the guitar rather than above it (scaled per screen shape in layout)
     this.halo.position.set(0, 0.5, -0.5);
     scene.add(this.halo);
@@ -940,7 +936,10 @@ export class Showroom {
     const G = this.glow;
     this.cone.material.uniforms.uAlpha.value = 0.05 * G * smooth(0.1, 1, L) * (1 - 0.7 * F) * (1 - 0.6 * Lw);
     this.halo.children.forEach((m) => m.material.color.copy(ACCENT).multiplyScalar(G * m.userData.k * smooth(0.3, 1, L) * (1 - (1 - CLOSE.light.halo) * F) * (1 - Lw)));
-    this.onFrame?.();         // ?glow= demo round (glow-options.js)
+    {
+      const c = this.halo.children[0].material.color, lit = c.r + c.g + c.b > 0.002;
+      this.halo.children.forEach((m) => { m.visible = lit; if (lit) m.setTime(this.reduced ? 0 : t, this.renderer.domElement.height); });
+    }
     // the seams share one material, at the strength they have always had
     this.seams[0].material.color.copy(ACCENT).multiplyScalar(G * 0.067 * smooth(0.4, 1, L) * (1 - 0.6 * F));
     this.floor.material.uniforms.uPool.value.copy(ACCENT).multiplyScalar(G * 0.03 * on * (1 - 0.4 * F));
@@ -1045,8 +1044,11 @@ export class Showroom {
     const now = performance.now();
     // View guitar left alone: it keeps its slow sway (Sam asked for it), at half the frames so the GPU can
     // rest, until 90 s untouched
-    const glowLive = this.keepAlive && this.walkAt < 0.35;     // ?glow= demo round: the motes keep moving, at half the frames
-    if ((this.focus > 0.99 || glowLive) && this.idleTime > 10 && this.idleTime < 90 && (this.halfFrame = !this.halfFrame)) return;
+    if (this.focus > 0.99 && this.idleTime > 10 && this.idleTime < 90 && (this.halfFrame = !this.halfFrame)) return;
+    // The hero's motes keep turning when it is left alone (halo.js), at a third of the frames they are slow
+    // enough not to show it, and for 45 s, then it rests: the GPU went from 21% to 62% with it at half the frames
+    const heroLive = !this.reduced && this.walkAt < 0.35 && this.focus < 0.01 && this.idleTime < 45;
+    if (heroLive && this.idleTime > 10 && (this.heroSkip = ((this.heroSkip || 0) + 1) % 3)) return;
     const dt = Math.min((now - this.last) / 1000, 0.05);
     this.last = now;
     const walkSettled = Math.abs(this.walkTo - this.walkAt) < 6e-4;
@@ -1059,7 +1061,7 @@ export class Showroom {
     }
     // In the Drawing chapter and Close-up walk stops (walkAt > 0.35), motion is driven by scroll:
     // once scroll settles (or after 10s of zero user interaction anywhere), rest the GPU until the next input.
-    if ((this.walkAt > 0.35 && walkSettled && ringSettled && this.focus < 0.01) || (this.idleTime > 10 && this.focus < 0.99 && !glowLive) || this.idleTime > 90) {
+    if ((this.walkAt > 0.35 && walkSettled && ringSettled && this.focus < 0.01) || (this.idleTime > 10 && this.focus < 0.99 && !heroLive) || this.idleTime > 90) {
       if (++this.settledFrames > 2) return;
     }
     this.time += dt;
