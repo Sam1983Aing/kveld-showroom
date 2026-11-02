@@ -6,6 +6,7 @@
 // (The two options that were not picked, Open Strings and The Ticket, are under the tag
 // alt/unpicked-options with ?footer=strings and ?footer=ticket.)
 import { LINEUP } from './data.js';
+import { asset } from './base.js';
 import { riseOver } from './handoff.js';
 
 const { gsap, ScrollTrigger } = window;
@@ -15,7 +16,7 @@ const lines = (...l) => l.map((t) => `<span class="ft__l"><span>${t}</span></spa
 
 // The picture: tools/room_still.mjs, taken with this guitar in front (FLOOR=0.6 for a quiet floor).
 // `dust` is the part of it the dust lives in, as fractions of the picture: the light and the guitar under it.
-const STILL = { src: 'assets/shots/room-wide.jpg', front: 'moss' };
+const STILL = { src: asset('assets/shots/room-wide.jpg'), front: 'moss' };
 // KVELD is a concept, so no address here reaches anyone yet. When there is one, these are the only lines to
 // change: email, text and the social pages. A page with no address yet says so when it is pressed, rather
 // than sending you to the top of the footer.

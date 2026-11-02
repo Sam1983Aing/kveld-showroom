@@ -17,6 +17,7 @@
 // is plotted from assets/data/<id>.json with frames.json, which says where a
 // front still sits in the guitar's own frame. Words and prices: specs.js.
 import { LINEUP } from './data.js';
+import { asset, json } from './base.js';
 import { SPECS } from './specs.js';
 import { createVoices } from './voices.js';
 import { riseOver } from './handoff.js';
@@ -45,7 +46,7 @@ function planPath(D, F) {
  * takes the ring to that guitar, `current()` is the guitar the room is on.
  */
 export async function buildSpotlight(section, { sheet, pick, current = () => 0, reduced }) {
-  const [sheets, frames] = await Promise.all([Promise.all(LINEUP.map((g) => sheet(g.id))), fetch('assets/shots/frames.json').then((r) => r.json())]);
+  const [sheets, frames] = await Promise.all([Promise.all(LINEUP.map((g) => sheet(g.id))), json('assets/shots/frames.json')]);
   const list = LINEUP.map((info, i) => ({ info, S: SPECS[info.id] || {}, D: sheets[i], scale: `${+sheets[i].scale.toFixed(2)} in` }));
   const F0 = frames[LINEUP[0].id];
 
@@ -65,7 +66,7 @@ export async function buildSpotlight(section, { sheet, pick, current = () => 0, 
         <i class="spot__halo"></i>
         <span class="spot__num" data-num aria-hidden="true">01</span>
         <svg class="spot__plan" viewBox="0 0 ${F0.w} ${F0.h}" aria-hidden="true"><path pathLength="1" data-plan/></svg>
-        <div class="spot__imgs">${list.map(({ info, S }, i) => `<img src="assets/shots/${info.id}-hero.webp" alt="${info.name}, ${S.finish}" data-pick="${i}" decoding="async" fetchpriority="low">`).join('')}</div>
+        <div class="spot__imgs">${list.map(({ info, S }, i) => `<img src="${asset(`assets/shots/${info.id}-hero.webp`)}" alt="${info.name}, ${S.finish}" data-pick="${i}" decoding="async" fetchpriority="low">`).join('')}</div>
         <div class="spot__sheet">
           <div data-swap>
             <p class="spot__after" data-after></p>

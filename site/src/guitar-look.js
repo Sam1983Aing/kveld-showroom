@@ -3,12 +3,13 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { asset } from './base.js';
 
 let _draco = null;
 export function gltfLoader() {
   if (!_draco) {
     _draco = new DRACOLoader();
-    _draco.setDecoderPath(new URL('../vendor/draco/', import.meta.url).href);
+    _draco.setDecoderPath(asset('vendor/draco/'));
     _draco.preload();
   }
   const loader = new GLTFLoader();

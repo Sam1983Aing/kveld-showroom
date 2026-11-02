@@ -573,7 +573,7 @@ h1 em, h2 em, h3 em, .spot__claim em, .closeup__claim em { white-space: nowrap; 
 .order::before { content: ''; position: absolute; inset: 0; pointer-events: none;
   background: radial-gradient(70% 90% at 72% 46%, rgba(255, 252, 244, 0.75), transparent 70%); }
 .order::after { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0.35; mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.4 0 0 0 0 0.33 0 0 0 0.16 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  background-image: url("assets/paper-grain.svg"); }
 .order > * { position: relative; z-index: 1; }
 .order em { font-style: normal; color: var(--ord); transition: color 0.8s var(--ease); }
 .order .eyebrow { color: var(--muted-ink); margin: 0 0 clamp(12px, 2vh, 24px); }

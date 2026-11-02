@@ -503,6 +503,7 @@ export async function createWorkshop(section, { room, reduced, nextFrame = async
     dirty = true;
   }
   return {
+    setResolution(ratio) { renderer.setPixelRatio(Math.min(ratio, 1.75)); layout(); },
     pin() {
       // the rise: from its top at the bottom of the screen to its top at the top, over the room's last screen.
       // Then the pin, a screen longer than the bench's story, so Hear them can come up over the finished guitar.

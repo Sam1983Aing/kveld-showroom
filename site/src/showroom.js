@@ -425,9 +425,11 @@ export class Showroom {
     this.setPalette(lineup.map((g) => g.colour));
     this.loader = gltfLoader();
     this.chrome = [];
-    // With Draco compression all seven models total 5.5 MB and decode in parallel
-    // across worker threads behind the loader screen, so none swap in mid-animation.
-    const realIdx = [0, 1, 6, 2, 5, 3, 4].filter((i) => i < lineup.length && lineup[i].real);
+    // The three guitars the hero shows come in behind the loader. The other four follow once they are in
+    // (loadRest), on empty plinths that are out of frame at rest, so entry waits for 2.1 MB and not 5.6.
+    const first = [0, 1, 6], rest = [2, 5, 3, 4];
+    const realIdx = first.filter((i) => i < lineup.length && lineup[i].real);
+    this.restIdx = rest.filter((i) => i < lineup.length && lineup[i].real);
     const prog = new Array(realIdx.length).fill(0);
     const loadedScenes = await Promise.all(realIdx.map((idx, k) =>
       this.loader.loadAsync(lineup[idx].model, (e) => {
@@ -435,7 +437,7 @@ export class Showroom {
           prog[k] = e.loaded / e.total;
           this.onProgress(prog.reduce((a, b) => a + b, 0) / realIdx.length);
         }
-      }).then((g) => [idx, g.scene])
+      }).then((g) => [idx, g.scene], (err) => { console.error(err); return null; })   // no network: the room still opens
     ));
 
     lineup.forEach((info, i) => {
@@ -454,6 +456,7 @@ export class Showroom {
       const c = clay.clone(), gr = graphite.clone();
       addDim(c, dim); addDim(gr, dim);
       const guitar = info.shape ? buildStandin(info.shape, c, gr) : new THREE.Group();
+      guitar.visible = false;      // the maquette only holds its measurements until the model is in: the plinth stands empty
       const spinner = new THREE.Group();
       spinner.add(guitar);
       spinner.position.y = PED_TOP + HOVER;
@@ -467,11 +470,45 @@ export class Showroom {
       this.scene.add(group);
       this.items.push({ info, group, pedestal, spinner, guitar, dim, ringMat, hit, spin: 0, spinV: 0, hoverK: 0, ready: false, cast: i === 0 });
     });
-    for (const [idx, scn] of loadedScenes) this.swapIn(idx, scn);
+    for (const got of loadedScenes) if (got) this.swapIn(got[0], got[1]);
     this.allReady = true;
     this.hits = this.items.map((it) => it.hit);
     this.update(0);
     this.emitChange();
+  }
+
+  /** The four guitars the hero does not show, once the room is up. They arrive one at a time, each fading up
+   *  from black, and go up to the GPU a piece at a time, so neither their arrival nor the first turn pays for it. */
+  async loadRest() {
+    const got = new Map(), order = [...this.restIdx];
+    this.restIdx.forEach((i) => this.loader.loadAsync(this.items[i].info.model).then((g) => { got.set(i, g.scene); }, (err) => { console.error(err); got.set(i, null); }));
+    while (order.length) {
+      const i = order.find((k) => got.has(k));
+      if (i === undefined) { await new Promise((r) => setTimeout(r, 120)); continue; }
+      order.splice(order.indexOf(i), 1);
+      const root = got.get(i);
+      if (!root) continue;
+      this.swapIn(i, root, true);
+      // the GPU's share, a piece a frame: each texture, then the shaders off the main thread, then the geometry
+      const frame = () => new Promise((r) => requestAnimationFrame(r));
+      const textures = new Set();
+      root.userData.meshes?.forEach((m) => { for (const k of ['map', 'normalMap', 'roughnessMap', 'clearcoatNormalMap']) if (m.material[k]) textures.add(m.material[k]); });
+      for (const t of textures) { await frame(); this.renderer.initTexture(t); }
+      await frame();
+      await this.renderer.compileAsync(root, this.camera, this.scene).catch(() => {});
+      await frame();
+      root.userData.meshes?.forEach((m) => { m.frustumCulled = false; });
+      this.items[i].needsUpload = true;
+      this.wake();
+      await new Promise((r) => setTimeout(r, 300));
+    }
+  }
+
+  /** A lower (or higher) render resolution, for automatic quality (quality.js). */
+  setResolution(ratio) {
+    this.renderer.setPixelRatio(ratio);
+    this.composer.setPixelRatio(ratio);
+    this.layout();
   }
 
   /** Pre-upload all guitar geometries and compile shaders behind the loader curtain. */
@@ -489,7 +526,7 @@ export class Showroom {
   }
 
   /** Put a loaded model on its plinth in place of the maquette. */
-  swapIn(i, root) {
+  swapIn(i, root, late = false) {
     const it = this.items[i];
     prepareGuitar(root, this.renderer);
     const cast = it.cast ?? (i === 0);
@@ -507,6 +544,10 @@ export class Showroom {
     it.spinner.add(root);
     it.guitar = root;
     it.ready = true;
+    if (late) {
+      it.arrive = 0;              // a fade up from black, if it is in view by then
+      window.gsap.to(it, { arrive: 1, duration: 0.9, ease: 'power2.out', delay: 0.2 });
+    }
     this.walk.forget(it.info.id);
     this.wake();
   }
@@ -812,7 +853,7 @@ export class Showroom {
       const focusDim = 1 - 0.97 * F * away;
       // the rest of the room goes out while the walk runs
       const walkDim = a < 0.5 ? 1 : 1 - 0.95 * Lw;
-      const dim = (curve(DIM, s) + it.hoverK * 0.14) * focusDim * walkDim * (0.15 + 0.85 * smooth(0, 1, L * 1.4 - a * 0.12));
+      const dim = (curve(DIM, s) + it.hoverK * 0.14) * focusDim * walkDim * (0.15 + 0.85 * smooth(0, 1, L * 1.4 - a * 0.12)) * (it.arrive ?? 1);
       const inView = dim > 0.025 && a < maxA;
       it.dim.value = inView ? dim : 0;
       // Only cast key shadows for silhouette parts of the guitar at or crossing the centre plinth
@@ -823,7 +864,8 @@ export class Showroom {
       }
       // Cull guitars that are faded to black or outside the camera frustum (keep visible 1 frame on swapIn to upload VBOs)
       it.group.visible = inView || !!it.needsUpload;
-      it.needsUpload = false;
+      if (it.cullBack) { it.guitar.userData.meshes?.forEach((m) => { m.frustumCulled = true; }); it.cullBack = false; }     // the frame after its upload
+      if (it.needsUpload) { it.needsUpload = false; it.cullBack = true; }
       const glow = curve(GLOW, s) * (0.6 + 0.4 * smooth(0, 1, L * 1.2 - a * 0.1)) * smooth(0, 1, L * 1.6 - a * 0.25) * (1 - 0.94 * F * away) * walkDim;
       // the plinth ring stays soft under the guitar in front (the halo is its
       // light) and comes up to full as the guitar moves to the side. When the

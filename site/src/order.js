@@ -11,6 +11,7 @@
 // Phones: no pin, the slip fills as it scrolls past. Reduced motion: the slip is filled in.
 // The terms (deposit, delivery, the Friday pictures) are invented, like the maker. Styles: "03 · how to order".
 import { LINEUP } from './data.js';
+import { asset, json } from './base.js';
 import { SPECS } from './specs.js';
 import { riseOver } from './handoff.js';
 
@@ -55,7 +56,7 @@ function plotPlan(svg, D, flat, F, id) {
   G.span = span + 2; G.flat = flat; G.tail = tail; G.half = half;
   const k = F.ppm * IN, top = (F.base + F.h / F.ppm) / IN + tail;
   const wrap = el('g', { 'clip-path': `url(#${clipId})` }, svg);
-  G.img = el('image', { href: `assets/shots/${id}-front.webp`, width: F.w, height: F.h, class: 'pl-img',
+  G.img = el('image', { href: asset(`assets/shots/${id}-front.webp`), width: F.w, height: F.h, class: 'pl-img',
     transform: flat ? `matrix(0 ${1 / k} ${-1 / k} 0 ${top} ${-F.w / (2 * k)})` : `matrix(${1 / k} 0 0 ${1 / k} ${-F.w / (2 * k)} ${-top})` }, wrap);
   const strokes = (cls) => { const g = el('g', { class: cls }, svg); g.items = []; return g; };
   const add = (g, tag, attrs) => { const e = el(tag, { ...attrs, pathLength: 1 }, g); g.items.push(e); return e; };
@@ -203,7 +204,7 @@ export function buildOrder(section, { toVisit, sheet, current = () => 0, reduced
 
   // the slip is made out for one guitar: its plan, its colour, its terms
   let forI = -1;
-  const framesP = fetch('assets/shots/frames.json').then((r) => r.json());
+  const framesP = json('assets/shots/frames.json');
   const flat = () => matchMedia('(max-width: 900px)').matches;
   async function makeOut(i, first) {
     if (i === forI) return;

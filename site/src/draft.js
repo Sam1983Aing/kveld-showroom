@@ -22,6 +22,7 @@
 // ?draft=stack and ?draft=dark.
 import * as THREE from 'three';
 import { createDraftName } from './draft-name.js';
+import { json } from './base.js';
 import { BEATS } from './sequence.js';
 import { LINEUP } from './data.js';
 
@@ -681,7 +682,7 @@ class Draft {
     const update = room.update.bind(room);
     room.update = (dt) => { update(dt); this.frame(); };
     const swapIn = room.swapIn.bind(room);
-    room.swapIn = (i, root) => { swapIn(i, root); this.patch(room.items[i]); };
+    room.swapIn = (i, root, late) => { swapIn(i, root, late); this.patch(room.items[i]); };
     room.items.forEach((it) => { if (it.ready) this.patch(it); });
 
     // the words: the guitar's name and two inked headlines (draft-name.js)
@@ -695,7 +696,7 @@ class Draft {
     this.reveal.set(it.info.id, U);
     it.guitar.traverse((o) => { if (o.isMesh) addReveal(o.material, U, this.mode === 'stack'); });
     this.kits.delete(it.info.id);
-    if (!this.data.has(it.info.id)) fetch(`assets/data/${it.info.id}.json`).then((r) => r.json()).then((D) => this.data.set(it.info.id, D));
+    if (!this.data.has(it.info.id)) json(`assets/data/${it.info.id}.json`).then((D) => this.data.set(it.info.id, D));
   }
 
   kit(it) {

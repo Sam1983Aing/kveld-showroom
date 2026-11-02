@@ -12,6 +12,8 @@ import { BEATS } from './sequence.js';
 import { initDraft, DRAFT } from './draft.js';     // the drawing comes first (Ink on Paper)
 import { buildSpotlight } from './spotlight.js';
 import { createWorkshop } from './workshop.js';
+import { json } from './base.js';
+import { watchQuality } from './quality.js';
 import { buildNav } from './nav.js';
 import { createCallout } from './walk-callout.js';
 import { createLoader } from './loader.js';
@@ -146,7 +148,7 @@ const roomChrome = () => $$('.room__copy, .room__title, .room__view, .room__cont
 
 // Each guitar's drawing data, the file its build writes (Spotlight plots its outline from it)
 const sheets = new Map();
-const sheet = (id) => sheets.get(id) || sheets.set(id, fetch(`assets/data/${id}.json`).then((r) => r.json())).get(id);
+const sheet = (id) => sheets.get(id) || sheets.set(id, json(`assets/data/${id}.json`)).get(id);
 const cu = {
   no: $('[data-cu-no]'), after: $('[data-cu-after]'), name: $('[data-cu-name]'), claim: $('[data-cu-claim]'),
   figures: $('[data-cu-figures]'), specs: $('[data-specs]'), ours: $('[data-cu-ours]'), shade: $('[data-cu-shade]'),
@@ -339,7 +341,11 @@ async function boot() {
     }, { rootMargin: '-12% 0px -12% 0px' }).observe(roomEl);
   }
   onProgress(1);
-  loader.exit({ intro: () => room?.intro(), done: () => lenis?.start(), reduced });
+  loader.exit({ intro: () => room?.intro(), done: () => {
+    lenis?.start();
+    room?.loadRest();            // the four guitars the hero does not show (showroom.js)
+    if (room) window.__quality = watchQuality(room.renderer.getPixelRatio(), (ratio) => { room.setResolution(ratio); shop?.setResolution(ratio); });
+  }, reduced });
   introReveal();
 
   // pins are made in page order (the room, then anything below it), so each measures from the one before
