@@ -173,3 +173,10 @@ Waiting for Sam's pick.
 **"Long Fade."** (2026-11-02)
 Made the page's own arch (`halo.js`). Because the blunt ends were also in Hear them's arch, the loader and the footer's picture, Claude faded those too, without being asked, so the page does not disagree with itself. Re-rendering the footer showed the performance pass had been hiding four of its seven guitars in any new still, and the floor mirroring the new motes as specks: both fixed. The honest catch: the moving motes kept the GPU at 62% when the hero was left alone, against 21% at rest. Sam asked about his fan in October, so it now draws a third of the frames and rests after 45 s untouched (55%, then 21%). The saving while moving was smaller than expected, which is why the rest at 45 s is there.
 On camera: a look decision has a cost you can measure. Say the number and let the person choose.
+
+**"Okay, do one to five. And then you're going to upload it right through the connector. And yes, you can tag V7."** (2026-11-02)
+V7 tagged and pushed. The five: code bundled and minified, only used files uploaded with the plan trace stripped, the room opens on the three visible guitars and the other four arrive behind it, automatic quality, Floe's textures shrunk after a close-up comparison. A harder normal map showed blotches on the lit edge, so that step stopped at 80.
+The connector turned out to take a file's text inside the call, too small for 1.2 MB. So Aura holds a 6.8 KB page and the code sits on the CDN with the models. The one-file build stays for double-clicking.
+jsDelivr answered 403 on a new tag for several minutes, then fine: the assets repo is over its 50 MB package limit, so each file is fetched singly the first time.
+Aura's import said it failed but had saved the project. Reading it back showed the page intact, minus the final newline.
+On camera: measure before you promise. The estimate was 12 s on 4G, the real number came out under half that. And when a tool says it failed, look at what it left behind before you retry, or you end up with two projects.

@@ -4,8 +4,8 @@
 import json, pathlib, subprocess, sys, time
 d = json.loads((pathlib.Path(__file__).parent.parent / 'standalone/hosted.json').read_text())
 def check(f):
-    r = subprocess.run(['curl', '-s', '-o', '/dev/null', '-D', '-', '-w', '%{http_code} %{size_download}', d['base'] + f['path']], capture_output=True, text=True).stdout
-    code, size = r.strip().splitlines()[-1].split()
+    r = subprocess.run(['curl', '-s', '--connect-timeout', '10', '--max-time', '60', '-o', '/dev/null', '-D', '-', '-w', '%{http_code} %{size_download}', d['base'] + f['path']], capture_output=True, text=True).stdout
+    code, size = (r.strip().splitlines() or ['000 0'])[-1].split()
     cors = 'access-control-allow-origin: *' in r.lower()
     return code == '200' and int(size) == f['bytes'] and cors, code, size, cors
 left = d['files']

@@ -217,6 +217,29 @@ set necks), markers, logo, tuners, knobs, switch tips, strap buttons and jack.
 Overlays of each model on its sheet: `media/plan-vs-<id>.png` (Floe's is
 `media/plan-vs-model.png`).
 
+## Standalone and Aura (2026-11-02)
+
+Two builds, both from `node tools/build-standalone.mjs`, both on the same tag:
+
+- `standalone/kveld.html`, 1.2 MB, one file with the code and stylesheet inside. This is the one to double-click.
+- `standalone/aura/index.html`, 6.8 KB, the same page with the code and stylesheet on the CDN. This is the one on Aura, because Aura's connector takes a file's text inside the call and 1.2 MB does not fit in one. It departs from the "inline the stylesheet" rule on purpose. If the CDN doesn't answer, the page's words still read on a dark ground.
+
+**Aura project:** KVELD Showroom V7, `ff0e4a11-082b-4d0d-9b46-553f650a2854`, https://aura.build/editor/0da58110-baf2-46eb-a3f5-9b505886e5ae . Not published.
+
+**Assets:** `Sam1983Aing/aura-assets`, folder `kveld/`, tags `1.24.0` and `kveld-v2` (`1.23.0` and `kveld-v1` hold the same tree without `app/`).
+Base URL: `https://cdn.jsdelivr.net/gh/Sam1983Aing/aura-assets@1.24.0/kveld/`
+The tree mirrors `site/`: `assets/models/*.glb`, `assets/shots/*`, `assets/icon.svg`, `vendor/fonts/*`, `vendor/draco/*`, plus `app/kveld.min.js` and `app/kveld.min.css`. The full list with byte counts is written to `standalone/hosted.json`.
+
+**To change anything:**
+1. Set the next numeric tag in `TAG` at the top of `tools/build-standalone.mjs` and run it.
+2. Copy `standalone/hosted/` over `kveld/` in a clone of aura-assets (the licences stay there, the copy doesn't remove them), commit, push, tag twice, push the tags.
+3. `python3 tools/verify_cdn.py` until every file passes. A new tag answers 403 for a few minutes, because the repo is over jsDelivr's 50 MB package limit and each file is fetched singly the first time. Don't point a live page at a tag until this passes.
+4. Paste `standalone/aura/index.html` into the Aura project, or update it through the connector. Only the tag in the URLs changes.
+
+Checks: `tools/standalone_check.mjs` (walk from `file://`, then the CDN cut off), `tools/embed_check.mjs` (inside a locked-down iframe), `tools/load_check.mjs <url>` (timing at each speed).
+
+The plan trace (`plan_outline`) is removed from the data at build time and the build stops if any is left. `site/assets/models/floe.glb` has its textures re-encoded by `tools/glb_textures.py` (`floe_ash_normal=80 floe_ash=62`, 889 to 675 KB). A Blender rebuild of Floe overwrites that, so run it again afterwards.
+
 ## The polish pass (2026-10-31, still V7, not tagged)
 
 Scorecards: `teach/reviews/` (rubric, before, after). Reels: `demo/v7/final/` (not in git).

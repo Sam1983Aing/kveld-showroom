@@ -15,7 +15,7 @@ const open = async (block, { w = 1725, h = 990, dpr = 1, phone = false } = {}) =
   if (block) await page.route('**/cdn.jsdelivr.net/**', (r) => r.abort());
   const t0 = Date.now();
   await page.goto(url, { waitUntil: 'commit' });
-  await page.waitForFunction(() => !document.querySelector('.loader') && window.__room, null, { timeout: 120000 });
+  await page.waitForFunction(() => document.documentElement.classList.contains('no-cdn') || (!document.querySelector('.loader') && window.__room), null, { timeout: 120000 });
   page.entry = Date.now() - t0;
   return page;
 };

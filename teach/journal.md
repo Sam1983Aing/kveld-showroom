@@ -495,3 +495,10 @@ Teaches: "make it feel more ours" usually means reuse what the page already taug
 
 ## 2026-10-31 · V7 final · Technique · Sound with no ears
 Everything is synthesized from the Hear them string model and noise, on one audio context. Pen and saw are noise loops with the texture baked in (grains for a nib, teeth for a blade), then gain and filter follow the scroll's speed, so it runs backwards too. To check it without being able to hear: take the real output off the bus with a MediaStreamDestination into a MediaRecorder while Chrome stays muted, then read peak, RMS and LUFS per section, and look at the spectrogram. Sam still has the last word: `LEVEL` at the top of `ambience.js`, or `?ambience=1.4` in the address.
+
+## 2026-11-02 · V7 final · Technique · Open on what you can see
+The room used to wait for all seven guitars. Now it opens on the three in view and the other four load behind it. The catch was an 83 ms stutter when a late guitar reached the GPU, so textures upload a piece per frame and the guitar fades up. Worst frame after: 50 ms.
+Teaches: what a visitor waits for is the first view, not the whole download. Timing the two separately shows where the seconds are.
+
+## 2026-11-02 · V7 final · Teachable bug · The 403 that fixed itself
+A freshly tagged jsDelivr file answered 403, then 200 a few minutes later. Its data API gave the reason: the repo is 933 MB and the package limit is 50 MB, so files are served one at a time and the first fetch can fail. The check script retries and a tag only goes live once every file passes.
