@@ -5,7 +5,7 @@
 // keep what they have. Styles: "pointer" in styles.css.
 const { gsap } = window;
 
-export function initCursor({ room, draft, reduced }) {
+export function initCursor({ room, paper: paperUp, reduced }) {
   if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
   const el = document.createElement('div');
   el.className = 'cursor';
@@ -43,7 +43,7 @@ export function initCursor({ room, draft, reduced }) {
     else if (t && t.classList.contains('room__gl')) s = t.style.cursor === 'pointer' ? 'link' : r && !r.walkState ? 'drag' : '';
     if (s !== state) { el.classList.remove('is-link', 'is-drag'); if (s) el.classList.add(`is-${s}`); state = s; }
     // over the cream sheet (the ink chapter) or a light chapter the pick is drawn in ink
-    const d = draft(), p = !!((d && d.S && d.S.paper > 0.5) || (t && t.closest('[data-theme="light"]')));
+    const p = !!(paperUp() || (t && t.closest('[data-theme="light"]')));
     if (p !== paper) { paper = p; el.classList.toggle('on-paper', p); }
   });
 }

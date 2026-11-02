@@ -421,10 +421,11 @@ function navGo(key) {
   if (lenis && Math.abs(y - scrollY) < vh * 2.5 && !inCloseup) lenis.scrollTo(y, { duration: 1.6 });
   else jump(Math.round(y), inCloseup ? closeCloseup : undefined);
 }
-// The drawing's paper only counts while the scroll is in the drawing: after a jump past it, its state
-// stays where it was, and the pointer (and a header) went dark-on-dark over the rest of the page.
+// Is the drawing's paper up, right now? One answer for the header and the pointer. It has to be asked of
+// the live chapter and only while the scroll is in it: its state stays where it was when you leave.
 const inDrawing = () => !!draft && !!walkST && (scrollY - walkST.start) / innerHeight < DRAFT.len;
-const navPaper = () => !!((inDrawing() && draft.S && draft.S.paper > 0.5) || document.elementFromPoint(innerWidth * 0.5, innerHeight * 0.22)?.closest('[data-theme="light"]'));
+const drawingPaper = () => inDrawing() && draft.paperNow > 0.5;
+const navPaper = () => !!(drawingPaper() || document.elementFromPoint(innerWidth * 0.5, innerHeight * 0.22)?.closest('[data-theme="light"]'));
 
 /* ---------------------------------------------------------------------------
    5) The drawing: the plan draws itself as you scroll past it
@@ -539,7 +540,7 @@ function walkFrame() {
   walkUI.roomUI.style.opacity = roomA;
   walkUI.roomUI.style.visibility = roomA > 0 ? '' : 'hidden';
   walkUI.el.style.visibility = lift > 0 ? 'visible' : 'hidden';
-  if (!W) return;
+  if (!W) { walkUI.shade.style.opacity = 0; callout.box.style.opacity = 0; return; }   // a jump leaves in one frame: nothing stays lit
   const on = clamp01((lift - 0.5) / 0.5) * (1 - W.outro);
   walkUI.shade.style.opacity = on;
   callout.box.style.opacity = on.toFixed(3);
@@ -552,5 +553,5 @@ addEventListener('resize', () => {
   resizeT = setTimeout(() => { room?.layout(); placeStage(); measureCopy(); ScrollTrigger.refresh(); }, 120);
 });
 
-initCursor({ room: () => room, draft: () => (inDrawing() ? draft : null), reduced });
+initCursor({ room: () => room, paper: drawingPaper, reduced });
 boot();

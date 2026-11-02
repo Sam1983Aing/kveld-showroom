@@ -74,6 +74,9 @@ export function buildNav() {
         const b = e.target.closest('[data-nav]');
         if (!b || !head.contains(b)) return;
         e.preventDefault();
+        // clicked with a pointer, the link lets go of the focus: left on it, the next key pressed (the hero's
+        // arrow keys) drew the keyboard focus ring round the logo. From the keyboard (detail 0) it stays.
+        if (e.detail) b.blur();
         api.go(b.dataset.nav);
       });
       // where we are and what we sit on, once a frame while the page moves

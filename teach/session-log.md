@@ -157,3 +157,11 @@ On camera: Claude cannot hear. It measured levels and took real sound off the pa
 Then three blind judges in all, each fresh, on captures only. Before 4.5 to 8, then 6.5 to 8.5, then 6.5 to 9. The bar of 9.5 was not reached and the scorecard says so. The judge's list of what reads as generated includes things Sam picked: they went on a "his to decide" list and stayed.
 On camera: an honest score is worth more than a good one. And "9.5" got the page further than "polish it" would have, because it forced a list.
 
+
+**"There's a bug here. Sometimes when I click the name of the company top left, it brings me to the hero, but that card is floating out of nowhere, and the top is not the right colour. Fix it, and fix the root cause."** (2026-11-01, with a screenshot)
+Claude reproduced it first, with a script that clicks the logo from nine parts of the page, busy and left idle: 16 of 18 came back wrong. "Sometimes" was the clue: a jump from under 2.5 screens away glides through the scroll and every state cleans itself up, a longer one (a dark jump) lands in one frame. Three separate causes:
+The card: one line set it to `visibility: visible`, which beats the hidden layer around it, and the tour only wrote to its card while the tour was running, so nothing ever took it down.
+The header and the pointer: both asked the drawing chapter "is your paper up?", and the chapter only updates that answer while it is on screen. They heard the last answer it gave, which is why it depended on where you had been. Now `draft.paperNow` only counts a value sampled on this very frame, one answer for both.
+The box round the logo: the link kept the focus after the click, so the next key pressed (the hero's arrow keys) drew the keyboard focus ring. A pointer click now lets go of it.
+`tools/jump_check.mjs` stays in the project. It also checks the opposite: on the paper, the header and pointer still go dark, also left idle.
+On camera: "sometimes" is information. Find what differs between the times it works and the times it doesn't. And a state only written while something is on screen is a stale state the moment you leave without passing through its end.

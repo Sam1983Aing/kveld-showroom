@@ -779,6 +779,10 @@ class Draft {
     return out;
   }
 
+  /** How much of the sheet is up right now. S is only written while the chapter is on screen, so what is left
+   *  in it after leaving is old news: it only counts if it was sampled on this very frame. */
+  get paperNow() { return this.S.stamp === this.room.time ? this.S.paper : 0; }
+
   // ----------------------------------------------------------- frame ----
   frame() {
     const room = this.room, S = this.S, on = S.stamp === room.time;

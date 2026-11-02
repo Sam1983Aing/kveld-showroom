@@ -57,7 +57,7 @@ function callout(box) {
       // from where the part is going to rest and not from where it is on its way past
       const a = ctx.anchor(), c0 = W.stop >= 0 ? W.copy : 0, c = clamp01((c0 - 0.3) / 0.7);
       el.copy.style.opacity = Math.min(c * 1.6, 1);
-      el.copy.style.visibility = c > 0 ? 'visible' : 'hidden';
+      el.copy.style.visibility = c > 0 ? '' : 'hidden';      // never 'visible': that would show through the hidden tour layer
       $('.wo__rise', el.title)?.style.setProperty('transform', `translate3d(0, ${((1 - c) * 110).toFixed(1)}%, 0)`);
       el.text.style.opacity = clamp01((c - 0.3) / 0.7);
       if (!a) return;
