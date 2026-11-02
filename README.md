@@ -18,7 +18,7 @@ the page copy. Model names and each guitar's colour live in `site/src/data.js`.
 
 ## Versions
 
-The history is six commits on `main`, one per iteration of the page, each with a tag.
+The history is on `main`. Each iteration of the page ends at a tag.
 
 | Tag | What it is |
 |---|---|
@@ -28,6 +28,7 @@ The history is six commits on `main`, one per iteration of the page, each with a
 | `v4` | Seven guitars: the other six built from their plans, then all seven corrected one by one in review. |
 | `v5` | The page around them: the drawing that becomes the guitar (Ink on Paper), the View guitar sheet, Spotlight as section 02, Last Light as the footer, the plectrum pointer. |
 | `v6` | The guitar up close, and a lighter page: View guitar as a body portrait with the seven names to change guitar in place, the sheet selling instead of measuring, section 02 following the pointer, the footer with the room's details, and the performance pass (Draco models, 60 MB to 10 MB, 60 fps on Retina). |
+| `v7` | The rest of the page and the final polish: the workshop on the bench, 02 Hear them with synthesized guitars, 03 How to order on an order slip, the Fretboard header, Amp Plate type (hosted), the Halo loader, Long Fade on the arch, the scroll's sound, and a QA pass against a blind judge. |
 
 To look at an older one:
 
@@ -38,12 +39,14 @@ To look at an older one:
 At `v1` to `v4` the repo holds the page only (`site/`). The Blender builds, tools and notes
 arrive with `v5`.
 
-Five side tags keep things that are not on that line: `alt/hero-options` (the four hero
+Side tags keep things that are not on that line: `alt/hero-options` (the four hero
 options behind `?hero=`), `alt/scree-1961-guard` (Scree with the 1961 guard and heel),
 `alt/unpicked-options` (the options not chosen for section 02, the drawing and the footer,
 behind `?index=`, `?draft=`, `?footer=`), `alt/dark-hero` (the darker hero Sam turned down) and
 `alt/workshop-options` (the three workshop options behind `?shop=`, with the gallery's pictures
-and `tools/shop_pictures.mjs`).
+and `tools/shop_pictures.mjs`), `alt/v7-options` (navigation, tour, drawing, workshop words and order
+options behind `?nav=`, `?walk=`, `?ink=`, `?words=`, `?order=`), `alt/v7-fonts` (`?type=`), `alt/v7-loaders`
+(`?loader=`) and `alt/v7-glow` (`?glow=`).
 
 A new tag is for something big, a new section or a redesign. Fixes land in the version they
 belong to.
@@ -232,7 +235,7 @@ Scorecards: `teach/reviews/` (rubric, before, after). Reels: `demo/v7/final/` (n
 
 **Tools.** Anything that starts Chrome goes through `tools/chrome.mjs` (closed on every way out, `chrome-guard.mjs`). `tools/record.mjs` is the demo recorder with that guard. `tools/audit.mjs` shoots every part at one window size. `demo/qa/record-base.sh <label>` records forwards, backwards, a flick and a phone.
 
-## What V7 changes (from 2026-10-23, not tagged yet)
+## What V7 changed (2026-10-23 to 11-02)
 
 - **The hero**: the arrows sit on the halo's line, left and right, as two beads of light in the
   guitar's colour. The colour dots are gone. The name stands on the centre plinth and View guitar
