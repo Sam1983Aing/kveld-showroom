@@ -940,6 +940,7 @@ export class Showroom {
     const G = this.glow;
     this.cone.material.uniforms.uAlpha.value = 0.05 * G * smooth(0.1, 1, L) * (1 - 0.7 * F) * (1 - 0.6 * Lw);
     this.halo.children.forEach((m) => m.material.color.copy(ACCENT).multiplyScalar(G * m.userData.k * smooth(0.3, 1, L) * (1 - (1 - CLOSE.light.halo) * F) * (1 - Lw)));
+    this.onFrame?.();         // ?glow= demo round (glow-options.js)
     // the seams share one material, at the strength they have always had
     this.seams[0].material.color.copy(ACCENT).multiplyScalar(G * 0.067 * smooth(0.4, 1, L) * (1 - 0.6 * F));
     this.floor.material.uniforms.uPool.value.copy(ACCENT).multiplyScalar(G * 0.03 * on * (1 - 0.4 * F));
@@ -1044,7 +1045,8 @@ export class Showroom {
     const now = performance.now();
     // View guitar left alone: it keeps its slow sway (Sam asked for it), at half the frames so the GPU can
     // rest, until 90 s untouched
-    if (this.focus > 0.99 && this.idleTime > 10 && this.idleTime < 90 && (this.halfFrame = !this.halfFrame)) return;
+    const glowLive = this.keepAlive && this.walkAt < 0.35;     // ?glow= demo round: the motes keep moving, at half the frames
+    if ((this.focus > 0.99 || glowLive) && this.idleTime > 10 && this.idleTime < 90 && (this.halfFrame = !this.halfFrame)) return;
     const dt = Math.min((now - this.last) / 1000, 0.05);
     this.last = now;
     const walkSettled = Math.abs(this.walkTo - this.walkAt) < 6e-4;
@@ -1057,7 +1059,7 @@ export class Showroom {
     }
     // In the Drawing chapter and Close-up walk stops (walkAt > 0.35), motion is driven by scroll:
     // once scroll settles (or after 10s of zero user interaction anywhere), rest the GPU until the next input.
-    if ((this.walkAt > 0.35 && walkSettled && ringSettled && this.focus < 0.01) || (this.idleTime > 10 && this.focus < 0.99) || this.idleTime > 90) {
+    if ((this.walkAt > 0.35 && walkSettled && ringSettled && this.focus < 0.01) || (this.idleTime > 10 && this.focus < 0.99 && !glowLive) || this.idleTime > 90) {
       if (++this.settledFrames > 2) return;
     }
     this.time += dt;

@@ -1,0 +1,15 @@
+{
+  "section": "Hero glow",
+  "out": "glow/glow-options",
+  "cardSeconds": 3.0,
+  "theme": { "bg": "#0b0a09", "fg": "#ece6da", "accent": "#9fe3f0",
+    "display": { "family": "Archivo", "src": "../../site/vendor/fonts/archivo-var.woff2", "weight": 700 },
+    "body": { "family": "Archivo", "src": "../../site/vendor/fonts/archivo-var.woff2" },
+    "mono": { "family": "IBM Plex Mono", "src": "../../site/vendor/fonts/ibm-plex-mono-400.woff2" } },
+  "options": [
+    { "n": "00", "name": "Now", "line": "The arch stops at two bright ends, and a light dust rises slowly behind the guitar.", "desktop": "glow/now-d.mp4", "phone": "glow/now-p.mp4" },
+    { "n": "01", "name": "Long Fade", "line": "The arch runs on past the arrows, thins and goes out by the plinth, its glow widening as it goes. The dust turns slowly round the guitar.", "desktop": "glow/fade-d.mp4", "phone": "glow/fade-p.mp4" },
+    { "n": "02", "name": "Ember Run", "line": "Light runs down the arch from the top, and sparks run with it, fall off the two ends and go out before the glass.", "desktop": "glow/embers-d.mp4", "phone": "glow/embers-p.mp4" },
+    { "n": "03", "name": "Corona", "line": "A soft crown of slow rays comes off the arch, like an eclipse, fading into the dark. The dust streams out through it.", "desktop": "glow/corona-d.mp4", "phone": "glow/corona-p.mp4" }
+  ]
+}

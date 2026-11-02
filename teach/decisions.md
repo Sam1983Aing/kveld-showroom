@@ -87,3 +87,5 @@ Running table for 009 Guitars (KVELD). Started with the V6 session. For earlier 
 | 10-31 | Stage names one set: Rest, Cut, Fret, Coat, Play on the rail too | Blind judge (found it), Claude | Not reviewed | Built |
 
 | 11-01 | Jump home leaves nothing behind: card, header and pointer colours, focus ring | Sam (found it, asked for the root cause) | Sam | Fixed, `tools/jump_check.mjs` guards it |
+| 11-02 | The arch fades out instead of stopping, the particles move more | Sam | Sam | Three options built behind ?glow= |
+| 11-02 | Glow options: Long Fade, Ember Run, Corona | Claude | Waiting for Sam's pick | Built |
