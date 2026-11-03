@@ -7,6 +7,7 @@
 // A new asset is a push to that repo, a new tag, and a change to the one constant below.
 // Aura's connector takes a file's text inside the call, too small for 1.2 MB, so it gets a thin page as well:
 //   standalone/aura/index.html is the same page, with the code and the stylesheet on the CDN at the same tag.
+//   standalone/pages/index.html is that page with share tags, for the live site (Sam1983Aing/kveld on GitHub Pages).
 import { build } from 'esbuild';
 import { readFileSync, writeFileSync, mkdirSync, rmSync, copyFileSync, statSync, readdirSync } from 'fs';
 import { dirname, join, resolve } from 'path';
@@ -14,6 +15,7 @@ import { fileURLToPath } from 'url';
 
 const TAG = '1.25.0';                  // the numeric tag on aura-assets
 const CDN = `https://cdn.jsdelivr.net/gh/Sam1983Aing/aura-assets@${TAG}/kveld/`;
+const LIVE = 'https://sam1983aing.github.io/kveld/';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..'), SITE = join(ROOT, 'site'), OUT = join(ROOT, 'standalone');
 rmSync(OUT, { recursive: true, force: true }); mkdirSync(join(OUT, 'hosted'), { recursive: true });
 const read = (p) => readFileSync(join(SITE, p), 'utf8');
@@ -100,6 +102,17 @@ ${thinBody}
 </html>
 `;
 writeFileSync(join(OUT, 'aura/index.html'), thin);
+const share = `<link rel="canonical" href="${LIVE}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="${LIVE}">
+<meta property="og:title" content="KVELD: A 3D Showroom for Seven Guitars">
+<meta property="og:description" content="Seven guitars on lit plinths in a dark room. Turn them, walk around one up close, hear it played and order it.">
+<meta property="og:image" content="${LIVE}assets/cover.png">
+<meta property="og:image:width" content="800">
+<meta property="og:image:height" content="600">
+<meta name="twitter:card" content="summary_large_image">`;
+mkdirSync(join(OUT, 'pages'), { recursive: true });
+writeFileSync(join(OUT, 'pages/index.html'), thin.replace(meta, `${meta}\n${share}`));
 hosted.add('app/kveld.min.js'); hosted.add('app/kveld.min.css');
 
 let bytes = 0;

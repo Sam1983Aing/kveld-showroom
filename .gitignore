@@ -32,3 +32,6 @@ demo/qa/*.json
 demo/v7/final/
 standalone/hosted/
 standalone/hosted.json
+
+# The live site's own checkout (Sam1983Aing/kveld, GitHub Pages), filled from standalone/pages/
+publish/

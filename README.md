@@ -236,6 +236,9 @@ The tree mirrors `site/`: `assets/models/*.glb`, `assets/shots/*`, `assets/icon.
 3. `python3 tools/verify_cdn.py` until every file passes. A new tag answers 403 for a few minutes, because the repo is over jsDelivr's 50 MB package limit and each file is fetched singly the first time. Don't point a live page at a tag until this passes.
 4. Paste `standalone/aura/index.html` into the Aura project, or update it through the connector. Only the tag in the URLs changes.
 
+**Live site:** https://sam1983aing.github.io/kveld/ , GitHub Pages from the public repo `Sam1983Aing/kveld` (`main`, root). That repo holds only the built page (`standalone/pages/index.html`, which is the Aura page with share tags), its README and two images. The source stays here, in the private `kveld-showroom`. Its checkout is `publish/kveld/`, ignored by this repo (clone it again with `gh repo clone Sam1983Aing/kveld publish/kveld` if it's gone).
+To update it: run the build, `cp standalone/pages/index.html publish/kveld/`, commit and push there, then wait for `gh api repos/Sam1983Aing/kveld/pages/builds/latest` to say `built`. Check it with `node tools/standalone_check.mjs <dir> https://sam1983aing.github.io/kveld/` and `node tools/resize_check.mjs https://sam1983aing.github.io/kveld/`.
+
 **Cover image:** `media/aura-cover-800x600.png`, from `node tools/cover_shot.mjs`: the hero's main visual alone, Floe centred in the halo, no words and no other guitars.
 
 Checks: `tools/resize_check.mjs [url]` (the hero keeps its shape when the window changes size), `tools/standalone_check.mjs` (walk from `file://`, then the CDN cut off), `tools/embed_check.mjs` (inside a locked-down iframe), `tools/load_check.mjs <url>` (timing at each speed).

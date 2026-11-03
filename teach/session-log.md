@@ -187,3 +187,7 @@ On camera: the bug was always there, nobody had resized the window after load. A
 
 **"Can you turn the screenshot into 800x600, and I want the main image of the hero section to be centered."** Then: **"Everything around it should be not visible, so we only see the main visual of the hero section with the background color."**
 `tools/cover_shot.mjs`: the words, the header and the six other guitars hidden, Floe held facing us (it turns slowly while idle), and the camera's picture panned with a view offset so the guitar and plinth sit in the middle, a touch zoomed out. Panning the picture keeps the perspective. Moving the camera would have changed it.
+
+**"I like the live site from GitHub, but make the repo private for now."** (2026-11-03)
+A new repo, `kveld`, with only the built page, the README and two images, because `kveld-showroom` holds the plan traces in its data. GitHub refused Pages on a private repo on Sam's plan. Sam chose to make `kveld` public (it shows the same files the site does), and the source stays private, the same split as his sacred-monkey-forest repos. Live at https://sam1983aing.github.io/kveld/ .
+On camera: keep the thing you publish apart from the thing you build it in. Then "public or private" is a question about one small folder.
