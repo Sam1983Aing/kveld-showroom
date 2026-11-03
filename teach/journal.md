@@ -502,3 +502,7 @@ Teaches: what a visitor waits for is the first view, not the whole download. Tim
 
 ## 2026-11-02 · V7 final · Teachable bug · The 403 that fixed itself
 A freshly tagged jsDelivr file answered 403, then 200 a few minutes later. Its data API gave the reason: the repo is 933 MB and the package limit is 50 MB, so files are served one at a time and the first fetch can fail. The check script retries and a tag only goes live once every file passes.
+
+## 2026-11-03 · V7 final · Teachable bug · The pinned room kept the old size
+On Aura's preview the hero was stretched sideways. A pinned section holds its width and height in px until ScrollTrigger refreshes, and the room measured itself on the resize event, before that refresh. So it always drew the previous size into the new box. It had been there all along, on any window resize, and Aura's frame resizing after load made it obvious. Fix: measure on ScrollTrigger's 'refresh' event. Check: `tools/resize_check.mjs` compares the canvas box with its drawing buffer at five sizes.
+A trap while checking: the Browser pane draws no frames when it isn't shown, so it fires no resize events and no ResizeObserver, and it looked like the fix had failed.

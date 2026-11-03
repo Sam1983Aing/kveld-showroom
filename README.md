@@ -226,8 +226,8 @@ Two builds, both from `node tools/build-standalone.mjs`, both on the same tag:
 
 **Aura project:** KVELD Showroom V7, `ff0e4a11-082b-4d0d-9b46-553f650a2854`, https://aura.build/editor/0da58110-baf2-46eb-a3f5-9b505886e5ae . Not published.
 
-**Assets:** `Sam1983Aing/aura-assets`, folder `kveld/`, tags `1.24.0` and `kveld-v2` (`1.23.0` and `kveld-v1` hold the same tree without `app/`).
-Base URL: `https://cdn.jsdelivr.net/gh/Sam1983Aing/aura-assets@1.24.0/kveld/`
+**Assets:** `Sam1983Aing/aura-assets`, folder `kveld/`, tags `1.25.0` and `kveld-v3` (`1.24.0` / `kveld-v2` is the first Aura page, before the stretch fix, and `1.23.0` / `kveld-v1` the same tree without `app/`).
+Base URL: `https://cdn.jsdelivr.net/gh/Sam1983Aing/aura-assets@1.25.0/kveld/`
 The tree mirrors `site/`: `assets/models/*.glb`, `assets/shots/*`, `assets/icon.svg`, `vendor/fonts/*`, `vendor/draco/*`, plus `app/kveld.min.js` and `app/kveld.min.css`. The full list with byte counts is written to `standalone/hosted.json`.
 
 **To change anything:**
@@ -236,7 +236,9 @@ The tree mirrors `site/`: `assets/models/*.glb`, `assets/shots/*`, `assets/icon.
 3. `python3 tools/verify_cdn.py` until every file passes. A new tag answers 403 for a few minutes, because the repo is over jsDelivr's 50 MB package limit and each file is fetched singly the first time. Don't point a live page at a tag until this passes.
 4. Paste `standalone/aura/index.html` into the Aura project, or update it through the connector. Only the tag in the URLs changes.
 
-Checks: `tools/standalone_check.mjs` (walk from `file://`, then the CDN cut off), `tools/embed_check.mjs` (inside a locked-down iframe), `tools/load_check.mjs <url>` (timing at each speed).
+**Cover image:** `media/aura-cover-800x600.png`, from `node tools/cover_shot.mjs`: the hero's main visual alone, Floe centred in the halo, no words and no other guitars.
+
+Checks: `tools/resize_check.mjs [url]` (the hero keeps its shape when the window changes size), `tools/standalone_check.mjs` (walk from `file://`, then the CDN cut off), `tools/embed_check.mjs` (inside a locked-down iframe), `tools/load_check.mjs <url>` (timing at each speed).
 
 The plan trace (`plan_outline`) is removed from the data at build time and the build stops if any is left. `site/assets/models/floe.glb` has its textures re-encoded by `tools/glb_textures.py` (`floe_ash_normal=80 floe_ash=62`, 889 to 675 KB). A Blender rebuild of Floe overwrites that, so run it again afterwards.
 

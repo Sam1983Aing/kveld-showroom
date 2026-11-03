@@ -94,3 +94,5 @@ Running table for 009 Guitars (KVELD). Started with the V6 session. For earlier 
 | 11-02 | Idle hero: a third of the frames, rest after 45 s, so the motes don't hold the GPU at 62% | Claude (measured) | Not reviewed yet | Built, his to change |
 | 11-02 | Hero-first loading, automatic quality, Floe textures, bundling, only used files | Claude (measured) | Sam | Built |
 | 11-02 | Aura gets a thin page with the code on the CDN, since the connector can't carry 1.2 MB | Claude (forced by the tool) | Not reviewed yet | Built, departs from "inline the stylesheet" |
+| 11-03 | The room measures itself on ScrollTrigger's refresh, not on resize | Claude (found on Aura) | Sam reported it | Built |
+| 11-03 | Aura cover: the main visual alone, centred, 800x600 | Sam | Sam | Built |

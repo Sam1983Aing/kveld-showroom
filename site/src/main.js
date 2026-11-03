@@ -556,7 +556,17 @@ function walkFrame() {
 let resizeT;
 addEventListener('resize', () => {
   clearTimeout(resizeT);
-  resizeT = setTimeout(() => { room?.layout(); placeStage(); measureCopy(); ScrollTrigger.refresh(); }, 120);
+  resizeT = setTimeout(() => ScrollTrigger.refresh(), 120);
+});
+// The room measures itself once the pins have their new size, like the workshop. Before a refresh the
+// pinned room still holds the old size in px, so measuring on resize drew the old shape into the new box
+// and stretched it (Aura's preview resizes its frame after the page loads). tools/resize_check.mjs
+let roomSize = '';
+ScrollTrigger.addEventListener('refresh', () => {
+  if (!room) return;
+  const size = `${room.canvas.clientWidth}x${room.canvas.clientHeight}`;
+  if (size !== roomSize) { roomSize = size; room.layout(); }
+  placeStage(); measureCopy();
 });
 
 initCursor({ room: () => room, paper: drawingPaper, reduced });

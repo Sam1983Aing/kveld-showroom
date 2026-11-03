@@ -12,7 +12,7 @@ import { readFileSync, writeFileSync, mkdirSync, rmSync, copyFileSync, statSync,
 import { dirname, join, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
-const TAG = '1.24.0';                  // the numeric tag on aura-assets
+const TAG = '1.25.0';                  // the numeric tag on aura-assets
 const CDN = `https://cdn.jsdelivr.net/gh/Sam1983Aing/aura-assets@${TAG}/kveld/`;
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..'), SITE = join(ROOT, 'site'), OUT = join(ROOT, 'standalone');
 rmSync(OUT, { recursive: true, force: true }); mkdirSync(join(OUT, 'hosted'), { recursive: true });

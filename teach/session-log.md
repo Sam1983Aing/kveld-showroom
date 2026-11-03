@@ -180,3 +180,10 @@ The connector turned out to take a file's text inside the call, too small for 1.
 jsDelivr answered 403 on a new tag for several minutes, then fine: the assets repo is over its 50 MB package limit, so each file is fetched singly the first time.
 Aura's import said it failed but had saved the project. Reading it back showed the page intact, minus the final newline.
 On camera: measure before you promise. The estimate was 12 s on 4G, the real number came out under half that. And when a tool says it failed, look at what it left behind before you retry, or you end up with two projects.
+
+**"In the hero section, it seems it has a bug. It's stretched. Can you check?"** (2026-11-03, on Aura's preview)
+Floe and the halo were about a third too wide. `tools/resize_check.mjs` showed it on the plain site too: after any resize the room drew the size the window had before. The room is pinned, and a pinned element holds its size in px until ScrollTrigger refreshes, so measuring on resize read the old size. Aura's frame resizes after the page loads, which is why it showed there first. The room now measures itself on ScrollTrigger's refresh, as the workshop already did. Pushed as 1.25.0 and updated on Aura through the connector.
+On camera: the bug was always there, nobody had resized the window after load. A new host is a free test.
+
+**"Can you turn the screenshot into 800x600, and I want the main image of the hero section to be centered."** Then: **"Everything around it should be not visible, so we only see the main visual of the hero section with the background color."**
+`tools/cover_shot.mjs`: the words, the header and the six other guitars hidden, Floe held facing us (it turns slowly while idle), and the camera's picture panned with a view offset so the guitar and plinth sit in the middle, a touch zoomed out. Panning the picture keeps the perspective. Moving the camera would have changed it.
